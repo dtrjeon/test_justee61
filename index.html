@@ -2399,7 +2399,7 @@ pre.code-block {
   <div class="search-bar" id="search-bar" style="display:none;">
     <button type="button" class="search-preset-btn" id="preset-filter-btn" onclick="togglePresetFilter()" title="내 프리셋 기준으로 필터">👤 내 조</button>
     <div style="display:flex;gap:6px;align-items:center;">
-      <select id="search-type" onchange="filterHistory()" style="flex:1;">
+      <select id="search-type" onchange="onSearchTypeChange()" style="flex:1;">
         <option value="doc_number">문서번호</option>
         <option value="jo">조</option>
         <option value="week">주차</option>
@@ -2407,7 +2407,8 @@ pre.code-block {
         <option value="trainer">훈련자</option>
         <option value="trainee1">훈련생</option>
       </select>
-      <input type="text" id="search-input" placeholder="검색어 입력..." oninput="filterHistory()" style="flex:2;">
+      <input type="text" id="search-input" placeholder="검색어 입력..." onkeydown="if(event.key==='Enter')filterHistory()" style="flex:2;">
+      <button type="button" onclick="filterHistory()" style="background:#2050c8;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">🔍 조회</button>
     </div>
     <button class="search-clear" onclick="clearSearch()" title="초기화">✕</button>
   </div>
@@ -2899,7 +2900,7 @@ const DIAG_MAP = {
   }
 };
 let currentMode = 'server';
-let scriptUrl = localStorage.getItem('apps_script_url') || 'https://script.google.com/macros/s/AKfycbzzQ96SgdOMruDh4Nwr-3La7sLOInwXqZ_Kyry-lNWMVwgbdBls-ilDWkmR7nY1LIv6/exec';
+let scriptUrl = localStorage.getItem('apps_script_url') || 'https://script.google.com/macros/s/AKfycbxx4QNQeqYzicZcb4OvAGcpIKJVHluVVsLqv6fJ5fRb9uFDJzwj-vgLyfGeq3T5QUnj/exec';
 var _lastSavedDiagResult = '';
 
 var _autoSaveTimer = null;
@@ -3601,7 +3602,7 @@ async function suggestEvangCount() {
   // 2) 캐시 없으면 서버에서 직접 조회
   else if (scriptUrl) {
     try {
-      var res = await fetch(scriptUrl + '?action=get', {
+      var res = await fetch(scriptUrl, {
         method: 'GET',
         redirect: 'follow'
       });
@@ -4543,6 +4544,21 @@ function toggleSearch() {
   }
 }
 
+function onSearchTypeChange() {
+  var type = document.getElementById('search-type').value;
+  var input = document.getElementById('search-input');
+  var placeholders = {
+    doc_number: '예: 61-9-질-1',
+    jo: '예: 9',
+    week: '예: 7',
+    leader: '이름 입력',
+    trainer: '이름 입력',
+    trainee1: '이름 입력'
+  };
+  input.placeholder = placeholders[type] || '검색어 입력...';
+  input.value = '';
+}
+
 function filterHistory() {
   var type = document.getElementById('search-type').value;
   var q = document.getElementById('search-input').value.trim().toLowerCase();
@@ -4617,7 +4633,7 @@ async function loadServerHistory() {
   }
   list.innerHTML = '<div class="empty-state"><span class="es-icon">⏳</span><p>불러오는 중...</p></div>';
   try {
-    var res = await fetch(scriptUrl + '?action=get', {
+    var res = await fetch(scriptUrl, {
       method: 'GET',
       redirect: 'follow'
     });

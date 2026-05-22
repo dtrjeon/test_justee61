@@ -1333,6 +1333,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
   <div class="tbl-wrap">
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title">그룹/조별 팀전도 현황 (<span id="week-label-2b">—</span>주차 누적)</span>
+      <button id="incomplete-toggle-btn" onclick="toggleIncompleteFilter()" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:16px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">전체</button>
     </div>
     <div class="tbl-scroll">
       <table>
@@ -1912,7 +1913,7 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: localStorage.getItem('mon_url') || 'https://script.google.com/macros/s/AKfycbzzQ96SgdOMruDh4Nwr-3La7sLOInwXqZ_Kyry-lNWMVwgbdBls-ilDWkmR7nY1LIv6/exec',
+  url: localStorage.getItem('mon_url') || 'https://script.google.com/macros/s/AKfycbxx4QNQeqYzicZcb4OvAGcpIKJVHluVVsLqv6fJ5fRb9uFDJzwj-vgLyfGeq3T5QUnj/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
@@ -2716,6 +2717,7 @@ function renderTab0(data, w) {
   if (tb2) tb2.innerHTML = renderWeekly2Html(allData.filter(function(r){ return Number(r.week) <= w; }), w);
   setText('week-label-2b', w);
   applyInactiveFilter();
+  applyIncompleteFilter();
 }
 
 // ── TAB2 조별상세: 전도유형 구조 렌더 ─────────────────────────────────────────
@@ -2746,7 +2748,7 @@ function renderWeekly2Html(data, w) {
     // 7일후(팀) 조 전체 합산
     var joDay7Cnt = allRecs.filter(function(r){ return r.evangType==='7일후(팀)'; }).length;
     // 수료요건 완료
-    var joComplete = (joRelCnt>=6 && joQuesDateCnt>=2 && joDay7Cnt>=1) ? '<span style="color:var(--green);font-weight:700;">✔</span>' : '—';
+    var joComplete = isSuryoComplete(joRelCnt, joQuesDateCnt, joDay7Cnt) ? '<span style="color:var(--green);font-weight:700;">✔</span>' : '—';
 
     joMembers.forEach(function(m, mi) {
       var roleCls = m.role==='리더' ? 'color:#111;font-weight:700;' : m.role==='훈련자' ? 'color:#1565c0;' : 'color:#666;';
@@ -2772,9 +2774,9 @@ function renderWeekly2Html(data, w) {
 
       // 수료요건
       var rel6  = relCnt  >= 6 ? '✔' : relCnt  > 0 ? relCnt  : '—';
-      var ques2 = quesCnt >= 2 ? '✔' : quesCnt > 0 ? quesCnt : '—';
+      var ques2 = quesCnt >= 3 ? '✔' : quesCnt > 0 ? quesCnt : '—';
       var day71 = day7Cnt >= 1 ? '✔' : '—';
-      var complete = (relCnt>=6 && quesCnt>=2 && day7Cnt>=1) ? '<span style="color:var(--green);font-weight:700;">✔</span>' : '—';
+      var complete = isSuryoComplete(relCnt, quesCnt, day7Cnt) ? '<span style="color:var(--green);font-weight:700;">✔</span>' : '—';
 
       // 복음참여 파트 (관계팀 레코드 기준)
       var actRecs = myRecs.filter(function(r){
@@ -2800,14 +2802,14 @@ function renderWeekly2Html(data, w) {
         '<td class="td-role">'+roleBadge+'</td>' +
         '<td style="border-right:1px solid #c5cde8;text-align:center;">'+( m.step||'—')+'</td>' +
         // 관계(팀) — 첫 행에만 rowspan으로 병합
-        (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(joRelCnt>=6?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+(joRelCnt>0?(joRelCnt>=6?'<b style="color:var(--green)">✔ '+joRelCnt+'</b>':'<span style="color:#e65100;">'+joRelCnt+'</span>'):'—')+'</td>' : '') +
+        (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(joRelCnt>=6?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+(joRelCnt>0?(joRelCnt>=7?'<b style="color:var(--green)">✔ '+joRelCnt+'</b>':joRelCnt>=6?'<b style="color:#e65100;">'+joRelCnt+'</b>':'<span style="color:#e65100;">'+joRelCnt+'</span>'):'—')+'</td>' : '') +
         // 질문지(팀) — 첫 행에만 rowspan
         (mi===0 ? '<td style="text-align:center;font-weight:700;" rowspan="'+rowspan+'">'+(joQuesCnt||'—')+'</td>' : '') +
-        (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(joQuesDateCnt>=2?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+(joQuesDateCnt>0?(joQuesDateCnt>=2?'<b style="color:var(--green)">✔ '+joQuesDateCnt+'</b>':'<span style="color:#e65100;">'+joQuesDateCnt+'</span>'):'—')+'</td>' : '') +
+        (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(joQuesDateCnt>=2?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+(joQuesDateCnt>0?(joQuesDateCnt>=3?'<b style="color:var(--green)">✔ '+joQuesDateCnt+'</b>':joQuesDateCnt>=2?'<b style="color:#e65100;">'+joQuesDateCnt+'</b>':'<span style="color:#e65100;">'+joQuesDateCnt+'</span>'):'—')+'</td>' : '') +
         // 7일후(팀) — 첫 행에만 rowspan
         (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(joDay7Cnt>=1?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+(joDay7Cnt>=1?'<b style="color:var(--green)">✔ '+joDay7Cnt+'</b>':'—')+'</td>' : '') +
         // 수료요건 — 첫 행에만 rowspan
-        (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(joRelCnt>=6&&joQuesDateCnt>=2&&joDay7Cnt>=1?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+joComplete+'</td>' : '') +
+        (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(isSuryoComplete(joRelCnt,joQuesDateCnt,joDay7Cnt)?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+joComplete+'</td>' : '') +
         // 개인전도
         '<td style="text-align:center;font-weight:700;border-right:1px solid #c5cde8;">'+(persCnt||'—')+'</td>' +
         // 복음참여 파트
@@ -3124,14 +3126,14 @@ function renderTab2(data, w) {
       totalConfirm += cf;
       totalReject += sum(joRecs, 'reject');
 
-      // 팀전도 수료 요건: 관계전도 6회↑, 질문지 2일↑, 7일후 1회↑
-      var rel6 = c >= 6 ? '<span class="badge b-green">✓' + c + '</span>' : '<span class="badge b-gray">' + c + '</span>';
-      var ques2 = t >= 2 ? '<span class="badge b-green">✓' + t + '</span>' : '<span class="badge b-gray">' + t + '</span>';
+      // 팀전도 수료 요건: (관계6회↑+질문지3회↑+7일후1회↑) 또는 (관계7회↑+질문지2회↑+7일후1회↑)
+      var rel6 = c >= 6 ? '<span class="badge b-green">✓' + c + '</span>' : '<span class="badge b-gray">' + c + '</span>';  // 6이상이면 진행중 표시
+      var ques2 = t >= 3 ? '<span class="badge b-green">✓' + t + '</span>' : t >= 2 ? '<span class="badge b-red">'+t+'</span>' : '<span class="badge b-gray">' + t + '</span>';
       var w7recs = joRecs.filter(function(r) {
         return r.followup && r.followup.indexOf('7일') > -1;
       }).length;
       var w7ok = w7recs >= 1 ? '<span class="badge b-green">✓' + w7recs + '</span>' : '<span class="badge b-gray">' + w7recs + '</span>';
-      var suryoOk = (c >= 6 && t >= 2 && w7recs >= 1) ? '<span class="badge b-green">완료</span>' : '<span class="badge b-gray">미완료</span>';
+      var suryoOk = isSuryoComplete(c, t, w7recs) ? '<span class="badge b-green">완료</span>' : '<span class="badge b-gray">미완료</span>';
 
       html += '<tr>' +
         '<td></td>' +
@@ -3157,7 +3159,66 @@ function renderTab2(data, w) {
   setText('week-label-2b', w);
 }
 
-// ── TAB 3: 복음제시현황 주차별 누적 ──────────────────────────────────────────
+// ── 수료요건 판단 함수 ────────────────────────────────────────────────────────
+// 조건: (관계6회↑ + 질문지3회↑ + 7일후1회↑) OR (관계7회↑ + 질문지2회↑ + 7일후1회↑)
+function isSuryoComplete(rel, ques, day7) {
+  return day7 >= 1 && ((rel >= 6 && ques >= 3) || (rel >= 7 && ques >= 2));
+}
+
+
+var _incompleteFilterActive = false;
+
+function toggleIncompleteFilter() {
+  _incompleteFilterActive = !_incompleteFilterActive;
+  var btn = document.getElementById('incomplete-toggle-btn');
+  if (_incompleteFilterActive) {
+    btn.textContent = '⚠️ 미완료만';
+    btn.style.background = '#fff3e0';
+    btn.style.border = '1px solid #e65100';
+    btn.style.color = '#e65100';
+  } else {
+    btn.textContent = '전체';
+    btn.style.background = '#f5f5f5';
+    btn.style.border = '1px solid #ddd';
+    btn.style.color = '#555';
+  }
+  applyIncompleteFilter();
+}
+
+function applyIncompleteFilter() {
+  var tb = document.getElementById('tb-weekly-2');
+  if (!tb) return;
+  // jo-row-first 행(첫 멤버행)에서 수료요건 셀 확인
+  // 수료요건 td는 첫번째 행에만 있고 rowspan으로 병합됨
+  // isSuryoComplete() 조건 충족이면 완료 → ✔ 포함
+  var rows = tb.querySelectorAll('tr');
+  // 조별 첫 행(jo-row-first)의 수료요건 셀 인덱스: td-jo(0) name(1) role(2) step(3) rel(4) quesN(5) quesD(6) day7(7) suryo(8)
+  // suryo td에 ✔ 있으면 완료, 없으면 미완료
+  // 각 조의 rowspan 범위 행들을 함께 숨기거나 표시
+
+  var i = 0;
+  while (i < rows.length) {
+    var row = rows[i];
+    if (row.classList.contains('jo-row-first')) {
+      // 수료요건 셀 찾기 (rowspan 있는 td 중 8번째 — 0-based)
+      var tds = row.querySelectorAll('td');
+      // jo-row-first는 td-jo 포함하므로: jo(0) name(1) role(2) step(3) rel(4) quesN(5) quesD(6) day7(7) suryo(8)
+      var suryoTd = tds[8];
+      var isComplete = suryoTd && suryoTd.textContent.indexOf('✔') > -1;
+      // rowspan 값으로 몇 행을 제어할지 결정
+      var span = suryoTd ? (parseInt(suryoTd.getAttribute('rowspan')) || 1) : 1;
+      var hide = _incompleteFilterActive && isComplete;
+      for (var j = 0; j < span && (i + j) < rows.length; j++) {
+        rows[i + j].style.display = hide ? 'none' : '';
+      }
+      i += span;
+    } else {
+      i++;
+    }
+  }
+}
+
+
 function renderTab3(selectedWeek) {
   var tb = document.getElementById('tb-weekly-acc');
   var totals = {
