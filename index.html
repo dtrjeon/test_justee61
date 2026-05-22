@@ -5610,10 +5610,18 @@ async function printMultiSuju() {
 
     document.body.removeChild(container);
 
-    // 파일명: 날짜_수주반보고서
-    var fname = '수주반_공개보고서_' + new Date().toISOString().slice(0, 10) + '.pdf';
-    pdf.save(fname);
-    showStatus('✅ PDF 저장 완료! (' + selected.length + '매)', 'success');
+    // Blob URL로 새 탭에서 미리보기 — 탭에서 저장 가능
+    var blob = pdf.output('blob');
+    var blobUrl = URL.createObjectURL(blob);
+    var previewWin = window.open(blobUrl, '_blank');
+    if (!previewWin) {
+      // 팝업 차단 시 직접 다운로드
+      var fname = '수주반_공개보고서_' + new Date().toISOString().slice(0, 10) + '.pdf';
+      pdf.save(fname);
+      showStatus('✅ PDF 저장 완료! (' + selected.length + '매)', 'success');
+    } else {
+      showStatus('✅ PDF 미리보기 탭이 열렸습니다. 탭에서 저장하세요. (' + selected.length + '매)', 'success');
+    }
   } catch (e) {
     showStatus('PDF 생성 오류: ' + e.message, 'error');
     console.error(e);
