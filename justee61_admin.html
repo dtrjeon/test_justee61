@@ -2626,7 +2626,6 @@ function renderTab0(data, w) {
     var joRecs = data.filter(function(r) {
       return String(r.jo) === String(jo);
     });
-    var rowspan = joMembers.length;
     var grp = joMembers[0] && joMembers[0].group;
     if (grp && grp !== lastGroup) {
       lastGroup = grp;
@@ -2640,91 +2639,131 @@ function renderTab0(data, w) {
         grp + '그룹' + (grpObj.leader ? ' — ' + grpObj.leader : '') +
         '</td></tr>';
     }
-    // 데이터가 있어도 문서번호가 없으면 미실시로 처리 (실시만 표시 토글 기준)
-    var noData = !joRecs.length || !joRecs[0].docNumber;
-    joMembers.forEach(function(m, mi) {
-      var rec = joRecs[0];
+
+    // 데이터 없는 조: 미실시 1행 렌더
+    if (!joRecs.length || !joRecs[0].docNumber) {
+      var rowspan = joMembers.length;
+      joMembers.forEach(function(m, mi) {
+        var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
+        var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+        var displayStep = m.step || '—';
+        html += '<tr class="jo-row inactive-row' + (mi === 0 ? ' jo-row-first' : '') + '" style="background:#fafafa;">' +
+          (mi === 0 ? '<td class="td-jo" rowspan="' + rowspan + '" style="color:#e65100;"><span title="미실시">' + jo + '</span></td>' : '') +
+          '<td class="td-name" style="' + roleCls + 'opacity:0.55;">' + m.name + '</td>' +
+          '<td class="td-role" style="opacity:0.55;">' + roleBadge + '</td>' +
+          '<td class="td-step" style="border-right:1px solid #c5cde8;color:#999;">' + displayStep + '</td>' +
+          (mi === 0 ? '<td rowspan="' + rowspan + '" colspan="15" style="color:#bbb;font-size:9px;text-align:center;background:#f5f5f5;letter-spacing:1px;">　미　실　시　</td>' : '') +
+          '<td style="font-size:14px;text-align:center;border-left:1px solid #c5cde8;"></td>';
+        // 복음참여 9칸 빈칸
+        for (var pi0 = 0; pi0 < 9; pi0++) {
+          html += '<td style="' + (pi0 === 8 ? 'border-right:1px solid #c5cde8;' : '') + '"></td>';
+        }
+        // 후속양육 + 비고 (첫 행만)
+        if (mi === 0) {
+          html +=
+            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;"></td>' +
+            '<td rowspan="' + rowspan + '">—</td>';
+        }
+        html += '</tr>';
+      });
+      return;
+    }
+
+    // 데이터 있는 조: 건수(joRecs)별로 반복 렌더
+    // 조번호 셀은 전체 건수×조원수만큼 rowspan
+    var totalRowspan = joRecs.length * joMembers.length;
+    var joNumRendered = false;
+
+    joRecs.forEach(function(rec, ri) {
+      var rowspan = joMembers.length;
       var result = rec ? rec.result : '';
       var resultCls = result === '결신' ? 'b-red' : result === '이미신자' ? 'b-green' : result === '확신' ? 'b-blue' : 'b-gray';
-      var action = m.role === '리더' ? (rec ? rec.leaderAction : '') :
-        m.role === '훈련자' ? (rec ? rec.trainerAction : '') :
-        (rec ? rec.traineeAction : '');
-      var isActive = action === '하였고';
-      var isObs = action === '참관하였고';
-      var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
-      var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
 
-      var displayStep = m.step || '—'; // 조정보 시트 기준 (이름/역할과 동일 출처)
+      joMembers.forEach(function(m, mi) {
+        var action = m.role === '리더' ? (rec ? rec.leaderAction : '') :
+          m.role === '훈련자' ? (rec ? rec.trainerAction : '') :
+          (rec ? rec.traineeAction : '');
+        var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
+        var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+        var displayStep = m.step || '—';
+        var isFirst = (ri === 0 && mi === 0);
+        var isRecFirst = (mi === 0);
+        // 2건째 이상 첫 조원행: 구분선 추가
+        var extraBorderStyle = (ri > 0 && mi === 0) ? 'border-top:2px solid #8fa3d0;' : '';
 
-      html += '<tr class="' + (noData ? 'jo-row inactive-row' : 'jo-row active-row') + (mi === 0 ? ' jo-row-first' : '') + '" style="' + (noData ? 'background:#fafafa;' : '') + '">' +
-        (mi === 0 ? '<td class="td-jo" rowspan="' + rowspan + '" style="' + (noData ? 'color:#e65100;' : '') + '">' + (noData ? '<span title="미실시">' : '') + jo + (noData ? '</span>' : '') + '</td>' : '') +
-        '<td class="td-name" style="' + roleCls + (noData ? 'opacity:0.55;' : '') + '">' + m.name + '</td>' +
-        '<td class="td-role" style="' + (noData ? 'opacity:0.55;' : '') + '">' + roleBadge + '</td>' +
-        '<td class="td-step" style="border-right:1px solid #c5cde8;' + (noData ? 'color:#999;' : '') + '">' + displayStep + '</td>' +
-        (mi === 0 ? (noData ?
-          '<td rowspan="' + rowspan + '" colspan="15" style="color:#bbb;font-size:9px;text-align:center;background:#f5f5f5;letter-spacing:1px;">　미　실　시　</td>' :
-          '<td rowspan="' + rowspan + '" style="font-size:10px;color:#1a3a9e;font-weight:700;">' + (rec.docNumber || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" style="font-size:10px;">' + (rec.evangType || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '">—</td><td rowspan="' + rowspan + '">—</td>' +
-          '<td rowspan="' + rowspan + '" style="font-size:10px;">' + (rec.religion || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '">' + (rec.gender || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '">' + (rec.age || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" style="font-size:10px;">' + (rec.region || rec.location || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" style="font-size:10px;">' + (rec.relationMember || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" style="font-size:10px;">' + (rec.targetType || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" style="font-size:10px;border-right:1px solid #c5cde8;">' + (rec.gospelPlace || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '">' + (rec.heaven || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '">' + (rec.reason || '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;"><span class="badge b-orange">' + (rec.diagResult ? rec.diagResult.split('|')[0].replace('진단:', '').trim() : '—') + '</span></td>' +
-          '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;"><span class="badge ' + resultCls + '">' + result + '</span></td>'
-        ) : '') + '';
+        html += '<tr class="jo-row active-row' + (isFirst ? ' jo-row-first' : '') + '">' +
+          // 조번호: 첫 번째 건의 첫 번째 조원에만 전체 rowspan
+          (!joNumRendered ? '<td class="td-jo" rowspan="' + totalRowspan + '">' + jo + '</td>' : '') +
+          '<td class="td-name" style="' + roleCls + extraBorderStyle + '">' + m.name + '</td>' +
+          '<td class="td-role" style="' + extraBorderStyle + '">' + roleBadge + '</td>' +
+          '<td class="td-step" style="border-right:1px solid #c5cde8;' + extraBorderStyle + '">' + displayStep + '</td>';
 
-      // 참관 — 조원별 개별 셀
-      html += '<td style="font-size:14px;text-align:center;border-left:1px solid #c5cde8;">' + ((!noData && action === '참관하였고') ? '🟣' : '') + '</td>';
+        joNumRendered = true;
 
-      // 복음참여 역할배분 — 관계(팀):검정 / 그 외:주황 / 참관:colspan
-      var PARTS = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
-      // 전도유형 기준 마크 색상: 관계(팀)→검정, 그 외→주황
-      var evangType = rec ? rec.evangType || '' : '';
-      var isTeam = evangType === '관계(팀)';
-      var markColor = isTeam ? 'color:#111111;' : 'color:#e65100;';
-      var mPart = m.role === '리더' ? (rec ? rec.leaderPart : '') :
-        m.role === '훈련자' ? (rec ? rec.trainerPart : '') :
-        (rec ? rec.traineePart : '');
-      var partArr = mPart ? mPart.split(',').map(function(s) {
-        return s.trim();
-      }).filter(Boolean) : [];
-      // 참관: 복음참여 9칸은 빈칸
-      if (action === '참관하였고') {
-        html += '<td style="border-right:1px solid #c5cde8;"></td>'.repeat(0);
-        for (var pi2 = 0; pi2 < 9; pi2++) {
-          var isLast2 = pi2 === 8;
-          var bs2 = isLast2 ? 'border-right:1px solid #c5cde8;' : '';
-          html += '<td style="' + bs2 + '"></td>';
+        // 전도내용 셀 (건당 첫 조원에만 rowspan)
+        if (isRecFirst) {
+          html +=
+            '<td rowspan="' + rowspan + '" style="font-size:10px;color:#1a3a9e;font-weight:700;' + extraBorderStyle + '">' + (rec.docNumber || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.evangType || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.religion || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.gender || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.age || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.region || rec.location || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.relationMember || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.targetType || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-right:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.gospelPlace || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.heaven || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.reason || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;' + extraBorderStyle + '"><span class="badge b-orange">' + (rec.diagResult ? rec.diagResult.split('|')[0].replace('진단:', '').trim() : '—') + '</span></td>' +
+            '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;' + extraBorderStyle + '"><span class="badge ' + resultCls + '">' + result + '</span></td>';
         }
-      } else {
-        var partCells = PARTS.map(function(p, pi) {
-          var isLast = pi === PARTS.length - 1;
-          var borderStyle = isLast ? 'border-right:1px solid #c5cde8;' : '';
-          if (action !== '하였고') return '<td style="' + borderStyle + '"></td>';
-          if (partArr.indexOf(p) > -1) return '<td style="font-size:14px;text-align:center;' + borderStyle + '">' + (isTeam ? '●' : '🟠') + '</td>';
-          return '<td style="text-align:center;color:#e0e0e0;font-size:10px;' + borderStyle + '">·</td>';
-        });
-        html += partCells.join('');
-      }
-      // 후속양육 + 비고 (조당 첫 행만)
-      if (mi === 0) {
-        var fuStyle = noData ? 'style="color:#ddd;"' : '';
-        html +=
-          '<td rowspan="' + rowspan + '" ' + fuStyle + '>' + (rec && rec.followup && rec.followup.indexOf('7일') > -1 ? '●' : '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" ' + fuStyle + '>' + (rec && rec.followup && rec.followup.indexOf('24') > -1 ? '●' : '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" ' + fuStyle + '>' + (rec && rec.followup && rec.followup.indexOf('예배') > -1 ? '●' : '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" ' + fuStyle + '>' + (rec && rec.followup && rec.followup.indexOf('새가족') > -1 ? '●' : '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" ' + fuStyle + '>' + (rec && rec.followup && (rec.followup.indexOf('하지') > -1 || rec.followup.indexOf('못') > -1) ? '●' : '—') + '</td>' +
-          '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;">' + (rec ? rec.q13 || '' : '') + '</td>' +
-          '<td rowspan="' + rowspan + '">—</td>';
-      }
-      html += '</tr>';
+
+        // 참관 — 조원별 개별 셀
+        html += '<td style="font-size:14px;text-align:center;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + ((action === '참관하였고') ? '🟣' : '') + '</td>';
+
+        // 복음참여 역할배분
+        var PARTS = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
+        var evangType = rec ? rec.evangType || '' : '';
+        var isTeam = evangType === '관계(팀)';
+        var mPart = m.role === '리더' ? (rec ? rec.leaderPart : '') :
+          m.role === '훈련자' ? (rec ? rec.trainerPart : '') :
+          (rec ? rec.traineePart : '');
+        var partArr = mPart ? mPart.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+
+        if (action === '참관하였고') {
+          for (var pi2 = 0; pi2 < 9; pi2++) {
+            html += '<td style="' + (pi2 === 8 ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle + '"></td>';
+          }
+        } else {
+          PARTS.forEach(function(p, pi) {
+            var isLast = pi === PARTS.length - 1;
+            var borderStyle = (isLast ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle;
+            if (action !== '하였고') { html += '<td style="' + borderStyle + '"></td>'; return; }
+            if (partArr.indexOf(p) > -1) { html += '<td style="font-size:14px;text-align:center;' + borderStyle + '">' + (isTeam ? '●' : '🟠') + '</td>'; return; }
+            html += '<td style="text-align:center;color:#e0e0e0;font-size:10px;' + borderStyle + '">·</td>';
+          });
+        }
+
+        // 후속양육 + 비고 (건당 첫 조원에만 rowspan)
+        if (isRecFirst) {
+          html +=
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('7일') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('24') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('예배') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('새가족') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && (rec.followup.indexOf('하지') > -1 || rec.followup.indexOf('못') > -1) ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.q13 || '') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">—</td>';
+        }
+        html += '</tr>';
+      });
     });
   });
   tb.innerHTML = html;
