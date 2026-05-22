@@ -1994,7 +1994,19 @@ pre.code-block {
         </div>
       </div>
     </div>
-    <div class="fld"><div class="lbl">만난 장소 <span style="font-weight:400;font-size:10px;color:rgba(0,0,0,0.4);">(예: 수지성전, 카페 등)</span></div><input type="text" id="q3_meet_place" placeholder="만난 장소 입력" oninput="syncPreview();syncSuju()" style="width:100%;box-sizing:border-box;"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;">
+      <div class="fld" style="flex:1;margin-bottom:0;">
+        <div class="lbl">만난 장소 <span style="font-weight:400;font-size:10px;color:rgba(0,0,0,0.4);">(예: 수지성전, 카페 등)</span></div>
+        <input type="text" id="meet_place" placeholder="만난 장소 입력" oninput="syncPreview();syncSuju()" style="width:100%;box-sizing:border-box;">
+      </div>
+      <div class="fld" style="flex:1;margin-bottom:0;">
+        <div class="lbl">복음전달</div>
+        <div class="rg" style="margin-top:6px;">
+          <div class="rb"><input type="radio" name="q3_meet_place" value="대면" id="mp1" onchange="syncPreview();syncSuju()"><label for="mp1">대면</label></div>
+          <div class="rb"><input type="radio" name="q3_meet_place" value="비대면" id="mp2" onchange="syncPreview();syncSuju()"><label for="mp2">비대면</label></div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="divider"></div>
   <div class="sec"><div class="sec-lbl">4. 종교배경 및 직업</div>
@@ -2896,7 +2908,8 @@ function applyFormData(r) {
   sr('marriage', r.marriage);
   sr('gender', r.gender);
   sv('q3_gospel_place', r.gospel_place || '');
-  sv('q3_meet_place', r.meet_place || '');
+  sv('meet_place', r.meet_place || '');
+  sr('q3_meet_place', r.gospel_delivery || r.meet_place || '');
 
   // 8. 종교 · 직업
   setReligionValue(r.religion || '');
@@ -4383,7 +4396,8 @@ function collectFormData() {
     marriage: radio('marriage'),
     gender: radio('gender'),
     gospel_place: v('q3_gospel_place'),
-    meet_place: v('q3_meet_place'),
+    meet_place: v('meet_place'),
+    gospel_delivery: radio('q3_meet_place'),
     religion: getReligionValue(),
     job: v('q4_job'),
     heaven: radio('heaven'),
@@ -4722,6 +4736,7 @@ async function loadServerHistory() {
         gender: r['성별'] || '',
         meet_place: r['만난장소'] || '',
         gospel_place: r['복음제시장소'] || '',
+        gospel_delivery: r['복음전달'] || '',
         religion: r['종교배경'] || '',
         job: r['직업'] || '',
         heaven: r['천국확신'] || '',
@@ -4854,6 +4869,7 @@ function loadRecord(idx) {
     gender: r.gender || r['성별'] || '',
     meet_place: r.meet_place || r['만난장소'] || '',
     gospel_place: r.gospel_place || r['복음제시장소'] || '',
+    gospel_delivery: r.gospel_delivery || r['복음전달'] || '',
     religion: r.religion || r['종교배경'] || '',
     job: r.job || r['직업'] || '',
     // 진단
@@ -5132,7 +5148,7 @@ function syncSuju() {
   else if (targetType) relationText = targetType;
   else relationText = '—';
   setEl2('sj_relation', relationText);
-  setEl2('sj_meet_place', v('q3_meet_place'));
+  setEl2('sj_meet_place', v('meet_place'));
   // 결혼여부·성별 (선택 시 해당 값만, 미선택 시 원본 괄호 표기 유지)
   var mEl = document.getElementById('sj_marriage');
   if (mEl) mEl.textContent = radio('marriage') || '[미혼/기혼]';
@@ -6086,7 +6102,7 @@ async function handleClaudeImage(event) {
     sv('q3_location', parsed.location);
     sv('q3_name', parsed.name);
     sv('q3_age', parsed.age);
-    sv('q3_meet_place', parsed.meet_place);
+    sv('meet_place', parsed.meet_place);
     sv('q4_job', parsed.job);
     sv('q10', parsed.q10);
     sv('q12', parsed.q12);
@@ -6316,7 +6332,7 @@ async function handleOcrImage(event) {
     sv2('q3_location', parsed.location);
     sv2('q3_name', parsed.name);
     sv2('q3_age', parsed.age);
-    sv2('q3_meet_place', parsed.meet_place);
+    sv2('meet_place', parsed.meet_place);
     sv2('q4_job', parsed.job);
     sv2('q10', parsed.q10);
     sv2('q12', parsed.q12);
