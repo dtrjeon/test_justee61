@@ -1244,12 +1244,12 @@ pre.code-block {
 
 .modal-btns button {
   border-radius: 6px;
-  padding: 8px 18px;
+  padding: 6px 14px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   border: none;
-  min-height: 38px;
+  min-height: 32px;
 }
 
 .btn-cancel {
@@ -2586,213 +2586,13 @@ pre.code-block {
 <!-- MODAL -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal">
-    <h3>GOOGLE SHEETS</h3>
+    <h3>GOOGLE SHEETS 연결</h3>
     <p>Apps Script 웹앱 URL을 입력하면 구글 시트에 데이터가 저장됩니다.</p>
-    <div class="setup-steps"><strong>설정 방법 (최초 1회)</strong><br>1. <a href="https://docs.google.com/spreadsheets/d/1uV9myI09dSn_0fhFk9LCXvDHvQuDOU_lEkwegs_Z75c/edit" target="_blank">📊 공개보고서 구글 시트 열기</a><br>2. 확장 프로그램 → Apps Script<br>3. 아래 코드 복사 → 저장 → 배포 → 새 배포<br>4. 웹앱 · 모든 사용자 → 배포 → URL 입력<br>5. <strong>📷 카메라(OCR) 사용 시</strong>: Apps Script → 프로젝트 설정 → 스크립트 속성 → 추가<br>&nbsp;&nbsp;&nbsp;• Gemini 사용: <code>GEMINI_API_KEY</code> = (Google AI Studio에서 발급)<br>&nbsp;&nbsp;&nbsp;• Claude 사용: <code>CLAUDE_API_KEY</code> = (Anthropic Console에서 발급)</div>
-    <details><summary style="cursor:pointer;font-size:11px;color:#2050c8;font-weight:600;margin-bottom:6px;">📋 Apps Script 코드 보기</summary>
-      <pre class="code-block" id="apps-script-code">// ── 필수 설정값 ──────────────────────────────
-const SHEET_ID   = 'YOUR_SPREADSHEET_ID';  // ← 구글 시트 ID 입력
-const SHEET_NAME = '전도보고서';
-
-// 알림 수신 이메일 목록
-const ADMIN_EMAILS = ['admin@example.com'];
-const SEND_EMAIL = true;
-
-// ── doPost : 보고서 저장 + OCR + 이메일 알림 ──
-function doPost(e){
-  try{
-    const d=JSON.parse(e.postData.contents);
-    if(d.action==='save_jo'){
-      PropertiesService.getScriptProperties().setProperty('JO_DATA',JSON.stringify(d.joData));
-      return ok({});
-    }
-
-    // ── Claude Vision OCR ─────────────────────
-    if(d.action==='ocr_claude'){
-      const apiKey=PropertiesService.getScriptProperties().getProperty('CLAUDE_API_KEY');
-      if(!apiKey) return error('API 키가 설정되지 않았습니다. GAS 스크립트 속성에 CLAUDE_API_KEY를 등록하세요.');
-      const payload={
-        model:'claude-opus-4-5',
-        max_tokens:1024,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:d.mediaType||'image/jpeg',data:d.imageBase64}},
-          {type:'text',text:'이 이미지에서 전도 보고서 작성에 필요한 정보를 추출해 주세요. JSON으로만 응답하세요: {"location":"거주지역","name":"성씨","age":"나이(숫자)","marriage":"기혼또는미혼","gender":"남자또는여자","meet_place":"만난장소","job":"직업","religion":"종교배경","target_type":"대상자구분","heaven":"있었고또는없었고","reason":"믿음또는행위등","q10":"특별경험","q12":"기도제목"}'}
-        ]}]
-      };
-      const resp=UrlFetchApp.fetch('https://api.anthropic.com/v1/messages',{
-        method:'post',
-        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
-        payload:JSON.stringify(payload),
-        muteHttpExceptions:true
-      });
-      const res=JSON.parse(resp.getContentText());
-      if(res.error) return error('Claude API 오류: '+res.error.message);
-      const text=(res.content&&res.content[0]&&res.content[0].text)||'';
-      let parsed={};
-      try{
-        const m=text.match(/\{[\s\S]*\}/);
-        if(m) parsed=JSON.parse(m[0]);
-      }catch(pe){}
-      return ok({parsed:parsed,rawText:text});
-    }
-
-    // ── Gemini Vision OCR ─────────────────────
-    if(d.action==='ocr_gemini'){
-      const apiKey=PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-      if(!apiKey) return error('API 키가 설정되지 않았습니다. GAS 스크립트 속성에 GEMINI_API_KEY를 등록하세요.');
-      const payload={
-        contents:[{parts:[
-          {inline_data:{mime_type:d.mediaType||'image/jpeg',data:d.imageBase64}},
-          {text:'이미지에서 전도 보고서 정보를 추출해 JSON으로만 응답: {"location":"거주지역","name":"성씨","age":"나이","marriage":"기혼또는미혼","gender":"남자또는여자","meet_place":"만난장소","job":"직업","religion":"종교","target_type":"대상자구분","heaven":"있었고또는없었고","reason":"믿음또는행위","q10":"특별경험","q12":"기도제목"}'}
-        ]}]
-      };
-      const resp=UrlFetchApp.fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+apiKey,
-        {method:'post',headers:{'Content-Type':'application/json'},payload:JSON.stringify(payload),muteHttpExceptions:true}
-      );
-      const res=JSON.parse(resp.getContentText());
-      if(res.error) return error('Gemini API 오류: '+res.error.message);
-      const text=((res.candidates||[])[0]||{}).content&&res.candidates[0].content.parts[0].text||'';
-      const ocrText=text;
-      let parsed={};
-      try{
-        const m=text.match(/\{[\s\S]*\}/);
-        if(m) parsed=JSON.parse(m[0]);
-      }catch(pe){}
-      return ok({parsed:parsed,ocrText:ocrText});
-    }
-
-    const ss=SpreadsheetApp.openById(SHEET_ID);
-    const s=ss.getSheetByName(SHEET_NAME)||ss.insertSheet(SHEET_NAME);
-    if(s.getLastRow()===0) writeHeader(s);
-    const savedAt=Utilities.formatDate(new Date(),'Asia/Seoul','yyyy-MM-dd HH:mm:ss');
-    s.appendRow([
-      savedAt,d.week,d.date,d.doc_number,d.evang_type,d.evang_count,
-      d.jo,d.leader,d.trainer,d.trainee1,
-      d.leader_step,d.trainer_step,d.trainee_step,
-      d.contact,d.gospel,d.target,d.decision,d.reject,d.confirm,d.believer,
-      d.location,d.name,d.age,d.marriage,d.gender,
-      d.meet_place,d.gospel_place,d.target_type,d.relation_member,
-      d.religion,d.job,d.heaven,d.reason,d.yeopjeop,d.diag_result,
-      d.testimony6,d.testimony7,
-      d.leader_part,d.leader_action,d.trainer_part,d.trainer_action,
-      d.trainee_part,d.trainee_action,
-      d.result,d.immed_nurture,d.followup,d.followup_reason,
-      d.q10,d.q11,d.q12,d.q13
-    ]);
-    if(SEND_EMAIL) sendEmailAlert(d,savedAt);
-    return ok({});
-  }catch(err){return error(err.toString());}
-}
-
-// ── doGet : 기록 조회 ────────────────────────
-function doGet(e){
-  try{
-    const action=e&&e.parameter&&e.parameter.action;
-    if(action==='get_jo'){
-      const raw=PropertiesService.getScriptProperties().getProperty('JO_DATA');
-      return ok({joData:raw?JSON.parse(raw):[]});
-    }
-    // 문서번호로 단일 레코드 조회 (admin에서 수정 시 사용)
-    if(action==='get_by_doc'){
-      const docNumber=e.parameter.docNumber||'';
-      const s=SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
-      if(!s||s.getLastRow()<2) return error('레코드 없음');
-      const rows=s.getDataRange().getValues();
-      const h=rows[0];
-      const DATE_COLS=new Set(['저장일시','전도일']);
-      const fmt=(v)=>{ if(v instanceof Date) return Utilities.formatDate(v,'Asia/Seoul','yyyy-MM-dd'); return v; };
-      // 동일 문서번호 중 최신 레코드 반환
-      let found=null;
-      rows.slice(1).forEach((r,i)=>{
-        const o={rowIndex:i+2};
-        h.forEach((k,j)=>{ o[k]=DATE_COLS.has(k)?fmt(r[j]):r[j]; });
-        if(String(o['문서번호'])===String(docNumber)){
-          if(!found||(String(o['저장일시'])>String(found['저장일시']))) found=o;
-        }
-      });
-      if(!found) return error('해당 문서번호를 찾을 수 없습니다: '+docNumber);
-      return ok({record:found});
-    }
-    const s=SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
-    if(!s||s.getLastRow()<2) return ok({records:[]});
-    const rows=s.getDataRange().getValues();
-    const h=rows[0];
-    const DATE_COLS=new Set(['저장일시','전도일']);
-    const fmt=(v)=>{
-      if(v instanceof Date) return Utilities.formatDate(v,'Asia/Seoul','yyyy-MM-dd');
-      return v;
-    };
-    const rec=rows.slice(1).map((r,i)=>{
-      const o={rowIndex:i+2};
-      h.forEach((k,j)=>{ o[k]=DATE_COLS.has(k)?fmt(r[j]):r[j]; });
-      return o;
-    }).reverse();
-    return ok({records:rec});
-  }catch(err){return error(err.toString());}
-}
-
-// ── 이메일 알림 ──────────────────────────────
-function sendEmailAlert(d,savedAt){
-  const subject=`[전도보고서] ${d.jo}조 ${d.leader} 팀 (${savedAt.slice(0,10)})`;
-  const body=
-`━━━━━━━━━━━━━━━━━━━━━━
-현장전도 보고서가 접수되었습니다
-━━━━━━━━━━━━━━━━━━━━━━
-제출일시 : ${savedAt}
-전도일   : ${d.date||'-'}
-조       : ${d.jo||'-'}조
-훈련자   : ${d.leader||'-'}
-훈련생   : ${d.trainee1||'-'}
-
-[통계]
-접촉: ${d.contact||0}회 | 복음제시: ${d.gospel||0}회
-결신: ${d.decision||0}명 | 보류/거절: ${d.reject||0}명
-
-[진단]
-천국확신: ${d.heaven||'-'} | 이유: ${d.reason||'-'}
-진단결과: ${d.diag_result||'-'}
-즉석양육: ${d.immed_nurture||'-'}
-후속양육: ${d.followup||'-'}
-
-[특별경험] ${d.q10||'(없음)'}
-[문제점]   ${d.q11||'(없음)'}
-[기도제목] ${d.q12||'(없음)'}
-━━━━━━━━━━━━━━━━━━━━━━
-모든 영광을 하나님께 올려드립니다!`;
-  ADMIN_EMAILS.forEach(email=>{
-    try{GmailApp.sendEmail(email,subject,body);}
-    catch(err){Logger.log('이메일 오류[%s]:%s',email,err);}
-  });
-}
-
-// ── 헤더 / 유틸 ─────────────────────────────
-function writeHeader(s){
-  s.appendRow(['저장일시','주차','전도일','문서번호','전도유형','횟수',
-    '조','훈련자(조장)','훈련자','훈련생',
-    '훈련자(조장)단계','훈련자단계','훈련생단계',
-    '접촉횟수','복음제시','대상자','결신','보류/거절','확신','이미신자',
-    '거주지역','성씨','나이','결혼여부','성별','만난장소','복음제시장소',
-    '대상자구분','관계조원','종교배경','직업',
-    '천국확신','이유대답','영접여부','진단결과','간증6','간증7',
-    '훈련자(조장)역할','훈련자(조장)행동','훈련자역할','훈련자행동','훈련생역할','훈련생행동','간증담당',
-    '결과','즉석양육','후속양육','하지못한사유',
-    '느낀점(10)','문제점(11)','기도제목(12)','기타(13)']);
-  const hr=s.getRange(1,1,1,s.getLastColumn());
-  hr.setBackground('#1a3a9e').setFontColor('#fff').setFontWeight('bold').setHorizontalAlignment('center');
-  s.setFrozenRows(1);
-}
-function ok(d){return ContentService.createTextOutput(JSON.stringify(Object.assign({status:'ok'},d))).setMimeType(ContentService.MimeType.JSON);}
-function error(m){return ContentService.createTextOutput(JSON.stringify({status:'error',message:m})).setMimeType(ContentService.MimeType.JSON);}</pre>
-      <button type="button" onclick="copyCode()" style="margin-top:6px;background:#2050c8;color:#fff;border:none;border-radius:4px;padding:4px 12px;font-size:11px;cursor:pointer;">📋 코드 복사</button>
-    </details>
     <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/...../exec">
-    <div style="display:flex;gap:6px;margin-top:8px;">
-      <input type="text" id="suju-ban-input" value="수지주일반" readonly style="flex:2;padding:8px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:16px;background:#f5f5f5;color:#666;">
-      <input type="text" id="suju-group-input" placeholder="그룹 (예: D)" style="flex:1;padding:8px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:16px;">
-    </div>
-    <div class="modal-btns">
+    <div id="current-url-display" style="font-size:10px;color:#888;margin-top:4px;word-break:break-all;background:#f5f5f5;border-radius:4px;padding:4px 8px;"></div>
+    <div class="modal-btns" style="margin-top:14px;">
       <button type="button" class="btn-cancel" onclick="closeModal()">취소</button>
+      <button type="button" style="background:#e65100;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;" onclick="resetStoredUrl()">🔄 URL 초기화</button>
       <button type="button" class="btn-save" onclick="saveScriptUrl()">저장 및 연결</button>
     </div>
   </div>
@@ -3937,11 +3737,28 @@ function switchTab(tab) {
 
 function openModal() {
   document.getElementById('script-url-input').value = scriptUrl;
+  // 현재 localStorage에 저장된 URL 표시
+  var stored = localStorage.getItem('apps_script_url');
+  var display = document.getElementById('current-url-display');
+  if (display) {
+    display.textContent = stored
+      ? '💾 저장된 URL: ' + stored.slice(-30) + '...'
+      : '💾 저장된 URL 없음 (코드 기본값 사용 중)';
+  }
   var banEl = document.getElementById('suju-ban-input');
   var grpEl = document.getElementById('suju-group-input');
   if (banEl) banEl.value = localStorage.getItem('suju_ban') || '수지주일반';
   if (grpEl) grpEl.value = localStorage.getItem('suju_group') || '';
   document.getElementById('modal-bg').classList.add('open');
+}
+
+function resetStoredUrl() {
+  localStorage.removeItem('apps_script_url');
+  scriptUrl = 'https://script.google.com/macros/s/AKfycbxx4QNQeqYzicZcb4OvAGcpIKJVHluVVsLqv6fJ5fRb9uFDJzwj-vgLyfGeq3T5QUnj/exec';
+  document.getElementById('script-url-input').value = scriptUrl;
+  var display = document.getElementById('current-url-display');
+  if (display) display.textContent = '✅ 초기화 완료 — 코드 기본값으로 복원됨';
+  showStatus('✅ URL 초기화 완료. 저장 및 연결을 눌러주세요.', 'success');
 }
 
 function closeModal() {
@@ -3956,10 +3773,6 @@ function saveScriptUrl() {
   }
   scriptUrl = url;
   localStorage.setItem('apps_script_url', url);
-  var banEl = document.getElementById('suju-ban-input');
-  var grpEl = document.getElementById('suju-group-input');
-  if (banEl) localStorage.setItem('suju_ban', '수지주일반');
-  if (grpEl) localStorage.setItem('suju_group', grpEl.value.trim());
   closeModal();
   if (url) {
     showStatus('✅ 연결 완료!', 'success');
