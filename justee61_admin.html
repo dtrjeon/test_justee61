@@ -2241,6 +2241,7 @@ function parseRecords(raw) {
       gender: g('성별'),
       meetPlace: g('만난장소'),
       gospelPlace: g('복음제시장소'),
+      gospelDelivery: g('복음전달'),
       targetType: g('대상자구분'),
       relationMember: g('관계조원'),
       religion: g('종교배경'),
@@ -2573,8 +2574,17 @@ function renderTab0(data, w) {
 
   var totalGospelAll = totalGospelTeam + totalQuesTeam + total7dayTeam + totalPersonal + totalRel + totalQQ;
   var rTotal = totalBeliever + totalDecision + totalConfirm + totalReject + (totalRefuse || 0);
-  var rateDenom = rTotal - totalBeliever - totalConfirm;
-  var rate = rateDenom > 0 ? Math.round((totalDecision / rateDenom) * 1000) / 10 : 0;
+  // 결신율: 7일후(팀) 제외하고 계산
+  var rateDecision = 0, rateBeliever = 0, rateConfirm = 0, rateReject = 0;
+  data.forEach(function(r) {
+    if ((r.evangType || r.evang_type || '') === '7일후(팀)') return;
+    rateDecision += Number(r.decision || 0);
+    rateBeliever += Number(r.believer || 0);
+    rateConfirm  += Number(r.confirm  || 0);
+    rateReject   += Number(r.reject   || 0);
+  });
+  var rateDenom = (rateDecision + rateBeliever + rateConfirm + rateReject) - rateBeliever - rateConfirm;
+  var rate = rateDenom > 0 ? Math.round((rateDecision / rateDenom) * 1000) / 10 : 0;
   var fuTotal = Object.values(fu).reduce(function(a, b) {
     return a + b;
   }, 0);
@@ -2748,7 +2758,7 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.region || rec.location || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.relationMember || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.targetType || '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;border-right:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.gospelPlace || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-right:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.gospelDelivery || rec.gospelPlace || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.heaven || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.reason || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;' + extraBorderStyle + '"><span class="badge b-orange">' + (rec.diagResult ? rec.diagResult.split('|')[0].replace('진단:', '').trim() : '—') + '</span></td>' +
@@ -3139,8 +3149,10 @@ function renderTab1(data, w) {
     '<td colspan="2"></td>';
 
   // 결신율: data에서 직접 계산 (totals는 멤버별 중복 집계로 결신율에 사용 불가)
+  // 7일후(팀) 제외
   var rDecision = 0, rReject = 0, rConfirm = 0, rBeliever = 0;
   data.forEach(function(r) {
+    if ((r.evangType || '') === '7일후(팀)') return;
     rDecision += Number(r.decision || 0);
     rReject   += Number(r.reject   || 0);
     rConfirm  += Number(r.confirm  || 0);
@@ -3241,9 +3253,10 @@ function renderTab2(data, w) {
   });
 
   if (tb) tb.innerHTML = html || '<tr><td colspan="18" class="empty"><span class="empty-icon">📭</span><p>데이터가 없습니다.</p></td></tr>';
-  // 결신율: data에서 직접 계산
+  // 결신율: data에서 직접 계산 — 7일후(팀) 제외
   var r2Decision = 0, r2Reject = 0, r2Confirm = 0, r2Believer = 0;
   data.forEach(function(r) {
+    if ((r.evangType || '') === '7일후(팀)') return;
     r2Decision += Number(r.decision || 0);
     r2Reject   += Number(r.reject   || 0);
     r2Confirm  += Number(r.confirm  || 0);
@@ -3666,8 +3679,17 @@ function renderTab3(selectedWeek) {
     var gospelCalc = decision + reject + confirm + believer;
     var gospelAll = gospel + rel;
     var rTotal = believer + decision + confirm + reject;
-    var rateDenom = gospelCalc - confirm - believer;
-    var rate = rateDenom > 0 ? Math.round((decision / rateDenom) * 1000) / 10 : 0;
+    // 결신율: 7일후(팀) 제외
+    var wData7x = wData.filter(function(r) { return (r.evangType || '') !== '7일후(팀)'; });
+    var rD7x = 0, rR7x = 0, rC7x = 0, rB7x = 0;
+    wData7x.forEach(function(r) {
+      rD7x += Number(r.decision || 0);
+      rR7x += Number(r.reject   || 0);
+      rC7x += Number(r.confirm  || 0);
+      rB7x += Number(r.believer || 0);
+    });
+    var rateDenom = (rD7x + rR7x + rC7x + rB7x) - rC7x - rB7x;
+    var rate = rateDenom > 0 ? Math.round((rD7x / rateDenom) * 1000) / 10 : 0;
     var isCur = w === selectedWeek;
 
     // 대상자구분 집계
@@ -3718,6 +3740,11 @@ function renderTab3(selectedWeek) {
       totals.tgt7day = (totals.tgt7day || 0) + tgt7day;
       totals.tgtTrain = (totals.tgtTrain || 0) + tgtTrain;
       totals.tgtAll = (totals.tgtAll || 0) + tgtAll;
+      // 7일후 제외 결신율 누적
+      totals.rateD7x = (totals.rateD7x || 0) + rD7x;
+      totals.rateR7x = (totals.rateR7x || 0) + rR7x;
+      totals.rateC7x = (totals.rateC7x || 0) + rC7x;
+      totals.rateB7x = (totals.rateB7x || 0) + rB7x;
     }
 
     html += '<tr' + (isCur ? ' class="week-acc-row-cur"' : '') + '>' +
@@ -3754,8 +3781,9 @@ function renderTab3(selectedWeek) {
   tb.innerHTML = html;
 
   var totalGospelCalc = totals.gospelCalc || 0;
-  var totalRateDenom = totalGospelCalc - totals.confirm - totals.imisinja;
-  var totalRate = totalRateDenom > 0 ? Math.round((totals.decision / totalRateDenom) * 1000) / 10 : 0;
+  // 결신율 TOTAL: 7일후(팀) 제외
+  var totalRateDenom = (totals.rateD7x + totals.rateR7x + totals.rateC7x + totals.rateB7x) - totals.rateC7x - totals.rateB7x;
+  var totalRate = totalRateDenom > 0 ? Math.round(((totals.rateD7x || 0) / totalRateDenom) * 1000) / 10 : 0;
   document.getElementById('tf-weekly-acc').innerHTML =
     '<td><b>1~' + selectedWeek + '주<br>TOTAL</b></td>' +
     '<td>' + totals.active + '</td><td>' + totals.inactive + '</td>' +
