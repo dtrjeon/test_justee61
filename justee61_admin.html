@@ -3015,7 +3015,7 @@ function renderTab1(data, w) {
         var leaderName = (joLeader && m.role !== '리더') ? joLeader.name : '—';
 
         var personalCnt = allRecs.filter(function(r) {
-          if (r.evangType !== '개인' && r.evangType !== '질문지' && r.evangType !== '질문지(팀)') return false;
+          if (r.evangType !== '개인') return false;
           // 본인 이름이 해당 역할 필드에 있는 건수만 집계
           if (m.role === '리더') return r.leader === m.name;
           if (m.role === '훈련자') return r.trainer === m.name;
