@@ -2700,7 +2700,7 @@ const DIAG_MAP = {
   }
 };
 let currentMode = 'server';
-let scriptUrl = localStorage.getItem('apps_script_url') || 'https://script.google.com/macros/s/AKfycbxx4QNQeqYzicZcb4OvAGcpIKJVHluVVsLqv6fJ5fRb9uFDJzwj-vgLyfGeq3T5QUnj/exec';
+let scriptUrl = localStorage.getItem('apps_script_url') || 'https://script.google.com/macros/s/AKfycbyGKTaLiii3Uz4R3NtHdrhhY2BM9WYjadshuj7T7leKK7IHlg3DdIYPm1cLZ4-MOtAY/exec';
 var _lastSavedDiagResult = '';
 
 var _autoSaveTimer = null;
@@ -3754,7 +3754,7 @@ function openModal() {
 
 function resetStoredUrl() {
   localStorage.removeItem('apps_script_url');
-  scriptUrl = 'https://script.google.com/macros/s/AKfycbxx4QNQeqYzicZcb4OvAGcpIKJVHluVVsLqv6fJ5fRb9uFDJzwj-vgLyfGeq3T5QUnj/exec';
+  scriptUrl = 'https://script.google.com/macros/s/AKfycbyGKTaLiii3Uz4R3NtHdrhhY2BM9WYjadshuj7T7leKK7IHlg3DdIYPm1cLZ4-MOtAY/exec';
   document.getElementById('script-url-input').value = scriptUrl;
   var display = document.getElementById('current-url-display');
   if (display) display.textContent = '✅ 초기화 완료 — 코드 기본값으로 복원됨';
