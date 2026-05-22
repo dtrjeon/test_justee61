@@ -1333,7 +1333,10 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
   <div class="tbl-wrap">
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title">그룹/조별 팀전도 현황 (<span id="week-label-2b">—</span>주차 누적)</span>
-      <button id="incomplete-toggle-btn" onclick="toggleIncompleteFilter()" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:16px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">전체</button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="suryo-info-btn" onclick="toggleSuryoInfo()" style="cursor:pointer;font-size:16px;" title="수료요건 보기">ℹ️</span>
+        <button id="incomplete-toggle-btn" onclick="toggleIncompleteFilter()" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:16px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">전체</button>
+      </div>
     </div>
     <div class="tbl-scroll">
       <table>
@@ -1913,7 +1916,7 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: localStorage.getItem('mon_url') || 'https://script.google.com/macros/s/AKfycbyGKTaLiii3Uz4R3NtHdrhhY2BM9WYjadshuj7T7leKK7IHlg3DdIYPm1cLZ4-MOtAY/exec',
+  url: 'https://script.google.com/macros/s/AKfycbzCKcRUsKDAy9KvvNRvUk6e24iA8UGFwq_lWcpeUPDakWB8vdglQDdvBMHx1ZSFX3Kl/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
@@ -3054,11 +3057,17 @@ function renderTab1(data, w) {
     }).join('') +
     '<td colspan="2"></td>';
 
-  // 복음제시 = 결신 + 보류/거절 + 확신 + 이미신자
-  var calcGospel = totals.decision + totals.reject + totals.confirm + totals.believer;
-  // 결신율 = 결신 / (복음제시 - 확신 - 이미신자)
-  var rateDenom = calcGospel - totals.confirm - totals.believer;
-  var rate = rateDenom > 0 ? Math.round((totals.decision / rateDenom) * 1000) / 10 : 0;
+  // 결신율: data에서 직접 계산 (totals는 멤버별 중복 집계로 결신율에 사용 불가)
+  var rDecision = 0, rReject = 0, rConfirm = 0, rBeliever = 0;
+  data.forEach(function(r) {
+    rDecision += Number(r.decision || 0);
+    rReject   += Number(r.reject   || 0);
+    rConfirm  += Number(r.confirm  || 0);
+    rBeliever += Number(r.believer || 0);
+  });
+  var calcGospel = rDecision + rReject + rConfirm + rBeliever;
+  var rateDenom = calcGospel - rConfirm - rBeliever;
+  var rate = rateDenom > 0 ? Math.round((rDecision / rateDenom) * 1000) / 10 : 0;
   setText('wb-rate-1', rate > 0 ? rate.toFixed(1) + '%' : '—');
   setText('wb-sub-1', '1주 ~ ' + w + '주 누적');
   setText('week-label-1', '1주~' + w + '주 누적');
@@ -3151,9 +3160,16 @@ function renderTab2(data, w) {
   });
 
   if (tb) tb.innerHTML = html || '<tr><td colspan="18" class="empty"><span class="empty-icon">📭</span><p>데이터가 없습니다.</p></td></tr>';
-  var rTotal2 = totalBeliever + totalDecision + totalConfirm + totalReject;
-  var rateDenom2 = rTotal2 - totalBeliever - totalConfirm;
-  var rate = rateDenom2 > 0 ? Math.round((totalDecision / rateDenom2) * 1000) / 10 : 0;
+  // 결신율: data에서 직접 계산
+  var r2Decision = 0, r2Reject = 0, r2Confirm = 0, r2Believer = 0;
+  data.forEach(function(r) {
+    r2Decision += Number(r.decision || 0);
+    r2Reject   += Number(r.reject   || 0);
+    r2Confirm  += Number(r.confirm  || 0);
+    r2Believer += Number(r.believer || 0);
+  });
+  var rateDenom2 = r2Decision + r2Reject;
+  var rate = rateDenom2 > 0 ? Math.round((r2Decision / rateDenom2) * 1000) / 10 : 0;
   setText('wb-rate-2', rate > 0 ? rate.toFixed(1) + '%' : '—');
   setText('wb-sub-2', '1주 ~ ' + w + '주 누적');
   setText('week-label-2b', w);
@@ -3165,6 +3181,15 @@ function isSuryoComplete(rel, ques, day7) {
   return day7 >= 1 && ((rel >= 6 && ques >= 3) || (rel >= 7 && ques >= 2));
 }
 
+
+// ── 수료요건 안내 팝업 ───────────────────────────────────────────────────────
+function toggleSuryoInfo() {
+  var popup = document.getElementById('suryo-info-popup');
+  var overlay = document.getElementById('suryo-info-overlay');
+  var show = popup.style.display === 'none';
+  popup.style.display = show ? 'block' : 'none';
+  overlay.style.display = show ? 'block' : 'none';
+}
 
 var _incompleteFilterActive = false;
 
@@ -3255,7 +3280,7 @@ function renderTab3(selectedWeek) {
 
   for (var w = 1; w <= 13; w++) {
     var wData = allData.filter(function(r) {
-      return r.week === w;
+      return Number(r.week) === w;
     });
     var active = new Set(wData.map(function(r) {
       return r.jo;
@@ -3787,7 +3812,6 @@ function saveSettings() {
   var grpEl = document.getElementById('set-group');
   if (banEl) localStorage.setItem('suju_ban', '수지주일반');
   if (grpEl) localStorage.setItem('suju_group', grpEl.value.trim());
-  localStorage.setItem('mon_url', CFG.url);
   localStorage.setItem('mon_title', CFG.title);
   localStorage.setItem('mon_trainStart', CFG.trainStart);
   localStorage.setItem('mon_trainEnd', CFG.trainEnd);
@@ -4215,5 +4239,27 @@ function showToast(msg) {
 }
 
 </script>
+<!-- 수료요건 안내 팝업 -->
+<div id="suryo-info-popup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:24px 28px;min-width:260px;max-width:320px;">
+  <div style="font-weight:800;font-size:15px;color:#1a3a9e;margin-bottom:14px;">📋 팀전도 수료요건</div>
+  <div style="font-size:13px;line-height:1.9;color:#333;">
+    다음 중 <b>하나</b>를 충족해야 합니다:
+    <div style="margin:10px 0 4px;padding:10px 14px;background:#f0f4ff;border-radius:8px;border-left:3px solid #2050c8;">
+      <b>조건 A</b><br>
+      관계전도 <b>6회</b> 이상<br>
+      질문지전도 <b>3회</b> 이상<br>
+      7일후전도 <b>1회</b> 이상
+    </div>
+    <div style="margin:8px 0 4px;padding:10px 14px;background:#f0f4ff;border-radius:8px;border-left:3px solid #2050c8;">
+      <b>조건 B</b><br>
+      관계전도 <b>7회</b> 이상<br>
+      질문지전도 <b>2회</b> 이상<br>
+      7일후전도 <b>1회</b> 이상
+    </div>
+  </div>
+  <button onclick="toggleSuryoInfo()" style="margin-top:16px;width:100%;background:#1a3a9e;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">확인</button>
+</div>
+<div id="suryo-info-overlay" onclick="toggleSuryoInfo()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:9998;"></div>
+
 </body>
 </html>

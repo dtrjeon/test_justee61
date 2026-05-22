@@ -1781,7 +1781,7 @@ pre.code-block {
     </div>
     <button class="icon-btn" onclick="openPresetModal()" title="내 프리셋 설정" style="font-size:15px;">👤</button>
     <button class="icon-btn" onclick="confirmReset()" title="화면 초기화" style="font-size:15px;">🔄</button>
-    <button class="icon-btn" onclick="handleSheetBtn()">⚙️</button>
+    <button class="icon-btn" onclick="handleSheetBtn()" style="display:none;">⚙️</button>
   </div>
 </div>
 
@@ -2584,19 +2584,7 @@ pre.code-block {
 </div>
 
 <!-- MODAL -->
-<div class="modal-bg" id="modal-bg">
-  <div class="modal">
-    <h3>GOOGLE SHEETS 연결</h3>
-    <p>Apps Script 웹앱 URL을 입력하면 구글 시트에 데이터가 저장됩니다.</p>
-    <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/...../exec">
-    <div id="current-url-display" style="font-size:10px;color:#888;margin-top:4px;word-break:break-all;background:#f5f5f5;border-radius:4px;padding:4px 8px;"></div>
-    <div class="modal-btns" style="margin-top:14px;">
-      <button type="button" class="btn-cancel" onclick="closeModal()">취소</button>
-      <button type="button" style="background:#e65100;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;" onclick="resetStoredUrl()">🔄 URL 초기화</button>
-      <button type="button" class="btn-save" onclick="saveScriptUrl()">저장 및 연결</button>
-    </div>
-  </div>
-</div>
+<!-- GAS URL은 코드에 고정 (모달 제거됨) -->
 
 
 <!-- JO MODAL -->
@@ -2700,7 +2688,7 @@ const DIAG_MAP = {
   }
 };
 let currentMode = 'server';
-let scriptUrl = localStorage.getItem('apps_script_url') || 'https://script.google.com/macros/s/AKfycbyGKTaLiii3Uz4R3NtHdrhhY2BM9WYjadshuj7T7leKK7IHlg3DdIYPm1cLZ4-MOtAY/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbzCKcRUsKDAy9KvvNRvUk6e24iA8UGFwq_lWcpeUPDakWB8vdglQDdvBMHx1ZSFX3Kl/exec';
 var _lastSavedDiagResult = '';
 
 var _autoSaveTimer = null;
@@ -3736,51 +3724,17 @@ function switchTab(tab) {
 }
 
 function openModal() {
-  document.getElementById('script-url-input').value = scriptUrl;
-  // 현재 localStorage에 저장된 URL 표시
-  var stored = localStorage.getItem('apps_script_url');
-  var display = document.getElementById('current-url-display');
-  if (display) {
-    display.textContent = stored
-      ? '💾 저장된 URL: ' + stored.slice(-30) + '...'
-      : '💾 저장된 URL 없음 (코드 기본값 사용 중)';
-  }
-  var banEl = document.getElementById('suju-ban-input');
-  var grpEl = document.getElementById('suju-group-input');
-  if (banEl) banEl.value = localStorage.getItem('suju_ban') || '수지주일반';
-  if (grpEl) grpEl.value = localStorage.getItem('suju_group') || '';
-  document.getElementById('modal-bg').classList.add('open');
+  // URL은 코드에 고정 — 모달 불필요
 }
 
-function resetStoredUrl() {
-  localStorage.removeItem('apps_script_url');
-  scriptUrl = 'https://script.google.com/macros/s/AKfycbyGKTaLiii3Uz4R3NtHdrhhY2BM9WYjadshuj7T7leKK7IHlg3DdIYPm1cLZ4-MOtAY/exec';
-  document.getElementById('script-url-input').value = scriptUrl;
-  var display = document.getElementById('current-url-display');
-  if (display) display.textContent = '✅ 초기화 완료 — 코드 기본값으로 복원됨';
-  showStatus('✅ URL 초기화 완료. 저장 및 연결을 눌러주세요.', 'success');
-}
+function resetStoredUrl() {}
 
-function closeModal() {
-  document.getElementById('modal-bg').classList.remove('open');
-}
+function closeModal() {}
 
 function saveScriptUrl() {
-  var url = document.getElementById('script-url-input').value.trim();
-  if (url && !url.includes('script.google.com')) {
-    showStatus('올바른 Apps Script URL을 입력하세요.', 'error');
-    return;
-  }
-  scriptUrl = url;
-  localStorage.setItem('apps_script_url', url);
   closeModal();
-  if (url) {
-    showStatus('✅ 연결 완료!', 'success');
-    setMode('server');
-    updateScbState('ok');
-  } else {
-    updateScbState('warn');
-  }
+  setMode('server');
+  updateScbState('ok');
 }
 
 function copyCode() {
@@ -4577,7 +4531,7 @@ function renderHistory(records, src) {
       '<span class="rc-seq-badge">' + seqLabel + '</span> ' +
       (r.jo ? r.jo + '조 ' : '') +
       (r.week ? r.week + '주차 ' : '') +
-      '현장전도 보고서 ' +
+      '<span style="font-size:0.85em;font-weight:600;">현장전도 보고서</span> ' +
       '<span class="src-badge ' + src + '">' + (src === 'test' ? 'TEST' : 'SERVER') + '</span>' +
       resultBadge +
       '</div>' +
@@ -4587,7 +4541,7 @@ function renderHistory(records, src) {
       '<br>📍 ' + (r.location || '—') + ' ' + (r.name ? r.name + '씨' : '') + ' ' + (r.age ? r.age + '세' : '') +
       '</div>' +
       '</div>' +
-      '<div class="rc-date">' + (r._savedAt || r.date || '') + '</div>' +
+      '<div class="rc-date">' + (r._savedAt || r.date || '').slice(0,10) + '</div>' +
       '</div>' +
       '<div class="rc-stats">' +
       '<span class="stat-chip neutral">접촉 ' + (r.contact || 0) + '회</span>' +
