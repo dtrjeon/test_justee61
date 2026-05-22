@@ -567,6 +567,12 @@ tr:hover td {
   background: #f7f9ff;
 }
 
+/* sticky 고정 열 hover 배경 유지 */
+tr:hover td.td-jo,
+tr:hover td.td-name {
+  background: #eef2ff;
+}
+
 tr:last-child td {
   border-bottom: none;
 }
@@ -1179,7 +1185,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
   <!-- 하단 상세 테이블 -->
   <div class="tbl-wrap">
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
-      <span class="tbl-head-title">조별 상세 현황 (<span id="week-label-0">—</span>주차 · <span id="week-period-0"></span>)</span>
+      <span class="tbl-head-title" style="line-height:1.7;">조별 상세 현황<br><span style="font-size:10px;font-weight:500;color:var(--text2);"><span id="week-label-0">—</span>주차&nbsp;&nbsp;<span id="week-period-0"></span></span></span>
       <div style="display:flex;align-items:center;gap:8px;">
         <button onclick="exportCsv('tb-weekly','tab0_주간현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
         <button onclick="exportPdf('tb-weekly','tab0_주간현황')" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ PDF</button>
@@ -1192,21 +1198,22 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
         </label>
       </div>
     </div>
-    <div class="tbl-scroll">
-      <table>
+    <div class="tbl-scroll" style="overflow-x:auto;">
+      <table style="border-collapse:collapse;">
         <thead>
           <tr>
-            <th colspan="4" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">조 정보</th>
+            <th colspan="2" style="background:#1a3a9e;color:#fff;position:sticky;left:0;z-index:6;border-right:none;">조 정보</th>
+            <th colspan="2" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">　</th>
             <th colspan="11" style="background:#2050c8;color:#fff;border-right:1px solid #c5cde8;">대상자 정보</th>
             <th colspan="3" style="background:#4a6fd8;color:#fff;border-right:1px solid #c5cde8;">진단 질문</th>
             <th colspan="1" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">결과</th>
             <th colspan="10" style="background:#2d5cb8;color:#fff;border-right:1px solid #c5cde8;">복음 참여 &nbsp;●관계(팀)&nbsp; 🟠질문지(팀)·개인</th>
             <th colspan="5" style="background:#1a3a9e;color:#fff;">후속양육 연결</th>
-            <th colspan="2" style="background:#2050c8;color:#fff;border-left:1px solid #c5cde8;">비고/불참</th>
+            <th colspan="2" style="background:#2050c8;color:#fff;border-left:1px solid #c5cde8;">전도일/불참</th>
           </tr>
           <tr>
-            <th>조</th>
-            <th>이름</th>
+            <th style="position:sticky;left:0;z-index:5;background:#f0f4ff;min-width:28px;box-shadow:2px 0 0 #c5cde8;">조</th>
+            <th style="position:sticky;left:28px;z-index:5;background:#f0f4ff;min-width:52px;box-shadow:2px 0 4px rgba(26,58,176,0.13);">이름</th>
             <th>역할</th>
             <th style="border-right:1px solid #c5cde8;">단계</th>
             <th>문서번호</th>
@@ -1225,7 +1232,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
             <th style="border-left:1px solid #c5cde8;">참관</th>
             <th title="간증">증</th><th title="서론">서</th><th title="은혜">은</th><th title="인간">인</th><th title="하나님">하</th><th title="예수그리스도">그</th><th title="믿음">믿</th><th title="결신">결</th><th title="즉석양육" style="border-right:1px solid #c5cde8;">즉</th>
             <th>7일<br>후</th><th>24시<br>간</th><th>예배<br>참석</th><th>새가<br>족반</th><th>하지<br>못</th>
-            <th style="border-left:1px solid #c5cde8;">비고</th>
+            <th style="border-left:1px solid #c5cde8;">전도일</th>
             <th>불참자</th>
           </tr>
         </thead>
@@ -2285,7 +2292,31 @@ function renderAll() {
 }
 
 function updatePeriodTxt(w) {
-  document.getElementById('period-txt').textContent = '';
+  var el = document.getElementById('week-period-0');
+  if (!el) return;
+  if (!CFG.trainStart) { el.textContent = ''; return; }
+
+  // 훈련 시작일 기준 해당 주의 월요일 계산
+  var start = new Date(CFG.trainStart);
+  var startDay = start.getDay(); // 0=일,1=월..6=토
+  var diffToMon = startDay === 0 ? -6 : 1 - startDay;
+  var baseMonday = new Date(start);
+  baseMonday.setDate(start.getDate() + diffToMon);
+  baseMonday.setHours(0, 0, 0, 0);
+
+  // w주차의 월요일 = baseMonday + (w-1)*7일
+  var wMonday = new Date(baseMonday);
+  wMonday.setDate(baseMonday.getDate() + (w - 1) * 7);
+
+  // 해당 주 일요일 = 월요일 + 6일
+  var wSunday = new Date(wMonday);
+  wSunday.setDate(wMonday.getDate() + 6);
+
+  function fmt(d) {
+    return (d.getMonth() + 1) + '/' + d.getDate();
+  }
+
+  el.textContent = fmt(wMonday) + ' ~ ' + fmt(wSunday);
 }
 
 function showDataErrorModal() {
@@ -2648,8 +2679,8 @@ function renderTab0(data, w) {
         var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
         var displayStep = m.step || '—';
         html += '<tr class="jo-row inactive-row' + (mi === 0 ? ' jo-row-first' : '') + '" style="background:#fafafa;">' +
-          (mi === 0 ? '<td class="td-jo" rowspan="' + rowspan + '" style="color:#e65100;"><span title="미실시">' + jo + '</span></td>' : '') +
-          '<td class="td-name" style="' + roleCls + 'opacity:0.55;">' + m.name + '</td>' +
+          (mi === 0 ? '<td class="td-jo" rowspan="' + rowspan + '" style="position:sticky;left:0;z-index:2;background:#fafafa;box-shadow:1px 0 0 #c5cde8;color:#e65100;"><span title="미실시">' + jo + '</span></td>' : '') +
+          '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fafafa;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + 'opacity:0.55;">' + m.name + '</td>' +
           '<td class="td-role" style="opacity:0.55;">' + roleBadge + '</td>' +
           '<td class="td-step" style="border-right:1px solid #c5cde8;color:#999;">' + displayStep + '</td>' +
           (mi === 0 ? '<td rowspan="' + rowspan + '" colspan="15" style="color:#bbb;font-size:9px;text-align:center;background:#f5f5f5;letter-spacing:1px;">　미　실　시　</td>' : '') +
@@ -2698,8 +2729,8 @@ function renderTab0(data, w) {
 
         html += '<tr class="jo-row active-row' + (isFirst ? ' jo-row-first' : '') + '">' +
           // 조번호: 첫 번째 건의 첫 번째 조원에만 전체 rowspan
-          (!joNumRendered ? '<td class="td-jo" rowspan="' + totalRowspan + '">' + jo + '</td>' : '') +
-          '<td class="td-name" style="' + roleCls + extraBorderStyle + '">' + m.name + '</td>' +
+          (!joNumRendered ? '<td class="td-jo" rowspan="' + totalRowspan + '" style="position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 #c5cde8;">' + jo + '</td>' : '') +
+          '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fff;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + extraBorderStyle + '">' + m.name + '</td>' +
           '<td class="td-role" style="' + extraBorderStyle + '">' + roleBadge + '</td>' +
           '<td class="td-step" style="border-right:1px solid #c5cde8;' + extraBorderStyle + '">' + displayStep + '</td>';
 
@@ -2759,7 +2790,7 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('예배') > -1 ? '●' : '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('새가족') > -1 ? '●' : '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && (rec.followup.indexOf('하지') > -1 || rec.followup.indexOf('못') > -1) ? '●' : '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.q13 || '') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.date ? rec.date.slice(5).replace('-', '/') : '') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">—</td>';
         }
         html += '</tr>';
