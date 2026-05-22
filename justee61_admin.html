@@ -1181,6 +1181,8 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title">조별 상세 현황 (<span id="week-label-0">—</span>주차 · <span id="week-period-0"></span>)</span>
       <div style="display:flex;align-items:center;gap:8px;">
+        <button onclick="exportCsv('tb-weekly','tab0_주간현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
+        <button onclick="exportPdf('tb-weekly','tab0_주간현황')" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ PDF</button>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;" onclick="toggleInactiveRows()">
           <div style="position:relative;width:34px;height:18px;">
             <div id="toggle-track-0" style="position:absolute;top:0;left:0;width:34px;height:18px;background:#4caf50;border-radius:9px;transition:background .2s;"></div>
@@ -1273,9 +1275,13 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
 
   <div class="sec-title">조별 누적 복음참여 현황</div>
   <div class="tbl-wrap">
-    <div class="tbl-head">
+    <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title">개인별 복음참여 현황</span>
-      <span class="tbl-head-sub" id="week-label-1">누적 집계</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="tbl-head-sub" id="week-label-1">누적 집계</span>
+        <button onclick="exportCsv('tb-gospel','tab1_복음참여현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
+        <button onclick="exportPdf('tb-gospel','tab1_복음참여현황')" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ PDF</button>
+      </div>
     </div>
     <div class="tbl-scroll">
       <table class="gospel-tbl">
@@ -1334,6 +1340,8 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title">그룹/조별 팀전도 현황 (<span id="week-label-2b">—</span>주차 누적)</span>
       <div style="display:flex;align-items:center;gap:6px;">
+        <button onclick="exportCsv('tb-weekly-2','tab2_팀전도현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
+        <button onclick="printTab2Pdf()" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">🖨️ 인쇄/PDF</button>
         <span id="suryo-info-btn" onclick="toggleSuryoInfo()" style="cursor:pointer;font-size:16px;" title="수료요건 보기">ℹ️</span>
         <button id="incomplete-toggle-btn" onclick="toggleIncompleteFilter()" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:16px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">전체</button>
       </div>
@@ -1385,9 +1393,13 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
 
   <div class="sec-title">주차별 복음제시 누적 현황</div>
   <div class="tbl-wrap" style="overflow:visible;border-radius:10px;">
-    <div class="tbl-head" style="border-radius:10px 10px 0 0;background:var(--card);">
+    <div class="tbl-head" style="border-radius:10px 10px 0 0;background:var(--card);display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title">주차별 현황 테이블 <span style="font-size:10px;font-weight:400;color:rgba(40,50,90,0.5);">(노란색 = 선택 주차)</span></span>
-      <span style="font-size:10px;color:rgba(40,50,90,0.45);margin-left:auto;">※ 접촉횟수는 결신율 미포함</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;color:rgba(40,50,90,0.45);">※ 접촉횟수는 결신율 미포함</span>
+        <button onclick="exportCsv('tb-weekly-acc','tab3_복음제시현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
+        <button onclick="exportPdf('tb-weekly-acc','tab3_복음제시현황')" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ PDF</button>
+      </div>
     </div>
     <div class="tbl-scroll" style="overflow-x:auto;border-radius:0 0 10px 10px;">
       <table class="weekly-acc-tbl">
@@ -3182,7 +3194,273 @@ function isSuryoComplete(rel, ques, day7) {
 }
 
 
-// ── 수료요건 안내 팝업 ───────────────────────────────────────────────────────
+// ── CSV 내보내기 ─────────────────────────────────────────────────────────────
+function exportCsv(tbodyId, filename) {
+  var table = document.getElementById(tbodyId);
+  if (!table) { alert('테이블을 찾을 수 없습니다.'); return; }
+
+  // thead 포함 전체 table 찾기
+  var tbl = table.closest('table');
+  if (!tbl) { alert('테이블 구조를 찾을 수 없습니다.'); return; }
+
+  var rows = [];
+
+  // 헤더 행들
+  tbl.querySelectorAll('thead tr').forEach(function(tr) {
+    var cols = [];
+    tr.querySelectorAll('th').forEach(function(th) {
+      var text = th.innerText.replace(/\n/g, ' ').replace(/,/g, '').trim();
+      var colspan = parseInt(th.getAttribute('colspan') || 1);
+      cols.push('"' + text + '"');
+      for (var i = 1; i < colspan; i++) cols.push('""'); // colspan 빈칸 채움
+    });
+    rows.push(cols.join(','));
+  });
+
+  // 데이터 행들 (tbody + tfoot)
+  tbl.querySelectorAll('tbody tr, tfoot tr').forEach(function(tr) {
+    var cols = [];
+    tr.querySelectorAll('td').forEach(function(td) {
+      var text = td.innerText.replace(/\n/g, ' ').replace(/,/g, '').trim();
+      var colspan = parseInt(td.getAttribute('colspan') || 1);
+      cols.push('"' + text + '"');
+      for (var i = 1; i < colspan; i++) cols.push('""');
+    });
+    if (cols.length) rows.push(cols.join(','));
+  });
+
+  // BOM + CSV 다운로드
+  var bom = '\uFEFF';
+  var csv = bom + rows.join('\n');
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✅ CSV 다운로드 완료: ' + a.download);
+}
+
+// ── TAB2 전용 인쇄 PDF ───────────────────────────────────────────────────────
+function printTab2Pdf() {
+  // 현재 선택된 주차
+  var w = currentWeek;
+  var accData = allData.filter(function(r) { return Number(r.week) <= w; });
+
+  // 인쇄용 HTML 생성
+  var title = CFG.title + ' 팀전도 현황';
+  var period = '1주 ~ ' + w + '주 누적';
+
+  // 결신율 계산
+  var rD=0, rR=0, rC=0, rB=0;
+  accData.forEach(function(r){
+    rD+=Number(r.decision||0); rR+=Number(r.reject||0);
+    rC+=Number(r.confirm||0); rB+=Number(r.believer||0);
+  });
+  var rateDenom = rD+rR;
+  var rate = rateDenom>0 ? Math.round(rD/rateDenom*1000)/10 : 0;
+
+  // 단계별 인원 집계
+  var stepCounts = {};
+  MEMBERS.forEach(function(m){
+    var s = String(m.step||'').toUpperCase().trim();
+    stepCounts[s] = (stepCounts[s]||0)+1;
+  });
+  var totalMembers = MEMBERS.length;
+
+  // 수료요건 텍스트
+  var suryoTxt = '수료요건(팀전도): (관계전도 6회↑, 질문지 3회↑, 7일후 1회↑) 또는 (관계 7회↑, 질문지 2회↑, 7일후 1회↑)';
+
+  // 그룹/조별 테이블 행 생성
+  var rows = '';
+  CFG.groups.forEach(function(grp) {
+    var joList = Object.keys(CFG.joGroup).filter(function(j){
+      return CFG.joGroup[j]===grp.id;
+    }).map(Number).sort();
+    if (!joList.length) return;
+
+    rows += '<tr class="grp-row"><td colspan="12">' + grp.name + ' (' + grp.leader + ')</td></tr>';
+
+    joList.forEach(function(jo) {
+      var joRecs = accData.filter(function(r){ return String(r.jo)===String(jo); });
+      var members = MEMBERS.filter(function(m){ return m.jo===jo; })
+                           .sort(function(a,b){ return Number(b.step||0)-Number(a.step||0); });
+      var relCnt  = joRecs.filter(function(r){ return r.evangType==='관계(팀)'; }).length;
+      var quesCnt = joRecs.filter(function(r){ return r.evangType==='질문지(팀)'; }).length;
+      var day7Cnt = joRecs.filter(function(r){ return r.followup&&r.followup.indexOf('7일')>-1; }).length;
+      var suryoOk = isSuryoComplete(relCnt, quesCnt, day7Cnt);
+
+      // 복음참여: 서론~즉석양육 각 멤버별 집계
+      var PARTS = ['서론','은혜','인간','하나님','그리스도','믿음','결신','즉석양육'];
+      var memberRows = '';
+      members.forEach(function(m, mi) {
+        var mRecs = joRecs.filter(function(r){
+          var act = m.role==='리더' ? r.leaderAction : m.role==='훈련자' ? r.trainerAction : r.traineeAction;
+          return act==='하였고';
+        });
+        var partCells = PARTS.map(function(p){
+          var cnt = mRecs.filter(function(r){
+            var pt = m.role==='리더' ? r.leaderPart : m.role==='훈련자' ? r.trainerPart : r.traineePart;
+            return pt && pt.split(',').map(function(x){return x.trim();}).indexOf(p)>-1;
+          }).length;
+          return '<td class="pc">' + (cnt||'') + '</td>';
+        }).join('');
+
+        var roleLabel = m.role==='리더'?'조장':m.role==='훈련자'?'훈련자':'훈련생';
+        memberRows += '<tr>' +
+          (mi===0?'<td class="jo-cell" rowspan="'+members.length+'">' + jo + '조</td>':'') +
+          '<td>' + m.name + '</td>' +
+          '<td class="c">' + roleLabel + '</td>' +
+          '<td class="c">' + (m.step||'') + '</td>' +
+          (mi===0?'<td class="c suryo-cell" rowspan="'+members.length+'" style="background:' + (suryoOk?'#e8f5e9':'#fff3e0') + ';font-weight:700;color:' + (suryoOk?'#2e7d32':'#e65100') + ';">' + (suryoOk?'완료':'미완료') + '</td>':'') +
+          (mi===0?'<td class="c" rowspan="'+members.length+'">' + (relCnt||'—') + '</td>':'') +
+          (mi===0?'<td class="c" rowspan="'+members.length+'">' + (quesCnt||'—') + '</td>':'') +
+          (mi===0?'<td class="c" rowspan="'+members.length+'">' + (day7Cnt||'—') + '</td>':'') +
+          partCells +
+          '</tr>';
+      });
+      rows += memberRows;
+    });
+  });
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<title>' + title + '</title>' +
+    '<style>' +
+    'body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:9px;margin:0;padding:8px;}' +
+    'h2{font-size:13px;margin:0 0 4px;} .sub{font-size:9px;color:#555;margin-bottom:6px;}' +
+    '.meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}' +
+    '.rate-box{border:2px solid #1a3a9e;padding:4px 12px;text-align:center;border-radius:4px;}' +
+    '.rate-box .rl{font-size:9px;color:#555;} .rate-box .rv{font-size:18px;font-weight:900;color:#1a3a9e;}' +
+    '.suryo{font-size:8px;color:#333;margin-bottom:6px;background:#f5f5f5;padding:4px 8px;border-radius:4px;}' +
+    'table{border-collapse:collapse;width:100%;}' +
+    'th{background:#1a3a9e;color:#fff;padding:3px 4px;text-align:center;font-size:8px;border:1px solid #aaa;}' +
+    'th.sub-hd{background:#3060c8;}' +
+    'td{padding:2px 4px;border:1px solid #ccc;font-size:8px;vertical-align:middle;}' +
+    'td.c{text-align:center;} td.pc{text-align:center;width:22px;}' +
+    'td.jo-cell{text-align:center;font-weight:700;font-size:10px;background:#f0f4ff;}' +
+    'td.suryo-cell{text-align:center;font-size:9px;}' +
+    'tr.grp-row td{background:#e8eaf6;font-weight:700;font-size:9px;padding:3px 6px;color:#1a3a9e;}' +
+    '@media print{body{padding:4px;} @page{size:A4 landscape;margin:8mm;}}' +
+    '</style></head><body>' +
+    '<div class="meta">' +
+    '<div><h2>■ ' + title + '</h2>' +
+    '<div class="sub">【누적집계기준: ' + period + '】</div></div>' +
+    '<div class="rate-box"><div class="rl">결신율</div><div class="rv">' + (rate>0?rate.toFixed(1)+'%':'—') + '</div></div>' +
+    '</div>' +
+    '<div class="suryo">※ ' + suryoTxt + '</div>' +
+    '<table>' +
+    '<thead><tr>' +
+    '<th rowspan="2">조</th>' +
+    '<th rowspan="2">이름</th>' +
+    '<th rowspan="2">역할</th>' +
+    '<th rowspan="2">단계</th>' +
+    '<th rowspan="2">수료요건</th>' +
+    '<th rowspan="2">관계(팀)<br>전도</th>' +
+    '<th rowspan="2">질문지(팀)<br>전도</th>' +
+    '<th rowspan="2">7일후<br>(팀)</th>' +
+    '<th colspan="8" class="sub-hd">관계전도(팀전도) 복음 참여 현황</th>' +
+    '</tr><tr>' +
+    '<th class="sub-hd">서론</th><th class="sub-hd">은혜</th><th class="sub-hd">인간</th>' +
+    '<th class="sub-hd">하나님</th><th class="sub-hd">그리스도</th>' +
+    '<th class="sub-hd">믿음</th><th class="sub-hd">결신</th><th class="sub-hd">즉석양육</th>' +
+    '</tr></thead>' +
+    '<tbody>' + rows + '</tbody>' +
+    '</table>' +
+    '</body></html>';
+
+  var win = window.open('', '_blank');
+  if (!win) { alert('팝업이 차단되었습니다. 허용 후 다시 시도해주세요.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(function(){ win.print(); }, 600);
+}
+
+
+async function exportPdf(tbodyId, filename) {
+  var table = document.getElementById(tbodyId);
+  if (!table) { alert('테이블을 찾을 수 없습니다.'); return; }
+  var tbl = table.closest('table');
+  if (!tbl) { alert('테이블 구조를 찾을 수 없습니다.'); return; }
+
+  showToast('⏳ PDF 생성 중...');
+
+  try {
+    await _loadAdminScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await _loadAdminScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  } catch(e) { alert('라이브러리 로드 실패: ' + e.message); return; }
+
+  try {
+    var container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;padding:12px;z-index:-1;';
+    var title = document.createElement('div');
+    title.style.cssText = 'font-weight:900;font-size:13px;margin-bottom:8px;color:#1a3a9e;';
+    title.textContent = filename.replace(/_/g,' ') + ' (' + new Date().toISOString().slice(0,10) + ')';
+    container.appendChild(title);
+    var cloned = tbl.cloneNode(true);
+    cloned.style.cssText = 'border-collapse:collapse;font-size:8px;width:100%;';
+    cloned.querySelectorAll('th,td').forEach(function(el) {
+      el.style.border = '1px solid #ccc';
+      el.style.padding = '3px 4px';
+      el.style.whiteSpace = 'normal';
+      el.style.wordBreak = 'break-all';
+    });
+    container.appendChild(cloned);
+    document.body.appendChild(container);
+    await new Promise(function(res) { setTimeout(res, 200); });
+
+    var canvas = await html2canvas(container, {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff',
+      width: container.scrollWidth, height: container.scrollHeight
+    });
+    document.body.removeChild(container);
+
+    var imgW = canvas.width, imgH = canvas.height;
+    var pdfW = 297, pdfH = 210; // A4 가로 기본
+    if (imgH > imgW * 1.2) { pdfW = 210; pdfH = 297; } // 세로 전환
+
+    var { jsPDF } = window.jspdf;
+    var pdf = new jsPDF({ orientation: pdfW > pdfH ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' });
+
+    var ratio = imgW / pdfW;
+    var pageHeightPx = pdfH * ratio;
+    var pages = Math.ceil(imgH / pageHeightPx);
+
+    for (var p = 0; p < pages; p++) {
+      if (p > 0) pdf.addPage();
+      var srcY = p * pageHeightPx;
+      var sliceH = Math.min(pageHeightPx, imgH - srcY);
+      var pc = document.createElement('canvas');
+      pc.width = imgW; pc.height = sliceH;
+      pc.getContext('2d').drawImage(canvas, 0, srcY, imgW, sliceH, 0, 0, imgW, sliceH);
+      pdf.addImage(pc.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pdfW, sliceH / ratio);
+    }
+
+    var blob = pdf.output('blob');
+    var url = URL.createObjectURL(blob);
+    var win = window.open(url, '_blank');
+    if (!win) {
+      pdf.save(filename + '_' + new Date().toISOString().slice(0,10) + '.pdf');
+      showToast('✅ PDF 저장 완료');
+    } else {
+      showToast('✅ PDF 미리보기 탭이 열렸습니다.');
+    }
+  } catch(e) { alert('PDF 생성 오류: ' + e.message); console.error(e); }
+}
+
+function _loadAdminScript(src) {
+  return new Promise(function(resolve, reject) {
+    if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+    var s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+
 function toggleSuryoInfo() {
   var popup = document.getElementById('suryo-info-popup');
   var overlay = document.getElementById('suryo-info-overlay');
