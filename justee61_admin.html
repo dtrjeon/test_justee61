@@ -1092,7 +1092,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
       <div class="stat-box-header">후속양육 연결</div>
       <table style="font-size:10px;width:100%;border-collapse:collapse;">
         <tbody>
-          <tr><td class="td-left" style="padding:3px 6px;">7일후재방문</td><td id="fu-7day" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr><td class="td-left" style="padding:3px 6px;">7일후<br>재방문</td><td id="fu-7day" style="text-align:right;padding:3px 6px;">—</td></tr>
           <tr><td class="td-left" style="padding:3px 6px;">24시간전화</td><td id="fu-24h" style="text-align:right;padding:3px 6px;">—</td></tr>
           <tr><td class="td-left" style="padding:3px 6px;">예배참석약속</td><td id="fu-worship" style="text-align:right;padding:3px 6px;">—</td></tr>
           <tr><td class="td-left" style="padding:3px 6px;">새가족반연결</td><td id="fu-new" style="text-align:right;padding:3px 6px;">—</td></tr>
@@ -1344,12 +1344,13 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
   <button id="debug-btn" onclick="runDebug()" style="display:none;background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:700;margin-bottom:12px;width:100%;">🔍 1조 데이터 확인</button>
   <div class="tbl-wrap">
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
-      <span class="tbl-head-title">그룹/조별 팀전도 현황 (<span id="week-label-2b">—</span>주차 누적)</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="incomplete-toggle-btn" onclick="toggleIncompleteFilter()" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:16px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">전체</button>
+        <span id="suryo-info-btn" onclick="toggleSuryoInfo()" style="cursor:pointer;font-size:16px;" title="수료요건 보기">ℹ️</span>
+      </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <button onclick="exportCsv('tb-weekly-2','tab2_팀전도현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
         <button onclick="printTab2Pdf()" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">🖨️ 인쇄/PDF</button>
-        <span id="suryo-info-btn" onclick="toggleSuryoInfo()" style="cursor:pointer;font-size:16px;" title="수료요건 보기">ℹ️</span>
-        <button id="incomplete-toggle-btn" onclick="toggleIncompleteFilter()" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:16px;padding:5px 14px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;">전체</button>
       </div>
     </div>
     <div class="tbl-scroll">
@@ -1362,7 +1363,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
             <th colspan="1" style="background:#2050c8;color:#fff;border-right:1px solid #c5cde8;">7일후(팀)</th>
             <th colspan="1" style="background:#4a6fd8;color:#fff;border-right:1px solid #c5cde8;">수료요건</th>
             <th colspan="1" style="background:#4a6fd8;color:#fff;border-right:1px solid #c5cde8;">개인전도</th>
-            <th colspan="8" style="background:#2d5cb8;color:#fff;border-right:1px solid #c5cde8;">관계전도(팀) 복음참여 현황</th>
+            <th colspan="9" style="background:#2d5cb8;color:#fff;border-right:1px solid #c5cde8;">관계전도(팀) 복음참여 현황</th>
             <th colspan="1" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">복음제시<br>완료여부</th>
             <th colspan="1" style="background:#2050c8;color:#fff;">비고</th>
           </tr>
@@ -1373,7 +1374,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
             <th style="border-right:1px solid #c5cde8;">1회↑</th>
             <th style="border-right:1px solid #c5cde8;">완료여부</th>
             <th style="border-right:1px solid #c5cde8;">횟수</th>
-            <th title="서론">서</th><th title="은혜">은</th><th title="인간">인</th><th title="하나님">하</th><th title="그리스도">그</th><th title="믿음">믿</th><th title="결신">결</th><th style="border-right:1px solid #c5cde8;" title="즉석양육">즉</th>
+            <th title="간증">간</th><th title="서론">서</th><th title="은혜">은</th><th title="인간">인</th><th title="하나님">하</th><th title="그리스도">그</th><th title="믿음">믿</th><th title="결신">결</th><th style="border-right:1px solid #c5cde8;" title="즉석양육">즉</th>
             <th style="border-right:1px solid #c5cde8;">완료</th>
             <th>비고</th>
           </tr>
@@ -1400,7 +1401,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
   <div class="sec-title">주차별 복음제시 누적 현황</div>
   <div class="tbl-wrap" style="overflow:visible;border-radius:10px;">
     <div class="tbl-head" style="border-radius:10px 10px 0 0;background:var(--card);display:flex;justify-content:space-between;align-items:center;">
-      <span class="tbl-head-title">주차별 현황 테이블 <span style="font-size:10px;font-weight:400;color:rgba(40,50,90,0.5);">(노란색 = 선택 주차)</span></span>
+      <span class="tbl-head-title" style="line-height:1.7;">주차별 현황 테이블<br><span style="font-size:10px;font-weight:400;color:rgba(40,50,90,0.5);">(노란색 = 선택 주차)</span></span>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:10px;color:rgba(40,50,90,0.45);">※ 접촉횟수는 결신율 미포함</span>
         <button onclick="exportCsv('tb-weekly-acc','tab3_복음제시현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
@@ -2551,8 +2552,11 @@ function renderTab0(data, w) {
     else if (tt.indexOf('질문지') > -1) tgt.ques++;
     else if (tt.indexOf('7일') > -1) tgt.day7++;
     else if (tt.indexOf('훈련생') > -1) tgt.trainee++;
-    var fk = fuKey(r.followup);
-    if (fk) fu[fk]++;
+    // 후속양육 집계: 7일후 제외
+    if (!is7ilhu(r)) {
+      var fk = fuKey(r.followup);
+      if (fk) fu[fk]++;
+    }
   });
 
   // 역할별 실시 카운트
@@ -2818,7 +2822,7 @@ function renderTab0(data, w) {
 // ── TAB2 조별상세: 전도유형 구조 렌더 ─────────────────────────────────────────
 function renderWeekly2Html(data, w) {
   var html = '';
-  var PARTS2 = ['서론','은혜','인간','하나님','그리스도','믿음','결신','즉석양육'];
+  var PARTS2 = ['간증','서론','은혜','인간','하나님','그리스도','믿음','결신','즉석양육'];
 
   // joList 동적 생성 (CFG.joGroup 기준)
   var joSet2 = new Set();
@@ -3381,7 +3385,7 @@ function printTab2Pdf() {
       var suryoOk = isSuryoComplete(relCnt, quesCnt, day7Cnt);
 
       // 복음참여: 서론~즉석양육 각 멤버별 집계
-      var PARTS = ['서론','은혜','인간','하나님','그리스도','믿음','결신','즉석양육'];
+      var PARTS = ['간증','서론','은혜','인간','하나님','그리스도','믿음','결신','즉석양육'];
       var memberRows = '';
       members.forEach(function(m, mi) {
         var mRecs = joRecs.filter(function(r){
@@ -3450,7 +3454,7 @@ function printTab2Pdf() {
     '<th rowspan="2">7일후<br>(팀)</th>' +
     '<th colspan="8" class="sub-hd">관계전도(팀전도) 복음 참여 현황</th>' +
     '</tr><tr>' +
-    '<th class="sub-hd">서론</th><th class="sub-hd">은혜</th><th class="sub-hd">인간</th>' +
+    '<th class="sub-hd">간증</th><th class="sub-hd">서론</th><th class="sub-hd">은혜</th><th class="sub-hd">인간</th>' +
     '<th class="sub-hd">하나님</th><th class="sub-hd">그리스도</th>' +
     '<th class="sub-hd">믿음</th><th class="sub-hd">결신</th><th class="sub-hd">즉석양육</th>' +
     '</tr></thead>' +
@@ -4629,13 +4633,13 @@ function showToast(msg) {
       <b>조건 A</b><br>
       관계전도 <b>6회</b> 이상<br>
       질문지전도 <b>3회</b> 이상<br>
-      7일후전도 <b>1회</b> 이상
+      7일후 재방문 <b>1회</b> 이상
     </div>
     <div style="margin:8px 0 4px;padding:10px 14px;background:#f0f4ff;border-radius:8px;border-left:3px solid #2050c8;">
       <b>조건 B</b><br>
       관계전도 <b>7회</b> 이상<br>
       질문지전도 <b>2회</b> 이상<br>
-      7일후전도 <b>1회</b> 이상
+      7일후 재방문 <b>1회</b> 이상
     </div>
   </div>
   <button onclick="toggleSuryoInfo()" style="margin-top:16px;width:100%;background:#1a3a9e;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">확인</button>
