@@ -3531,6 +3531,10 @@ function apply7ilhu() {
     var el = document.getElementById(id);
     if (el) { el.value = '0'; el.readOnly = true; el.style.background = '#f0f0f0'; el.style.color = '#aaa'; }
   });
+
+  // 6. 후속양육 → 7일 후 재 방문 약속 자동 선택
+  var rb7 = document.querySelector('input[name="followup"][value="7일 후 재 방문 약속"]');
+  if (rb7) { rb7.checked = true; if (typeof updateFollowup === 'function') updateFollowup(); }
 }
 
 // 7일후(팀) 선택 전 상태 스냅샷 저장/복원
