@@ -1978,6 +1978,13 @@ let CFG = {
   })()
 };
 
+// 7일후 제외 판정: 전도유형이 7일후(팀)이거나 대상자구분에 '7일'이 포함된 경우
+function is7ilhu(r) {
+  var et = r.evangType || r.evang_type || '';
+  var tt = r.targetType || r.target_type || '';
+  return et === '7일후(팀)' || tt.indexOf('7일') > -1;
+}
+
 function calcCurrentWeek() {
   if (!CFG.trainStart) return 1;
   // 훈련 시작일의 월요일 기준으로 계산
@@ -2528,12 +2535,14 @@ function renderTab0(data, w) {
     else if (et === '개인') totalPersonal++;
     else if (et === '관계') totalRel++;
     else if (et === 'QQ') totalQQ++;
-    totalDecision += Number(r.decision || 0);
-    totalBeliever += Number(r.believer || 0);
-    totalConfirm += Number(r.confirm || 0);
-    totalReject += Number(r.reject || 0);
-    // 거절: diagResult 또는 result에서 집계
-    if ((r.diagResult || '').indexOf('거절') > -1 || (r.result || '') === '거절') totalRefuse++;
+    // 결과 집계: 7일후(팀) 및 대상자구분 7일후 제외
+    if (!is7ilhu(r)) {
+      totalDecision += Number(r.decision || 0);
+      totalBeliever += Number(r.believer || 0);
+      totalConfirm  += Number(r.confirm  || 0);
+      totalReject   += Number(r.reject   || 0);
+      if ((r.diagResult || '').indexOf('거절') > -1 || (r.result || '') === '거절') totalRefuse++;
+    }
     // 대상자구분 집계
     var tt = r.targetType || '';
     if (tt.indexOf('지인') > -1 || tt.indexOf('지인가족') > -1) tgt.local++;
@@ -2574,17 +2583,9 @@ function renderTab0(data, w) {
 
   var totalGospelAll = totalGospelTeam + totalQuesTeam + total7dayTeam + totalPersonal + totalRel + totalQQ;
   var rTotal = totalBeliever + totalDecision + totalConfirm + totalReject + (totalRefuse || 0);
-  // 결신율: 7일후(팀) 제외하고 계산
-  var rateDecision = 0, rateBeliever = 0, rateConfirm = 0, rateReject = 0;
-  data.forEach(function(r) {
-    if ((r.evangType || r.evang_type || '') === '7일후(팀)') return;
-    rateDecision += Number(r.decision || 0);
-    rateBeliever += Number(r.believer || 0);
-    rateConfirm  += Number(r.confirm  || 0);
-    rateReject   += Number(r.reject   || 0);
-  });
-  var rateDenom = (rateDecision + rateBeliever + rateConfirm + rateReject) - rateBeliever - rateConfirm;
-  var rate = rateDenom > 0 ? Math.round((rateDecision / rateDenom) * 1000) / 10 : 0;
+  // 결신율 = 결신 ÷ (결신 + 보류/거절)  — 이미신자·확신부족 제외, 7일후 제외
+  var rateDenom = totalDecision + totalReject;
+  var rate = rateDenom > 0 ? Math.round((totalDecision / rateDenom) * 1000) / 10 : 0;
   var fuTotal = Object.values(fu).reduce(function(a, b) {
     return a + b;
   }, 0);
@@ -3152,14 +3153,15 @@ function renderTab1(data, w) {
   // 7일후(팀) 제외
   var rDecision = 0, rReject = 0, rConfirm = 0, rBeliever = 0;
   data.forEach(function(r) {
-    if ((r.evangType || '') === '7일후(팀)') return;
+    if (is7ilhu(r)) return;
     rDecision += Number(r.decision || 0);
     rReject   += Number(r.reject   || 0);
     rConfirm  += Number(r.confirm  || 0);
     rBeliever += Number(r.believer || 0);
   });
   var calcGospel = rDecision + rReject + rConfirm + rBeliever;
-  var rateDenom = calcGospel - rConfirm - rBeliever;
+  // 결신율 = 결신 ÷ (결신 + 보류/거절)
+  var rateDenom = rDecision + rReject;
   var rate = rateDenom > 0 ? Math.round((rDecision / rateDenom) * 1000) / 10 : 0;
   setText('wb-rate-1', rate > 0 ? rate.toFixed(1) + '%' : '—');
   setText('wb-sub-1', '1주 ~ ' + w + '주 누적');
@@ -3256,12 +3258,13 @@ function renderTab2(data, w) {
   // 결신율: data에서 직접 계산 — 7일후(팀) 제외
   var r2Decision = 0, r2Reject = 0, r2Confirm = 0, r2Believer = 0;
   data.forEach(function(r) {
-    if ((r.evangType || '') === '7일후(팀)') return;
+    if (is7ilhu(r)) return;
     r2Decision += Number(r.decision || 0);
     r2Reject   += Number(r.reject   || 0);
     r2Confirm  += Number(r.confirm  || 0);
     r2Believer += Number(r.believer || 0);
   });
+  // 결신율 = 결신 ÷ (결신 + 보류/거절)
   var rateDenom2 = r2Decision + r2Reject;
   var rate = rateDenom2 > 0 ? Math.round((r2Decision / rateDenom2) * 1000) / 10 : 0;
   setText('wb-rate-2', rate > 0 ? rate.toFixed(1) + '%' : '—');
@@ -3336,14 +3339,16 @@ function printTab2Pdf() {
   var title = CFG.title + ' 팀전도 현황';
   var period = '1주 ~ ' + w + '주 누적';
 
-  // 결신율 계산
+  // 결신율 계산 — 7일후(팀) 제외
   var rD=0, rR=0, rC=0, rB=0;
   accData.forEach(function(r){
+    if (is7ilhu(r)) return;
     rD+=Number(r.decision||0); rR+=Number(r.reject||0);
     rC+=Number(r.confirm||0); rB+=Number(r.believer||0);
   });
-  var rateDenom = rD+rR;
-  var rate = rateDenom>0 ? Math.round(rD/rateDenom*1000)/10 : 0;
+  // 결신율 = 결신 ÷ (결신 + 보류/거절)
+  var rateDenom = rD + rR;
+  var rate = rateDenom > 0 ? Math.round(rD / rateDenom * 1000) / 10 : 0;
 
   // 단계별 인원 집계
   var stepCounts = {};
@@ -3680,7 +3685,7 @@ function renderTab3(selectedWeek) {
     var gospelAll = gospel + rel;
     var rTotal = believer + decision + confirm + reject;
     // 결신율: 7일후(팀) 제외
-    var wData7x = wData.filter(function(r) { return (r.evangType || '') !== '7일후(팀)'; });
+    var wData7x = wData.filter(function(r) { return !is7ilhu(r); });
     var rD7x = 0, rR7x = 0, rC7x = 0, rB7x = 0;
     wData7x.forEach(function(r) {
       rD7x += Number(r.decision || 0);
@@ -3688,7 +3693,8 @@ function renderTab3(selectedWeek) {
       rC7x += Number(r.confirm  || 0);
       rB7x += Number(r.believer || 0);
     });
-    var rateDenom = (rD7x + rR7x + rC7x + rB7x) - rC7x - rB7x;
+    // 결신율 = 결신 ÷ (결신 + 보류/거절)
+    var rateDenom = rD7x + rR7x;
     var rate = rateDenom > 0 ? Math.round((rD7x / rateDenom) * 1000) / 10 : 0;
     var isCur = w === selectedWeek;
 
@@ -3781,8 +3787,8 @@ function renderTab3(selectedWeek) {
   tb.innerHTML = html;
 
   var totalGospelCalc = totals.gospelCalc || 0;
-  // 결신율 TOTAL: 7일후(팀) 제외
-  var totalRateDenom = (totals.rateD7x + totals.rateR7x + totals.rateC7x + totals.rateB7x) - totals.rateC7x - totals.rateB7x;
+  // 결신율 TOTAL = 결신 ÷ (결신 + 보류/거절)
+  var totalRateDenom = (totals.rateD7x || 0) + (totals.rateR7x || 0);
   var totalRate = totalRateDenom > 0 ? Math.round(((totals.rateD7x || 0) / totalRateDenom) * 1000) / 10 : 0;
   document.getElementById('tf-weekly-acc').innerHTML =
     '<td><b>1~' + selectedWeek + '주<br>TOTAL</b></td>' +
