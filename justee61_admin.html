@@ -1206,7 +1206,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
             <th colspan="11" style="background:#2050c8;color:#fff;border-right:1px solid #c5cde8;">대상자 정보</th>
             <th colspan="3" style="background:#4a6fd8;color:#fff;border-right:1px solid #c5cde8;">진단 질문</th>
             <th colspan="1" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">결과</th>
-            <th colspan="10" style="background:#2d5cb8;color:#fff;border-right:1px solid #c5cde8;">복음 참여 &nbsp;●관계(팀)&nbsp; 🟠질문지(팀)·개인</th>
+            <th colspan="10" style="background:#2d5cb8;color:#fff;border-right:1px solid #c5cde8;">복음 참여 &nbsp;<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#1565c0;vertical-align:middle;"></span>관계(팀)&nbsp; <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e65100;vertical-align:middle;"></span>질문지(팀)·개인</th>
             <th colspan="5" style="background:#1a3a9e;color:#fff;">후속양육 연결</th>
             <th colspan="2" style="background:#2050c8;color:#fff;border-left:1px solid #c5cde8;">전도일/불참</th>
           </tr>
@@ -2771,16 +2771,20 @@ function renderTab0(data, w) {
         }
 
         // 참관 — 조원별 개별 셀
-        html += '<td style="font-size:14px;text-align:center;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + ((action === '참관하였고') ? '🟣' : '') + '</td>';
+        html += '<td style="text-align:center;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' +
+          ((action === '참관하였고') ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9e9e9e;vertical-align:middle;"></span>' : '') +
+          '</td>';
 
         // 복음참여 역할배분
         var PARTS = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
         var evangType = rec ? rec.evangType || '' : '';
         var isTeam = evangType === '관계(팀)';
+        var markColor = isTeam ? '#1565c0' : '#e65100';
         var mPart = m.role === '리더' ? (rec ? rec.leaderPart : '') :
           m.role === '훈련자' ? (rec ? rec.trainerPart : '') :
           (rec ? rec.traineePart : '');
         var partArr = mPart ? mPart.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+        var dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + markColor + ';vertical-align:middle;"></span>';
 
         if (action === '참관하였고') {
           for (var pi2 = 0; pi2 < 9; pi2++) {
@@ -2791,7 +2795,7 @@ function renderTab0(data, w) {
             var isLast = pi === PARTS.length - 1;
             var borderStyle = (isLast ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle;
             if (action !== '하였고') { html += '<td style="' + borderStyle + '"></td>'; return; }
-            if (partArr.indexOf(p) > -1) { html += '<td style="font-size:14px;text-align:center;' + borderStyle + '">' + (isTeam ? '●' : '🟠') + '</td>'; return; }
+            if (partArr.indexOf(p) > -1) { html += '<td style="text-align:center;' + borderStyle + '">' + dot + '</td>'; return; }
             html += '<td style="text-align:center;color:#e0e0e0;font-size:10px;' + borderStyle + '">·</td>';
           });
         }
@@ -2917,7 +2921,8 @@ function renderWeekly2Html(data, w) {
           var isLast = pi===PARTS2.length-1;
           var border = isLast ? 'border-right:1px solid #c5cde8;' : '';
           var color = p==='서론' ? 'color:#222;' : 'color:#1565c0;';
-          return '<td style="text-align:center;'+(cnt?'font-weight:700;'+color:'color:#4a90d9;')+border+'">'+(cnt||'●')+'</td>';
+          var zeroDot = '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#b0c4de;vertical-align:middle;"></span>';
+          return '<td style="text-align:center;'+(cnt?'font-weight:700;'+color:'')+border+'">'+(cnt||zeroDot)+'</td>';
         }).join('') +
         // 복음제시 완료
         '<td style="text-align:center;border-right:1px solid #c5cde8;">'+gospelDoneCell+'</td>' +
@@ -3123,14 +3128,14 @@ function renderTab1(data, w) {
           '<td style="text-align:center;">' + (personalCnt || '—') + '</td>' +
           PARTS.map(function(p, i) {
             var cnt = partCounts[p];
-            var isLast = i === PARTS.length - 1; // 즉석양육(마지막) 오른쪽 border
-            var isFirst = i === 0; // 간증 — 검정
+            var isLast = i === PARTS.length - 1;
+            var isFirst = i === 0;
             var borderStyle = isLast ? 'border-right:1px solid #c5cde8;' : '';
             if (cnt) {
               var color = isFirst ? '#222' : '#1565c0';
               return '<td style="text-align:center;font-weight:700;color:' + color + ';' + borderStyle + '">' + cnt + '</td>';
             } else {
-              return '<td style="text-align:center;color:#4a90d9;' + borderStyle + '">●</td>';
+              return '<td style="text-align:center;' + borderStyle + '"><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#b0c4de;vertical-align:middle;"></span></td>';
             }
           }).join('') +
           '<td style="font-size:10px;text-align:center;color:#666;">' + lastDate + '</td>' +
