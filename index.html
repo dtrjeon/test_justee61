@@ -1918,14 +1918,6 @@ pre.code-block {
         <input type="file" id="ocr-file-input" accept="image/*"
           style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:99;font-size:16px;margin:0;padding:0;">
       </div>
-      <!-- Claude AI 클라우드 버튼 -->
-      <div style="position:absolute;right:0;top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);width:28px;height:28px;flex-shrink:0;">
-        <div id="claude-btn" onclick="handleClaudeBtn()" style="width:28px;height:28px;background:linear-gradient(135deg,#7c3aed,#4c1d95);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;position:relative;" title="Claude AI 자동인식">☁️
-          <span id="claude-api-dot" style="position:absolute;bottom:1px;right:1px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:1.5px solid #fff;display:none;"></span>
-        </div>
-        <input type="file" id="claude-file-input" accept="image/*"
-          style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:99;font-size:16px;margin:0;padding:0;display:none;">
-      </div>
     </div>
     <div id="ocr-status" style="display:none;margin-bottom:8px;background:#e3f2fd;border:1px solid rgba(21,101,192,0.2);border-radius:6px;padding:8px 12px;font-size:12px;color:#1565c0;font-weight:600;text-align:center;"></div>
 
@@ -1947,7 +1939,6 @@ pre.code-block {
       </details>
     </div>
 
-<!-- API 키 모달 제거됨: OCR/Gemini/Claude 키는 GAS 스크립트 속성에서 관리 -->
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <div class="fld" style="flex:1;margin-bottom:0;">
         <div class="lbl">관계 <span style="font-weight:400;font-size:10px;color:rgba(0,0,0,0.4);">(대상자 모신분)</span></div>
@@ -2402,21 +2393,9 @@ pre.code-block {
     <h2 class="test" id="history-title">TEST RECORDS</h2>
     <div class="history-actions">
       <button type="button" class="h-btn outline test" id="refresh-btn" onclick="loadHistory()">🔄 새로고침</button>
-      <button type="button" class="h-btn outline test" id="snapshot-btn" onclick="toggleSnapshotMenu()" title="오프라인 테스트용 데이터 저장/불러오기">📦 스냅샷</button>
       <button type="button" class="h-btn outline test" id="search-btn" onclick="toggleSearch()">🔍 검색</button>
       <button type="button" class="h-btn outline test" id="multiprint-btn" onclick="toggleMultiSelect()" style="display:none;">☑ 선택출력</button>
       <button type="button" class="h-btn primary test" id="new-btn" onclick="switchTab('form')">+ 새 보고서</button>
-    </div>
-    <!-- 스냅샷 메뉴 -->
-    <div id="snapshot-menu" style="display:none;background:#f0f4ff;border:1.5px solid rgba(32,80,200,0.2);border-radius:8px;padding:12px 14px;margin-top:6px;">
-      <div style="font-size:12px;font-weight:700;color:#1a3a9e;margin-bottom:8px;">📦 오프라인 스냅샷</div>
-      <div style="font-size:11px;color:#555;margin-bottom:10px;">서버 데이터를 저장해두면 인터넷 없이도 테스트할 수 있습니다.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button onclick="saveSnapshot()" style="background:#2050c8;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">💾 현재 데이터 저장</button>
-        <button onclick="loadSnapshot()" style="background:#1a6b3c;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">📂 저장된 데이터 불러오기</button>
-        <button onclick="clearSnapshot()" style="background:#e65100;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">🗑 스냅샷 삭제</button>
-      </div>
-      <div id="snapshot-info" style="margin-top:8px;font-size:11px;color:#888;"></div>
     </div>
   </div>
   <div id="multiprint-bar" style="display:none;background:#f0f4ff;border:1.5px solid rgba(32,80,200,0.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;align-items:center;justify-content:space-between;gap:8px;">
@@ -2617,9 +2596,7 @@ pre.code-block {
 <!-- MODAL -->
 <!-- GAS URL은 코드에 고정 (모달 제거됨) -->
 
-
 <!-- JO MODAL -->
-
 
 <div class="status-bar" id="status-bar"></div>
 
@@ -2779,21 +2756,6 @@ function startAutoSave() {
   _autoSaveTimer = setInterval(function() {
     saveDraft();
   }, 30000);
-}
-
-function loadDraftManual() {
-  try {
-    var d = JSON.parse(localStorage.getItem(LS_DRAFT));
-    if (!d) {
-      showStatus('저장된 임시내용이 없습니다.', 'info');
-      return;
-    }
-    if (!confirm('임시저장된 내용을 불러오시겠습니까?\n(저장일시: ' + d._draftAt + ')')) return;
-    applyFormData(d);
-    showStatus('📂 임시저장 내용을 불러왔습니다.', 'success');
-  } catch (e) {
-    showStatus('불러오기 실패: ' + e.message, 'error');
-  }
 }
 
 function loadDraft() {
@@ -3020,31 +2982,74 @@ function openPresetModal() {
   list.className = 'preset-member-list';
   list.id = 'preset-member-list';
 
+  // ── 그룹장 섹션
+  var grpLeaders = (function() {
+    // 1순위: admin에서 저장한 mon_groups
+    try {
+      var saved = JSON.parse(localStorage.getItem('mon_groups') || '[]');
+      if (saved.length && saved.some(function(g) { return g.leader; })) {
+        return saved.filter(function(g) { return g.leader; });
+      }
+    } catch(e) {}
+    // 2순위: joData에서 그룹별 첫 번째 조의 조장
+    var jd = getJoData();
+    var grpMap = {};
+    jd.forEach(function(j) {
+      if (j.group && j.leader && !grpMap[j.group]) {
+        grpMap[j.group] = { id: j.group, name: j.group + '그룹', leader: j.leader };
+      }
+    });
+    var derived = Object.values(grpMap).sort(function(a, b) { return a.id > b.id ? 1 : -1; });
+    if (derived.length) return derived;
+    // 3순위: 임시 기본값 (서버 연동 전)
+    return [
+      { id: 'A', name: 'A그룹', leader: 'A그룹장명' },
+      { id: 'B', name: 'B그룹', leader: 'B그룹장명' },
+      { id: 'C', name: 'C그룹', leader: 'C그룹장명' },
+      { id: 'D', name: 'D그룹', leader: 'D그룹장명' }
+    ];
+  })();
+  if (grpLeaders.length) {
+    var grpLabel = document.createElement('div');
+    grpLabel.style.cssText = 'font-size:10px;font-weight:700;color:rgba(32,80,200,.5);letter-spacing:2px;margin:6px 0 4px;';
+    grpLabel.textContent = '그룹장';
+    list.appendChild(grpLabel);
+
+    grpLeaders.forEach(function(g) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'preset-member-btn' + (saved && saved.name === g.leader && saved.scope === 'group' ? ' selected' : '');
+      btn.innerHTML = '<span class="pm-jo">' + g.id + '그룹</span><span class="pm-name">' + g.leader + '</span><span class="pm-role">그룹장</span>';
+      btn.onclick = function() {
+        savePreset({ name: g.leader, scope: 'group', group: g.id, role: '그룹장' });
+        closePresetModal();
+        applyPreset();
+        showStatus('✅ ' + g.leader + '님 (그룹장) 프리셋 저장!', 'success');
+      };
+      list.appendChild(btn);
+    });
+
+    var memLabel = document.createElement('div');
+    memLabel.style.cssText = 'font-size:10px;font-weight:700;color:rgba(32,80,200,.5);letter-spacing:2px;margin:10px 0 4px;';
+    memLabel.textContent = '조원';
+    list.appendChild(memLabel);
+  }
+
   joData.forEach(function(j) {
-    [{
-      name: j.leader,
-      role: '리더(조장)',
-      jo: j.jo
-    }, {
-      name: j.trainer,
-      role: '훈련자',
-      jo: j.jo
-    }, {
-      name: j.trainee,
-      role: '훈련생',
-      jo: j.jo
-    }].forEach(function(m) {
+    var members = [
+      { name: j.leader,   role: '리더(조장)', jo: j.jo },
+      { name: j.trainer,  role: '훈련자',      jo: j.jo },
+      { name: j.trainee,  role: '훈련생',      jo: j.jo },
+      { name: j.trainee2, role: '훈련생',      jo: j.jo }
+    ];
+    members.forEach(function(m) {
       if (!m.name) return;
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'preset-member-btn' + (saved && saved.name === m.name && saved.jo === m.jo ? ' selected' : '');
       btn.innerHTML = '<span class="pm-jo">' + m.jo + '조</span><span class="pm-name">' + m.name + '</span><span class="pm-role">' + m.role + '</span>';
       btn.onclick = function() {
-        savePreset({
-          jo: m.jo,
-          name: m.name,
-          role: m.role
-        });
+        savePreset({ jo: m.jo, name: m.name, role: m.role, scope: 'jo' });
         closePresetModal();
         applyPreset();
         showStatus('✅ ' + m.name + '님 프리셋 저장!', 'success');
@@ -3113,7 +3118,7 @@ function updatePresetIndicator() {
   var label = document.getElementById('preset-label');
   var dot = document.querySelector('.pi-dot');
   if (p && p.name) {
-    label.textContent = p.name;
+    label.textContent = p.scope === 'group' ? p.name + ' (' + p.group + '그룹장)' : p.name;
     if (dot) dot.style.background = '#2e7d32';
   } else {
     label.textContent = '프리셋';
@@ -3123,12 +3128,16 @@ function updatePresetIndicator() {
 
 function applyPreset() {
   var p = getPreset();
-  if (!p || !p.jo) return;
-  // 조 선택
-  var joSel = document.getElementById('q1_jo');
-  if (joSel) {
-    joSel.value = p.jo;
-    onJoSelect();
+  if (!p || !p.name) return;
+  // 그룹장: 조 자동선택 없음 (그룹 전체 관리)
+  if (p.scope === 'group') return;
+  // 조원: 조 자동선택
+  if (p.jo) {
+    var joSel = document.getElementById('q1_jo');
+    if (joSel) {
+      joSel.value = p.jo;
+      onJoSelect();
+    }
   }
 }
 
@@ -3301,7 +3310,6 @@ function loadJoData() {
     })
     .catch(function(e) {
       // 서버 연결 실패 시 DEFAULT_JO 사용 (정상 동작)
-      console.log('조정보 서버 로드 불가 — 기본 데이터 사용');
       if (!localStorage.getItem(LS_JO)) {
         saveJoDataLS(DEFAULT_JO);
         buildJoDropdown();
@@ -3927,7 +3935,16 @@ function switchTab(tab) {
     syncPreview();
     setTimeout(scalePreviewPaper, 100);
   }
-  if (tab === 'history') loadHistory();
+  if (tab === 'history') {
+    var p = getPreset();
+    if (!p || !p.name) {
+      showStatus('⚠️ 기록을 보려면 먼저 프리셋을 설정해주세요.', 'warn');
+      // 프리셋 모달 자동 열기
+      setTimeout(function() { openPresetModal(); }, 400);
+      return;
+    }
+    loadHistory();
+  }
   var pb = document.getElementById('print-btn');
   if (pb) {
     pb.title = (tab === 'suju') ? '수주반 A5 출력' : 'A4 출력';
@@ -3938,21 +3955,7 @@ function openModal() {
   // URL은 코드에 고정 — 모달 불필요
 }
 
-function resetStoredUrl() {}
-
 function closeModal() {}
-
-function saveScriptUrl() {
-  closeModal();
-  setMode('server');
-  updateScbState('ok');
-}
-
-function copyCode() {
-  navigator.clipboard.writeText(document.getElementById('apps-script-code').textContent).then(function() {
-    showStatus('코드가 복사되었습니다!', 'success');
-  });
-}
 
 function toggleDropdown(who, event) {
   if (event) event.stopPropagation();
@@ -4498,7 +4501,7 @@ var _presetFilterActive = false;
 
 function togglePresetFilter() {
   var p = getPreset();
-  if (!p || !p.jo) {
+  if (!p || !p.name) {
     showStatus('⚠️ 프리셋을 먼저 설정해주세요.', 'warn');
     return;
   }
@@ -4506,7 +4509,11 @@ function togglePresetFilter() {
   var btn = document.getElementById('preset-filter-btn');
   if (btn) {
     btn.classList.toggle('active', _presetFilterActive);
-    btn.textContent = _presetFilterActive ? ('👤 ' + p.jo + '조 ✓') : '👤 내 조';
+    if (p.scope === 'group') {
+      btn.textContent = _presetFilterActive ? ('👤 ' + p.group + '그룹 ✓') : '👤 내 그룹';
+    } else {
+      btn.textContent = _presetFilterActive ? ('👤 ' + p.jo + '조 ✓') : '👤 내 조';
+    }
   }
   filterHistory();
 }
@@ -4522,78 +4529,6 @@ function toggleSearch() {
     clearSearch();
   }
 }
-
-// ── 스냅샷 기능 ──────────────────────────────────────────────────────────────
-var LS_SNAPSHOT = 'server_snapshot';
-var LS_SNAPSHOT_AT = 'server_snapshot_at';
-
-function toggleSnapshotMenu() {
-  var menu = document.getElementById('snapshot-menu');
-  if (!menu) return;
-  var open = menu.style.display !== 'none';
-  menu.style.display = open ? 'none' : 'block';
-  if (!open) updateSnapshotInfo();
-}
-
-function updateSnapshotInfo() {
-  var info = document.getElementById('snapshot-info');
-  if (!info) return;
-  var savedAt = localStorage.getItem(LS_SNAPSHOT_AT);
-  var raw = localStorage.getItem(LS_SNAPSHOT);
-  if (savedAt && raw) {
-    var cnt = 0;
-    try { cnt = JSON.parse(raw).length; } catch(e) {}
-    info.textContent = '✅ 저장된 스냅샷: ' + cnt + '건 (' + savedAt + ')';
-  } else {
-    info.textContent = '저장된 스냅샷 없음';
-  }
-}
-
-function saveSnapshot() {
-  if (!window._historyRecords || !window._historyRecords.length) {
-    showStatus('❌ 저장할 데이터가 없습니다. 먼저 새로고침하여 서버 데이터를 불러오세요.', 'error');
-    return;
-  }
-  var now = new Date();
-  var savedAt = now.getFullYear() + '-' +
-    String(now.getMonth()+1).padStart(2,'0') + '-' +
-    String(now.getDate()).padStart(2,'0') + ' ' +
-    String(now.getHours()).padStart(2,'0') + ':' +
-    String(now.getMinutes()).padStart(2,'0');
-  localStorage.setItem(LS_SNAPSHOT, JSON.stringify(window._historyRecords));
-  localStorage.setItem(LS_SNAPSHOT_AT, savedAt);
-  updateSnapshotInfo();
-  showStatus('✅ ' + window._historyRecords.length + '건 스냅샷 저장 완료! (' + savedAt + ')', 'success');
-}
-
-function loadSnapshot() {
-  var raw = localStorage.getItem(LS_SNAPSHOT);
-  if (!raw) {
-    showStatus('❌ 저장된 스냅샷이 없습니다. 먼저 서버에서 데이터를 저장하세요.', 'error');
-    return;
-  }
-  try {
-    var records = JSON.parse(raw);
-    var savedAt = localStorage.getItem(LS_SNAPSHOT_AT) || '알 수 없음';
-    renderHistory(records, 'server');
-    document.getElementById('snapshot-menu').style.display = 'none';
-    showStatus('📂 스냅샷 불러오기 완료: ' + records.length + '건 (' + savedAt + ')', 'success');
-  } catch(e) {
-    showStatus('❌ 스냅샷 불러오기 실패: ' + e.message, 'error');
-  }
-}
-
-function clearSnapshot() {
-  if (!localStorage.getItem(LS_SNAPSHOT)) {
-    showStatus('저장된 스냅샷이 없습니다.', 'info');
-    return;
-  }
-  localStorage.removeItem(LS_SNAPSHOT);
-  localStorage.removeItem(LS_SNAPSHOT_AT);
-  updateSnapshotInfo();
-  showStatus('🗑 스냅샷 삭제 완료', 'info');
-}
-
 
 function onSearchTypeChange() {
   var type = document.getElementById('search-type').value;
@@ -4622,10 +4557,23 @@ function filterHistory() {
       return;
     }
     // 프리셋 필터
-    if (_presetFilterActive && p && p.jo) {
-      if ((r.jo || '').toString() !== p.jo.toString()) {
-        c.style.display = 'none';
-        return;
+    if (_presetFilterActive && p && p.name) {
+      if (p.scope === 'group') {
+        // 그룹장: joData에서 조→그룹 매핑 구성
+        var jd = getJoData();
+        var joGroupMap = {};
+        jd.forEach(function(j) { if (j.group) joGroupMap[String(j.jo)] = j.group; });
+        var rJo = (r.jo || '').toString();
+        if (joGroupMap[rJo] !== p.group) {
+          c.style.display = 'none';
+          return;
+        }
+      } else if (p.jo) {
+        // 조원: 해당 조만 표시
+        if ((r.jo || '').toString() !== p.jo.toString()) {
+          c.style.display = 'none';
+          return;
+        }
       }
     }
     // 검색어 필터
@@ -4670,6 +4618,18 @@ function loadTestHistory() {
   renderHistory(records, 'test');
 }
 async function loadHistory() {
+  // 프리셋 필터 자동 활성화
+  var p = getPreset();
+  if (p && p.name && !_presetFilterActive) {
+    _presetFilterActive = true;
+    var btn = document.getElementById('preset-filter-btn');
+    if (btn) {
+      btn.classList.add('active');
+      btn.textContent = p.scope === 'group'
+        ? ('👤 ' + p.group + '그룹 ✓')
+        : ('👤 ' + p.jo + '조 ✓');
+    }
+  }
   if (currentMode === 'test') {
     loadTestHistory();
   } else {
@@ -5450,24 +5410,6 @@ function closeAdminModal() {
   document.getElementById('admin-modal-bg').classList.remove('open');
 }
 
-function saveAdminUrl() {
-  var url = document.getElementById('admin-url-input').value.trim();
-  if (!url) {
-    showStatus('경로 또는 URL을 입력하세요.', 'error');
-    return;
-  }
-  localStorage.setItem(LS_ADMIN_URL, url);
-  closeAdminModal();
-  showStatus('✅ Admin 연동 완료!', 'success');
-  window.open(url, '_blank');
-}
-
-function clearAdminUrl() {
-  localStorage.removeItem(LS_ADMIN_URL);
-  closeAdminModal();
-  showStatus('Admin 연동이 해제되었습니다.', 'info');
-}
-
 // ── 멀티 선택 출력 ──────────────────────────────────────
 function toggleMultiSelect() {
   window._multiSelectMode = !window._multiSelectMode;
@@ -5949,240 +5891,7 @@ function _printViaWindow(selected) {
   }, 10000);
 }
 
-// ── 손글씨 OCR (Claude API) ──────────────────────────────
-function ocrBtnClick() {
-  var inp = document.getElementById('ocr-file-input');
-  if (!inp) return;
-  try {
-    inp.click();
-  } catch (e) {
-    var lbl = document.createElement('label');
-    lbl.htmlFor = 'ocr-file-input';
-    lbl.style.display = 'none';
-    document.body.appendChild(lbl);
-    lbl.click();
-    document.body.removeChild(lbl);
-  }
-}
-
-
-
-// ── OCR 디버그 패널 ─────────────────────────────────────────
-function showOcrDebug(rawText, parsed) {
-  var panel = document.getElementById('ocr-debug-panel');
-  if (!panel) return;
-
-  var fieldMap = {
-    date: '전도일',
-    location: '거주지역',
-    name: '성씨',
-    age: '나이',
-    gender: '성별',
-    marriage: '결혼여부',
-    meet_place: '만난장소',
-    gospel_place: '복음제시장소',
-    religion: '종교',
-    job: '직업',
-    heaven: '천국확신',
-    reason: '이유대답',
-    result: '결과',
-    q10: '느낀점',
-    q11: '문제점',
-    q12: '기도제목'
-  };
-
-  var rows = '';
-  Object.keys(fieldMap).forEach(function(k) {
-    var val = parsed[k];
-    var ok = !!val;
-    rows += '<tr>' +
-      '<td style="padding:4px 8px;font-size:11px;color:#555;border-bottom:1px solid #f0f0f0;white-space:nowrap;">' + fieldMap[k] + '</td>' +
-      '<td style="padding:4px 8px;font-size:11px;border-bottom:1px solid #f0f0f0;">' +
-      '<span style="' + (ok ? 'color:#16a34a;font-weight:700;' : 'color:#dc2626;') + '">' +
-      (ok ? '✅ ' + val : '❌ 미인식') +
-      '</span>' +
-      '</td>' +
-      '</tr>';
-  });
-
-  document.getElementById('ocr-debug-raw').textContent = rawText;
-  document.getElementById('ocr-debug-table').innerHTML = rows;
-  panel.style.display = 'block';
-}
-
-function closeOcrDebug() {
-  var p = document.getElementById('ocr-debug-panel');
-  if (p) p.style.display = 'none';
-}
-// ────────────────────────────────────────────────────────────
-
-// ── Claude AI 자동인식 ──────────────────────────────────────
-// Claude AI: API 키는 GAS 서버에서 관리 (브라우저에 키 없음)
-function updateClaudeDot() {
-  var dot = document.getElementById('claude-api-dot');
-  if (!dot) return;
-  dot.style.display = scriptUrl ? 'none' : 'block';
-}
-
-function handleClaudeBtn() {
-  if (!scriptUrl) {
-    openModal();
-    showStatus('먼저 구글 시트를 연결해 주세요.', 'error');
-    return;
-  }
-  var inp = document.getElementById('claude-file-input');
-  inp.style.display = 'block';
-  inp.click();
-}
-
-function initClaudeInput() {
-  var inp = document.getElementById('claude-file-input');
-  if (!inp) return;
-  inp.addEventListener('change', function(e) {
-    if (e.target.files && e.target.files[0]) handleClaudeImage(e);
-  });
-  updateClaudeDot();
-}
-
-async function handleClaudeImage(event) {
-  var file = event.target.files[0];
-  if (!file) return;
-
-  if (!scriptUrl) {
-    openModal();
-    showStatus('먼저 구글 시트를 연결해 주세요.', 'error');
-    event.target.value = '';
-    return;
-  }
-
-  var statusEl = document.getElementById('ocr-status');
-  statusEl.style.display = 'block';
-  statusEl.style.background = '#f3e8ff';
-  statusEl.style.borderColor = 'rgba(124,58,237,0.2)';
-  statusEl.style.color = '#6d28d9';
-  statusEl.textContent = '☁️ Claude AI 분석 중...';
-
-  try {
-    // 이미지 → base64
-    var base64 = await new Promise(function(res, rej) {
-      var r = new FileReader();
-      r.onload = function(ev) { res(ev.target.result.split(',')[1]); };
-      r.onerror = function() { rej(new Error('파일 읽기 실패')); };
-      r.readAsDataURL(file);
-    });
-
-    var mediaType = file.type || 'image/jpeg';
-
-    // GAS 프록시로 전송 (API 키는 서버에서 관리)
-    var resp = await fetch(scriptUrl, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'ocr_claude', imageBase64: base64, mediaType: mediaType })
-    });
-    if (!resp.ok) throw new Error('서버 오류: ' + resp.status);
-    var data = await resp.json();
-    if (data.status !== 'ok') throw new Error(data.message || 'Claude API 오류');
-
-    var parsed = data.parsed || {};
-    var clean = JSON.stringify(parsed); // already parsed by GAS
-    var filled = 0;
-
-    function sv(id, val) {
-      if (val && document.getElementById(id)) {
-        document.getElementById(id).value = val;
-        filled++;
-        syncPreview();
-      }
-    }
-
-    function sr(name, val) {
-      var el = document.querySelector('input[name="' + name + '"][value="' + val + '"]');
-      if (el) {
-        el.checked = true;
-        filled++;
-        syncPreview();
-      }
-    }
-
-    sv('q3_location', parsed.location);
-    sv('q3_name', parsed.name);
-    sv('q3_age', parsed.age);
-    sv('meet_place', parsed.meet_place);
-    sv('q4_job', parsed.job);
-    sv('q10', parsed.q10);
-    sv('q12', parsed.q12);
-
-    if (parsed.marriage) sr('marriage', parsed.marriage);
-    if (parsed.gender) sr('gender', parsed.gender);
-    if (parsed.heaven) sr('heaven', parsed.heaven);
-    if (parsed.reason) sr('reason', parsed.reason);
-
-    // 대상자 구분
-    if (parsed.target_type) {
-      var ttSel = document.getElementById('q3_target_type');
-      if (ttSel) {
-        for (var i = 0; i < ttSel.options.length; i++) {
-          if (ttSel.options[i].value.indexOf(parsed.target_type) > -1 || parsed.target_type.indexOf(ttSel.options[i].value) > -1) {
-            ttSel.value = ttSel.options[i].value;
-            filled++;
-            break;
-          }
-        }
-      }
-    }
-
-    // 종교
-    if (parsed.religion) {
-      var relSel = document.getElementById('q4_religion_sel');
-      if (relSel) {
-        var found = false;
-        for (var j = 0; j < relSel.options.length; j++) {
-          if (relSel.options[j].value === parsed.religion) {
-            relSel.value = parsed.religion;
-            found = true;
-            filled++;
-            break;
-          }
-        }
-        if (!found) {
-          var relInp = document.getElementById('q4_religion');
-          if (relInp) {
-            relInp.style.display = 'block';
-            relInp.value = parsed.religion;
-            filled++;
-          }
-        }
-      }
-    }
-
-    // 진단 연동
-    if (parsed.heaven || parsed.reason) {
-      setTimeout(function() {
-        if (typeof onQ5Change === 'function') onQ5Change();
-      }, 150);
-    }
-
-    syncPreview();
-
-    statusEl.style.background = '#f0fdf4';
-    statusEl.style.borderColor = 'rgba(22,163,74,0.25)';
-    statusEl.style.color = '#15803d';
-    statusEl.textContent = '✅ Claude AI 자동입력 완료! (' + filled + '개 항목 인식)';
-    setTimeout(function() {
-      statusEl.style.display = 'none';
-    }, 4000);
-
-  } catch (e) {
-    statusEl.style.background = '#fef2f2';
-    statusEl.style.borderColor = 'rgba(220,38,38,0.25)';
-    statusEl.style.color = '#b91c1c';
-    statusEl.textContent = '❌ ' + e.message;
-    console.error('Claude AI 오류:', e);
-  }
-  event.target.value = '';
-}
-// ────────────────────────────────────────────────────────────
-
-// 터치 이벤트로도 등록 (안드로이드 호환)
+// ── 터치 이벤트로도 등록 (안드로이드 호환)
 function initOcrInput() {
   var inp = document.getElementById('ocr-file-input');
   if (!inp) return;
@@ -6575,7 +6284,6 @@ window.onload = function() {
     setTimeout(loadJoData, 500);
   }
   initOcrInput();
-  initClaudeInput();
   updateGeminiDot();
 
   // ── admin.html에서 불일치 수정 요청 처리 ──────────────────────────────────
