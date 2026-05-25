@@ -3513,21 +3513,27 @@ async function suggestEvangCount() {
 
   if (!records || !records.length) return;
 
-  // 3) 같은 조 + 같은 전도유형 중 최대 횟수 찾기
-  // doc_number 마지막 숫자도 함께 확인 (예: 61-12-관-3 → 3)
+  // 3) 같은 조 + 같은 전도유형 + (개인전도 시 같은 전도자) 중 최대 횟수 찾기
+  var member = v('personal_member'); // 개인전도 전도자
+  var isPersonalType = (type === '개인' || type === '관계' || type === 'QQ');
   var maxCount = 0;
   records.forEach(function(r) {
-    if (String(r.jo) === String(jo) && r.evang_type === type) {
-      // evang_count 우선
-      var cnt = parseInt(r.evang_count) || 0;
-      // doc_number에서 마지막 숫자 추출 (61-12-관-3)
-      if (!cnt && r.doc_number) {
-        var parts = String(r.doc_number).split('-');
-        var last = parseInt(parts[parts.length - 1]) || 0;
-        if (last > cnt) cnt = last;
-      }
-      if (cnt > maxCount) maxCount = cnt;
+    if (String(r.jo) !== String(jo)) return;
+    if (r.evang_type !== type) return;
+    // 개인전도: 전도자 이름 일치 여부 확인
+    if (isPersonalType && member) {
+      // doc_number에서 전도자 이름 추출 (61-4-개인-이나경-3)
+      var docParts = String(r.doc_number || '').split('-');
+      var docMember = docParts.length >= 5 ? docParts[3] : '';
+      if (docMember && docMember !== member) return;
     }
+    var cnt = parseInt(r.evang_count) || 0;
+    if (!cnt && r.doc_number) {
+      var parts = String(r.doc_number).split('-');
+      var last = parseInt(parts[parts.length - 1]) || 0;
+      if (last > cnt) cnt = last;
+    }
+    if (cnt > maxCount) maxCount = cnt;
   });
 
   // 4) +1 가입력
@@ -3542,7 +3548,8 @@ async function suggestEvangCount() {
     }, 2000);
     autoDocNumber();
     syncPreview();
-    showStatus('📊 이전 기록: ' + maxCount + '회 → ' + (maxCount + 1) + '회 자동입력', 'info');
+    var memberLabel = (isPersonalType && member) ? ' (' + member + ')' : '';
+    showStatus('📊 이전 기록: ' + maxCount + '회 → ' + (maxCount + 1) + '회 자동입력' + memberLabel, 'info');
   }
 }
 
@@ -3723,6 +3730,9 @@ function buildPersonalMemberSelect() {
 }
 
 function onPersonalMemberChange() {
+  if (!window._isRevision) {
+    suggestEvangCount();  // 전도자 변경 시 횟수 재계산
+  }
   autoDocNumber();
   syncPreview();
 }
