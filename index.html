@@ -2953,8 +2953,11 @@ function applyFormData(r) {
   _pre7ilhu = null; // 불러오기 시에는 스냅샷 복원 차단
   if (r.evang_type === '7일후(팀)') apply7ilhu();
 
-  // 18. 개인전도 — personal_member 복원 후 불참 자동설정
+  // 18. 개인전도 — personal_member 복원 + 불참 자동설정 + 파트 자동설정
   if (r.evang_type === '개인' || r.evang_type === '관계' || r.evang_type === 'QQ') {
+    // buildPersonalMemberSelect 먼저 호출해서 옵션 채우기
+    buildPersonalMemberSelect();
+
     var pmSel = document.getElementById('personal_member');
     // personal_member 값 복원 (relation_member에서 이름만 추출)
     if (pmSel && r.relation_member) {
@@ -2966,34 +2969,32 @@ function applyFormData(r) {
         }
       }
     }
-    // 전도자 외 불참 자동설정
+
     var selMember = v('personal_member');
+    var joD = getJoData();
+    var joFound = joD.find(function(j) { return String(j.jo) === String(r.jo); });
+    var nameToId = {};
+    if (joFound) {
+      if (joFound.leader)   nameToId[joFound.leader]   = 'leader';
+      if (joFound.trainer)  nameToId[joFound.trainer]  = 'trainer';
+      if (joFound.trainee)  nameToId[joFound.trainee]  = 'trainee';
+      if (joFound.trainee2) nameToId[joFound.trainee2] = 'trainee';
+    }
+
     if (selMember) {
-      var joD = getJoData();
-      var joFound = joD.find(function(j) { return String(j.jo) === String(r.jo); });
-      if (joFound) {
-        var nameToId = {};
-        if (joFound.leader)   nameToId[joFound.leader]   = 'leader';
-        if (joFound.trainer)  nameToId[joFound.trainer]  = 'trainer';
-        if (joFound.trainee)  nameToId[joFound.trainee]  = 'trainee';
-        if (joFound.trainee2) nameToId[joFound.trainee2] = 'trainee';
-        MEMBERS.forEach(function(m) {
-          // 이미 action이 저장된 경우 덮어쓰지 않음
-          if (radio(m.id + '_action')) return;
-          var memberName = Object.keys(nameToId).find(function(n) { return nameToId[n] === m.id; });
-          var isEvangelist = (memberName === selMember);
-          var actionVal = isEvangelist ? '하였고' : '불참하였고';
-          var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + actionVal + '"]');
-          if (radioEl) radioEl.checked = true;
-        });
-      }
+      // 전도자 → 하였고, 나머지 → 불참하였고 (저장값 없을 때만)
+      MEMBERS.forEach(function(m) {
+        if (radio(m.id + '_action')) return; // 저장값 있으면 유지
+        var memberName = Object.keys(nameToId).find(function(n) { return nameToId[n] === m.id; });
+        var isEvangelist = (memberName === selMember);
+        var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + (isEvangelist ? '하였고' : '불참하였고') + '"]');
+        if (radioEl) radioEl.checked = true;
+      });
 
       // 역할배분 없으면 결과에 따라 전도자 파트 자동설정
-      var evangId = nameToId ? Object.keys(nameToId).find(function(n) { return n === selMember; }) : null;
-      var evangMemberId = evangId ? nameToId[evangId] : null;
+      var evangMemberId = nameToId[selMember] || null;
       if (evangMemberId) {
-        var partKey = evangMemberId + '_part';
-        var existPart = v('q8_' + partKey);
+        var existPart = v('q8_' + evangMemberId + '_part');
         if (!existPart) {
           var resultVal = r.result || '';
           var autoParts = [];
@@ -3005,7 +3006,6 @@ function applyFormData(r) {
             autoParts = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음'];
           }
           if (autoParts.length) {
-            // 체크박스 선택
             document.querySelectorAll('input[name="' + evangMemberId + '_role"]').forEach(function(el) {
               el.checked = autoParts.indexOf(el.value) > -1;
             });
@@ -4476,7 +4476,48 @@ function saveDiagResult() {
       if (cntEl) cntEl.value = (parseInt(cntEl.value) || 0) + 1;
     }
     _lastSavedDiagResult = saved;
+
+    // 개인전도 + 역할배분 없음 → 결과에 따라 전도자 파트 자동설정
+    var type = v('evang_type');
+    var isPersonalType = (type === '개인' || type === '관계' || type === 'QQ');
+    if (isPersonalType) {
+      var selMember = v('personal_member');
+      if (selMember) {
+        var joData = getJoData();
+        var jo = v('q1_jo');
+        var joFound = joData.find(function(j) { return String(j.jo) === String(jo); });
+        var nameToId = {};
+        if (joFound) {
+          if (joFound.leader)   nameToId[joFound.leader]   = 'leader';
+          if (joFound.trainer)  nameToId[joFound.trainer]  = 'trainer';
+          if (joFound.trainee)  nameToId[joFound.trainee]  = 'trainee';
+          if (joFound.trainee2) nameToId[joFound.trainee2] = 'trainee';
+        }
+        var evangMemberId = nameToId[selMember] || null;
+        if (evangMemberId) {
+          var existPart = v('q8_' + evangMemberId + '_part');
+          if (!existPart) {
+            var autoParts = [];
+            if (result === '결신' || result === '확신') {
+              autoParts = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신'];
+            } else if (result === '이미신자') {
+              autoParts = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
+            } else if (result === '보류 / 거부') {
+              autoParts = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음'];
+            }
+            if (autoParts.length) {
+              document.querySelectorAll('input[name="' + evangMemberId + '_role"]').forEach(function(el) {
+                el.checked = autoParts.indexOf(el.value) > -1;
+              });
+              updateRoleText(evangMemberId);
+              showStatus('✅ 진단결과 저장 + 역할배분 자동설정 완료', 'success');
+            }
+          }
+        }
+      }
+    }
   }
+
   var btn = document.querySelector('.diag-save-btn');
   btn.textContent = '✅ 저장됨';
   btn.style.background = '#1a6b3c';

@@ -2803,14 +2803,14 @@ function renderTab0(data, w) {
           (rec ? rec.traineePart : '');
         var partArr = mPart ? mPart.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
 
-        // 개인전도 + 역할배분 없음 → 결과에 따라 파트 자동 설정
+        // 역할배분 없음 + 개인전도 → 결과에 따라 파트 자동 설정
         if (isPersonal && action === '하였고' && !partArr.length) {
           var resultVal = rec ? (rec.result || '') : '';
           if (resultVal === '결신' || resultVal === '확신') {
             partArr = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신'];
           } else if (resultVal === '이미신자') {
             partArr = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
-          } else {
+          } else if (resultVal === '보류' || resultVal === '거절') {
             partArr = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음'];
           }
         }
