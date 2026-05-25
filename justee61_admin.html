@@ -2719,7 +2719,7 @@ function renderTab0(data, w) {
         for (var pi0 = 0; pi0 < 9; pi0++) {
           html += '<td style="' + (pi0 === 8 ? 'border-right:1px solid #c5cde8;' : '') + '"></td>';
         }
-        // 후속양육 + 비고 (첫 행만)
+        // 후속양육 + 전도일 (첫 행만 rowspan) + 불참자 (조원별 개별 셀 — 미실시는 전원 빈칸)
         if (mi === 0) {
           html +=
             '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
@@ -2727,9 +2727,9 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
             '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
             '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;"></td>' +
-            '<td rowspan="' + rowspan + '">—</td>';
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;"></td>';
         }
+        html += '<td style="text-align:center;"></td>';
         html += '</tr>';
       });
       return;
@@ -2843,7 +2843,7 @@ function renderTab0(data, w) {
           });
         }
 
-        // 후속양육 + 비고 (건당 첫 조원에만 rowspan)
+        // 후속양육 + 전도일 (건당 첫 조원에만 rowspan) + 불참자 (조원별 개별 셀)
         if (isRecFirst) {
           html +=
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('7일') > -1 ? '●' : '—') + '</td>' +
@@ -2851,18 +2851,27 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('예배') > -1 ? '●' : '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('새가족') > -1 ? '●' : '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && (rec.followup.indexOf('하지') > -1 || rec.followup.indexOf('못') > -1) ? '●' : '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.date ? rec.date.slice(5).replace('-', '/') : '') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:9px;' + extraBorderStyle + '">' + (function() {
-              if (!isPersonal) return '—';
-              // 개인전도: 전도자 제외 나머지 조원 이름 표시
-              var absentNames = joMembers.filter(function(mm) {
-                var mmAction = mm.role === '리더' ? rec.leaderAction :
-                  mm.role === '훈련자' ? rec.trainerAction : rec.traineeAction;
-                return mmAction !== '하였고';
-              }).map(function(mm) { return mm.name; });
-              return absentNames.length ? absentNames.join(', ') : '—';
-            })() + '</td>';
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.date ? rec.date.slice(5).replace('-', '/') : '') + '</td>';
         }
+        // 불참자 열 — 조원별 개별 셀
+        var isAbsent = false;
+        if (isPersonal) {
+          // 개인전도: 전도자가 아닌 조원은 불참
+          var mmAction = m.role === '리더' ? (rec ? rec.leaderAction : '') :
+            m.role === '훈련자' ? (rec ? rec.trainerAction : '') :
+            (rec ? rec.traineeAction : '');
+          if (!mmAction) {
+            var evangName = rec ? (rec.relationMember || '').replace(/\(.*?\)/g, '').trim() : '';
+            mmAction = (evangName && m.name === evangName) ? '하였고' : '';
+          }
+          isAbsent = (mmAction !== '하였고');
+        } else {
+          // 팀전도: 불참하였고
+          isAbsent = (action === '불참하였고');
+        }
+        html += '<td style="text-align:center;' + extraBorderStyle + '">' +
+          (isAbsent ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#bdbdbd;vertical-align:middle;" title="불참"></span>' : '') +
+          '</td>';
         html += '</tr>';
       });
     });
