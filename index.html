@@ -2953,13 +2953,11 @@ function applyFormData(r) {
   _pre7ilhu = null; // 불러오기 시에는 스냅샷 복원 차단
   if (r.evang_type === '7일후(팀)') apply7ilhu();
 
-  // 18. 개인전도 — personal_member 복원 + 불참 자동설정 + 파트 자동설정
+  // 18. 개인전도 — personal_member 복원 + 불참 자동설정 + 파트 자동설정 + 관계 동기화
   if (r.evang_type === '개인' || r.evang_type === '관계' || r.evang_type === 'QQ') {
-    // buildPersonalMemberSelect 먼저 호출해서 옵션 채우기
     buildPersonalMemberSelect();
 
     var pmSel = document.getElementById('personal_member');
-    // personal_member 값 복원 (relation_member에서 이름만 추출)
     if (pmSel && r.relation_member) {
       var pmName = r.relation_member.replace(/\(.*?\)/g, '').trim();
       for (var pi = 0; pi < pmSel.options.length; pi++) {
@@ -2984,18 +2982,31 @@ function applyFormData(r) {
     if (selMember) {
       // 전도자 → 하였고, 나머지 → 불참하였고 (저장값 없을 때만)
       MEMBERS.forEach(function(m) {
-        if (radio(m.id + '_action')) return; // 저장값 있으면 유지
+        if (radio(m.id + '_action')) return;
         var memberName = Object.keys(nameToId).find(function(n) { return nameToId[n] === m.id; });
         var isEvangelist = (memberName === selMember);
         var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + (isEvangelist ? '하였고' : '불참하였고') + '"]');
         if (radioEl) radioEl.checked = true;
       });
 
-      // 역할배분 없으면 결과에 따라 전도자 파트 자동설정
+      // 관계 드롭다운 동기화
+      var relSel = document.getElementById('q3_relation_member');
+      if (relSel && !r.relation_member) {
+        for (var ri2 = 0; ri2 < relSel.options.length; ri2++) {
+          var optName = relSel.options[ri2].value.replace(/\(.*?\)/g, '').trim();
+          if (optName === selMember || relSel.options[ri2].value === selMember) {
+            relSel.value = relSel.options[ri2].value;
+            break;
+          }
+        }
+      }
+
+      // 역할배분 없고 전도자가 하였고 → 결과에 따라 파트 자동설정
       var evangMemberId = nameToId[selMember] || null;
       if (evangMemberId) {
+        var evangAction = radio(evangMemberId + '_action');
         var existPart = v('q8_' + evangMemberId + '_part');
-        if (!existPart) {
+        if (evangAction === '하였고' && !existPart) {
           var resultVal = r.result || '';
           var autoParts = [];
           if (resultVal === '결신' || resultVal === '확신') {
@@ -3793,30 +3804,51 @@ function buildPersonalMemberSelect() {
 }
 
 function onPersonalMemberChange() {
-  // 개인전도: 선택된 전도자 → 하였고, 나머지 → 불참하였고 자동 선택
   var member = v('personal_member');
   if (member) {
     var jo = v('q1_jo');
     var joData = getJoData();
     var found = joData.find(function(j) { return String(j.jo) === String(jo); });
     if (found) {
-      // 조원 → MEMBERS id 매핑
       var nameToId = {};
       if (found.leader)   nameToId[found.leader]   = 'leader';
       if (found.trainer)  nameToId[found.trainer]  = 'trainer';
       if (found.trainee)  nameToId[found.trainee]  = 'trainee';
       if (found.trainee2) nameToId[found.trainee2] = 'trainee';
 
+      // ① 역할배분: 전도자 → 하였고, 나머지 → 불참하였고
       MEMBERS.forEach(function(m) {
-        // 이 멤버가 선택된 전도자인지 확인
         var memberName = Object.keys(nameToId).find(function(n) { return nameToId[n] === m.id; });
         var isEvangelist = (memberName === member);
-        var actionVal = isEvangelist ? '하였고' : '불참하였고';
-        var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + actionVal + '"]');
-        if (radioEl) {
-          radioEl.checked = true;
-        }
+        var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + (isEvangelist ? '하였고' : '불참하였고') + '"]');
+        if (radioEl) radioEl.checked = true;
       });
+    }
+
+    // ② 관계(대상자 모신분) 드롭다운 자동 동기화
+    var relSel = document.getElementById('q3_relation_member');
+    if (relSel) {
+      // 옵션에서 이름 일치 항목 선택
+      var matched = false;
+      for (var i = 0; i < relSel.options.length; i++) {
+        var optVal = relSel.options[i].value;
+        // 이름만 추출해서 비교 (이름(역할) 형태 대응)
+        var optName = optVal.replace(/\(.*?\)/g, '').trim();
+        if (optName === member || optVal === member) {
+          relSel.value = optVal;
+          matched = true;
+          break;
+        }
+      }
+      // 옵션에 없으면 직접 추가
+      if (!matched && member) {
+        var opt = document.createElement('option');
+        opt.value = member;
+        opt.textContent = member;
+        relSel.appendChild(opt);
+        relSel.value = member;
+      }
+      if (typeof onRelationChange === 'function') onRelationChange();
     }
   }
 
