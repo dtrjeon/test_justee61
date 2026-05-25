@@ -1855,31 +1855,33 @@ pre.code-block {
   <div class="divider"></div>
   <div class="sec">
     <div class="sec-lbl" style="margin-top:14px;">문서 정보</div>
-    <div style="margin-bottom:10px;">
-      <div class="fld" style="margin-bottom:8px;">
+    <div style="display:grid;grid-template-columns:3fr 2fr 1fr;gap:6px;margin-bottom:10px;align-items:end;">
+      <div class="fld">
         <div class="lbl">문서번호 <span style="font-weight:400;font-size:10px;color:rgba(0,0,0,0.4);">자동생성</span></div>
-        <input type="text" id="doc_number" placeholder="자동생성" oninput="syncPreview()" style="font-weight:700;letter-spacing:0.5px;background:#f7f9ff;color:#1a3a9e;height:40px;font-size:13px;text-align:center;width:100%;box-sizing:border-box;">
+        <input type="text" id="doc_number" placeholder="자동생성" oninput="syncPreview()" style="font-weight:700;letter-spacing:0;background:#f7f9ff;color:#1a3a9e;height:44px;font-size:12px;text-align:center;width:100%;box-sizing:border-box;padding:0 4px;">
       </div>
-      <div class="fld"><div class="lbl">복음제시 &amp; 횟수</div>
-        <div style="display:flex;gap:8px;align-items:center;height:44px;">
-          <select id="evang_type" onchange="onEvangTypeChange()" style="flex:1;height:44px;font-size:16px;padding-right:28px;">
-            <option value="">구분 선택</option>
-            <option value="관계(팀)">관계(팀)</option>
-            <option value="질문지(팀)">질문지(팀)</option>
-            <option value="7일후(팀)">7일후(팀)</option>
-            <option value="개인">개인</option>
-            <option value="관계">관계</option>
-            <option value="QQ">QQ</option>
-          </select>
-          <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" id="evang_count" placeholder="횟수" oninput="autoDocNumber();syncPreview()" style="width:72px;text-align:center;height:44px;font-size:16px;">
-        </div>
-        <!-- 개인전도 시 조원 선택 -->
-        <div id="personal-member-wrap" style="display:none;margin-top:7px;">
-          <select id="personal_member" onchange="onPersonalMemberChange()" style="width:100%;background:#fff;border:1px solid rgba(32,80,200,0.3);border-radius:6px;padding:9px 10px;font-size:16px;color:#0f1428;outline:none;background:#f0f6ff;">
-            <option value="">👤 전도자 선택 (조원)</option>
-          </select>
-        </div>
+      <div class="fld">
+        <div class="lbl">복음제시</div>
+        <select id="evang_type" onchange="onEvangTypeChange()" style="width:100%;height:44px;font-size:13px;padding:0 4px;">
+          <option value="">구분 선택</option>
+          <option value="관계(팀)">관계(팀)</option>
+          <option value="질문지(팀)">질문지(팀)</option>
+          <option value="7일후(팀)">7일후(팀)</option>
+          <option value="개인">개인</option>
+          <option value="관계">관계</option>
+          <option value="QQ">QQ</option>
+        </select>
       </div>
+      <div class="fld">
+        <div class="lbl">횟수</div>
+        <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" id="evang_count" placeholder="0" oninput="autoDocNumber();syncPreview()" style="width:100%;text-align:center;height:44px;font-size:16px;padding:0 4px;">
+      </div>
+    </div>
+    <!-- 개인전도 시 조원 선택 -->
+    <div id="personal-member-wrap" style="display:none;margin-bottom:10px;">
+      <select id="personal_member" onchange="onPersonalMemberChange()" style="width:100%;background:#fff;border:1px solid rgba(32,80,200,0.3);border-radius:6px;padding:9px 10px;font-size:16px;color:#0f1428;outline:none;background:#f0f6ff;">
+        <option value="">👤 전도자 선택 (조원)</option>
+      </select>
     </div>
     <div class="sec-lbl" style="margin-top:14px;">통계</div>
     <div style="overflow-x:auto;">
