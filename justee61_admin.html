@@ -2744,11 +2744,19 @@ function renderTab0(data, w) {
       var rowspan = joMembers.length;
       var result = rec ? rec.result : '';
       var resultCls = result === '결신' ? 'b-red' : result === '이미신자' ? 'b-green' : result === '확신' ? 'b-blue' : 'b-gray';
+      var recEvangType = rec ? rec.evangType || '' : '';
+      var isPersonal = (recEvangType === '개인' || recEvangType === '관계' || recEvangType === 'QQ');
 
       joMembers.forEach(function(m, mi) {
         var action = m.role === '리더' ? (rec ? rec.leaderAction : '') :
           m.role === '훈련자' ? (rec ? rec.trainerAction : '') :
           (rec ? rec.traineeAction : '');
+
+        // 개인전도: action이 비어있으면 relationMember(전도자)와 이름 비교로 판별
+        if (isPersonal && !action) {
+          var evangName = rec ? (rec.relationMember || '').replace(/\(.*?\)/g, '').trim() : '';
+          action = (evangName && m.name === evangName) ? '하였고' : '';
+        }
         var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
         var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
         var displayStep = m.step || '—';
@@ -2788,9 +2796,7 @@ function renderTab0(data, w) {
 
         // 복음참여 역할배분
         var PARTS = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
-        var evangType = rec ? rec.evangType || '' : '';
-        var isTeam = evangType === '관계(팀)';
-        var isPersonal = (evangType === '개인' || evangType === '관계' || evangType === 'QQ');
+        var isTeam = recEvangType === '관계(팀)';
         var markColor = isTeam ? '#1565c0' : '#e65100';
         var mPart = m.role === '리더' ? (rec ? rec.leaderPart : '') :
           m.role === '훈련자' ? (rec ? rec.trainerPart : '') :
