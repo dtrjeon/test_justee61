@@ -2786,19 +2786,6 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;' + extraBorderStyle + '"><span class="badge ' + resultCls + '">' + result + '</span></td>';
         }
 
-        // 참관 셀
-        // 개인전도: 전도자는 빈칸, 불참자는 회색 마크
-        // 팀전도: 참관자는 회색 마크
-        var showGrayMark = false;
-        if (isPersonal) {
-          showGrayMark = (action !== '하였고'); // 전도 안 한 조원 = 불참
-        } else {
-          showGrayMark = (action === '참관하였고');
-        }
-        html += '<td style="text-align:center;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' +
-          (showGrayMark ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9e9e9e;vertical-align:middle;"></span>' : '') +
-          '</td>';
-
         // 복음참여 역할배분
         var PARTS = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
         var evangType = rec ? rec.evangType || '' : '';
@@ -2810,26 +2797,35 @@ function renderTab0(data, w) {
           (rec ? rec.traineePart : '');
         var partArr = mPart ? mPart.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
 
-        // 개인전도 + 역할배분 없음 → 결신이면 서론~결신 자동, 아니면 전체
+        // 개인전도 + 역할배분 없음 → 결과에 따라 파트 자동 설정
         if (isPersonal && action === '하였고' && !partArr.length) {
           var resultVal = rec ? (rec.result || '') : '';
           if (resultVal === '결신' || resultVal === '확신') {
-            // 서론~결신 (인덱스 1~7)
             partArr = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신'];
           } else if (resultVal === '이미신자') {
             partArr = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
           } else {
-            // 보류/거절 등: 서론~믿음
             partArr = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음'];
           }
         }
 
         var dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + markColor + ';vertical-align:middle;"></span>';
 
-        if (action === '참관하였고' || (isPersonal && action !== '하였고')) {
-          // 팀전도 참관자 또는 개인전도 불참자 → 복음참여 9칸 빈칸
+        // 참관 셀 — 팀전도 참관자만 회색 마크, 개인전도는 빈칸
+        html += '<td style="text-align:center;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' +
+          ((!isPersonal && action === '참관하였고') ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9e9e9e;vertical-align:middle;"></span>' : '') +
+          '</td>';
+
+        // 복음참여 9칸
+        if (!isPersonal && action === '참관하였고') {
+          // 팀전도 참관 → 빈칸
           for (var pi2 = 0; pi2 < 9; pi2++) {
             html += '<td style="' + (pi2 === 8 ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle + '"></td>';
+          }
+        } else if (isPersonal && action !== '하였고') {
+          // 개인전도 불참자 → 빈칸
+          for (var pi3 = 0; pi3 < 9; pi3++) {
+            html += '<td style="' + (pi3 === 8 ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle + '"></td>';
           }
         } else {
           PARTS.forEach(function(p, pi) {
@@ -2850,7 +2846,16 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('새가족') > -1 ? '●' : '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && (rec.followup.indexOf('하지') > -1 || rec.followup.indexOf('못') > -1) ? '●' : '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.date ? rec.date.slice(5).replace('-', '/') : '') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">—</td>';
+            '<td rowspan="' + rowspan + '" style="font-size:9px;' + extraBorderStyle + '">' + (function() {
+              if (!isPersonal) return '—';
+              // 개인전도: 전도자 제외 나머지 조원 이름 표시
+              var absentNames = joMembers.filter(function(mm) {
+                var mmAction = mm.role === '리더' ? rec.leaderAction :
+                  mm.role === '훈련자' ? rec.trainerAction : rec.traineeAction;
+                return mmAction !== '하였고';
+              }).map(function(mm) { return mm.name; });
+              return absentNames.length ? absentNames.join(', ') : '—';
+            })() + '</td>';
         }
         html += '</tr>';
       });
