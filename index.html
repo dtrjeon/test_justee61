@@ -1855,10 +1855,10 @@ pre.code-block {
   <div class="divider"></div>
   <div class="sec">
     <div class="sec-lbl" style="margin-top:14px;">문서 정보</div>
-    <div style="display:grid;grid-template-columns:2fr 3fr;gap:10px;margin-bottom:10px;align-items:end;">
-      <div class="fld">
+    <div style="margin-bottom:10px;">
+      <div class="fld" style="margin-bottom:8px;">
         <div class="lbl">문서번호 <span style="font-weight:400;font-size:10px;color:rgba(0,0,0,0.4);">자동생성</span></div>
-        <input type="text" id="doc_number" placeholder="자동생성" oninput="syncPreview()" style="font-weight:700;letter-spacing:1px;background:#f7f9ff;color:#1a3a9e;height:44px;font-size:16px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;text-align:center;">
+        <input type="text" id="doc_number" placeholder="자동생성" oninput="syncPreview()" style="font-weight:700;letter-spacing:0.5px;background:#f7f9ff;color:#1a3a9e;height:40px;font-size:13px;text-align:center;width:100%;box-sizing:border-box;">
       </div>
       <div class="fld"><div class="lbl">복음제시 &amp; 횟수</div>
         <div style="display:flex;gap:8px;align-items:center;height:44px;">
@@ -2953,6 +2953,69 @@ function applyFormData(r) {
   _pre7ilhu = null; // 불러오기 시에는 스냅샷 복원 차단
   if (r.evang_type === '7일후(팀)') apply7ilhu();
 
+  // 18. 개인전도 — personal_member 복원 후 불참 자동설정
+  if (r.evang_type === '개인' || r.evang_type === '관계' || r.evang_type === 'QQ') {
+    var pmSel = document.getElementById('personal_member');
+    // personal_member 값 복원 (relation_member에서 이름만 추출)
+    if (pmSel && r.relation_member) {
+      var pmName = r.relation_member.replace(/\(.*?\)/g, '').trim();
+      for (var pi = 0; pi < pmSel.options.length; pi++) {
+        if (pmSel.options[pi].value === pmName) {
+          pmSel.value = pmName;
+          break;
+        }
+      }
+    }
+    // 전도자 외 불참 자동설정
+    var selMember = v('personal_member');
+    if (selMember) {
+      var joD = getJoData();
+      var joFound = joD.find(function(j) { return String(j.jo) === String(r.jo); });
+      if (joFound) {
+        var nameToId = {};
+        if (joFound.leader)   nameToId[joFound.leader]   = 'leader';
+        if (joFound.trainer)  nameToId[joFound.trainer]  = 'trainer';
+        if (joFound.trainee)  nameToId[joFound.trainee]  = 'trainee';
+        if (joFound.trainee2) nameToId[joFound.trainee2] = 'trainee';
+        MEMBERS.forEach(function(m) {
+          // 이미 action이 저장된 경우 덮어쓰지 않음
+          if (radio(m.id + '_action')) return;
+          var memberName = Object.keys(nameToId).find(function(n) { return nameToId[n] === m.id; });
+          var isEvangelist = (memberName === selMember);
+          var actionVal = isEvangelist ? '하였고' : '불참하였고';
+          var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + actionVal + '"]');
+          if (radioEl) radioEl.checked = true;
+        });
+      }
+
+      // 역할배분 없으면 결과에 따라 전도자 파트 자동설정
+      var evangId = nameToId ? Object.keys(nameToId).find(function(n) { return n === selMember; }) : null;
+      var evangMemberId = evangId ? nameToId[evangId] : null;
+      if (evangMemberId) {
+        var partKey = evangMemberId + '_part';
+        var existPart = v('q8_' + partKey);
+        if (!existPart) {
+          var resultVal = r.result || '';
+          var autoParts = [];
+          if (resultVal === '결신' || resultVal === '확신') {
+            autoParts = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신'];
+          } else if (resultVal === '이미신자') {
+            autoParts = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
+          } else if (resultVal === '보류' || resultVal === '거절') {
+            autoParts = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음'];
+          }
+          if (autoParts.length) {
+            // 체크박스 선택
+            document.querySelectorAll('input[name="' + evangMemberId + '_role"]').forEach(function(el) {
+              el.checked = autoParts.indexOf(el.value) > -1;
+            });
+            updateRoleText(evangMemberId);
+          }
+        }
+      }
+    }
+  }
+
   syncPreview();
 }
 
@@ -3730,8 +3793,35 @@ function buildPersonalMemberSelect() {
 }
 
 function onPersonalMemberChange() {
+  // 개인전도: 선택된 전도자 → 하였고, 나머지 → 불참하였고 자동 선택
+  var member = v('personal_member');
+  if (member) {
+    var jo = v('q1_jo');
+    var joData = getJoData();
+    var found = joData.find(function(j) { return String(j.jo) === String(jo); });
+    if (found) {
+      // 조원 → MEMBERS id 매핑
+      var nameToId = {};
+      if (found.leader)   nameToId[found.leader]   = 'leader';
+      if (found.trainer)  nameToId[found.trainer]  = 'trainer';
+      if (found.trainee)  nameToId[found.trainee]  = 'trainee';
+      if (found.trainee2) nameToId[found.trainee2] = 'trainee';
+
+      MEMBERS.forEach(function(m) {
+        // 이 멤버가 선택된 전도자인지 확인
+        var memberName = Object.keys(nameToId).find(function(n) { return nameToId[n] === m.id; });
+        var isEvangelist = (memberName === member);
+        var actionVal = isEvangelist ? '하였고' : '불참하였고';
+        var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + actionVal + '"]');
+        if (radioEl) {
+          radioEl.checked = true;
+        }
+      });
+    }
+  }
+
   if (!window._isRevision) {
-    suggestEvangCount();  // 전도자 변경 시 횟수 재계산
+    suggestEvangCount();
   }
   autoDocNumber();
   syncPreview();
