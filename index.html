@@ -4676,19 +4676,19 @@ async function handleSubmit() {
     }
     return;
   }
-  // ── 개인전도 참관 선택 경고 ──────────────────────────────────────────────────
+  // ── 개인전도 참관 선택 경고 — 강제 차단 ──────────────────────────────────────
   var personalWarn = checkPersonalActionWarning();
   if (personalWarn) {
-    if (!confirm(personalWarn + '\n\n그래도 제출하시겠습니까?\n(취소 후 해당 조원의 행동을 수정해 주세요)')) {
-      return;
-    }
+    // 오류 데이터 저장 방지 — confirm 없이 무조건 차단
+    showStatus('⚠️ 개인전도 조원 행동을 확인해 주세요. 전도자만 [하였고], 나머지는 [불참하였고]로 설정 후 다시 제출하세요.', 'warn');
+    return;
   }
-  // ── 통계 수치 2 이상 경고 (접촉횟수 제외) ──────────────────────────────────
+  // ── 통계 수치 2 이상 경고 (접촉횟수 제외) — 강제 차단 ───────────────────────
   var statsWarn = checkStatsOverflow();
   if (statsWarn) {
-    if (!confirm(statsWarn + '\n\n그래도 제출하시겠습니까?\n(취소 후 해당 수치를 확인해 주세요)')) {
-      return;
-    }
+    // 오류 데이터 저장 방지 — confirm 없이 무조건 차단
+    showStatus(statsWarn.split('\n')[0] + ' — 수치를 확인 후 다시 제출하세요.', 'warn');
+    return;
   }
   await submitServer();
 }
