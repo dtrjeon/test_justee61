@@ -1016,6 +1016,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
   <div class="tab" onclick="switchTab(1)">👥 복음참여현황</div>
   <div class="tab" onclick="switchTab(2)">🏃 팀전도현황</div>
   <div class="tab" onclick="switchTab(3)">📈 복음제시현황</div>
+  <div class="tab" onclick="switchTab(4)">🔍 문서번호관리</div>
 </div>
 
 <div class="week-bar">
@@ -1500,6 +1501,76 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     </div>
   </div>
   <div style="text-align:right;padding:4px 4px 2px;"><span id="release-time" style="font-size:10px;color:rgba(32,80,200,0.35);font-weight:600;"></span></div>
+</div>
+
+
+<!-- TAB 4: 문서번호 관리 -->
+<div class="page" id="page-4">
+  <div class="week-banner" style="background:linear-gradient(135deg,#1a3a6e,#2050c8);">
+    <div class="wb-left">
+      <div class="wb-title">문서번호 관리</div>
+      <div class="wb-sub">중복 문서번호 감지 및 정리</div>
+    </div>
+    <div class="wb-right">
+      <div class="wb-rate" id="dup-total-cnt">—</div>
+      <div class="wb-rate-label">중복 건수</div>
+    </div>
+  </div>
+
+  <!-- 요약 카드 -->
+  <div style="display:flex;gap:8px;padding:10px 0 4px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.07);padding:12px;text-align:center;">
+      <div style="font-size:10px;color:#888;margin-bottom:4px;">전체 문서번호</div>
+      <div id="dup-unique-cnt" style="font-size:22px;font-weight:800;color:#1a3ab0;">—</div>
+    </div>
+    <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.07);padding:12px;text-align:center;">
+      <div style="font-size:10px;color:#888;margin-bottom:4px;">전체 행 수</div>
+      <div id="dup-row-cnt" style="font-size:22px;font-weight:800;color:#555;">—</div>
+    </div>
+    <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.07);padding:12px;text-align:center;">
+      <div style="font-size:10px;color:#888;margin-bottom:4px;">중복 문서번호</div>
+      <div id="dup-doc-cnt" style="font-size:22px;font-weight:800;color:#e65100;">—</div>
+    </div>
+    <div style="flex:1;min-width:100px;background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.07);padding:12px;text-align:center;">
+      <div style="font-size:10px;color:#888;margin-bottom:4px;">이력 행 수</div>
+      <div id="dup-hist-cnt" style="font-size:22px;font-weight:800;color:#9e9e9e;">—</div>
+    </div>
+  </div>
+
+  <!-- 중복 문서번호 목록 -->
+  <div class="tbl-wrap" style="margin-top:8px;">
+    <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+      <span class="tbl-head-title">📋 중복 문서번호 목록
+        <span id="dup-list-cnt" style="font-size:11px;font-weight:400;color:#e65100;"></span>
+      </span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button onclick="renderTab4()" class="act-btn primary" style="font-size:11px;padding:4px 12px;">🔄 새로고침</button>
+        <button onclick="exportCsv('dup-table','tab4_문서번호관리')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;">⬇ CSV</button>
+      </div>
+    </div>
+    <div style="padding:8px 12px;font-size:10px;color:#888;background:#fafafa;border-bottom:1px solid #eee;">
+      ※ 같은 문서번호로 2행 이상 있는 경우 표시 &nbsp;|&nbsp; 수정 이력은 정상, 동일 저장일시는 중복 오류
+    </div>
+    <div id="dup-empty" style="padding:20px;text-align:center;font-size:12px;color:#aaa;display:none;">✅ 중복 문서번호가 없습니다</div>
+    <div class="tbl-scroll" style="overflow-x:auto;">
+      <table id="dup-table" style="width:100%;border-collapse:collapse;font-size:11px;display:none;">
+        <thead>
+          <tr style="background:#e8eaf6;">
+            <th style="padding:7px 8px;text-align:left;white-space:nowrap;">문서번호</th>
+            <th style="padding:7px 8px;text-align:center;">조</th>
+            <th style="padding:7px 8px;text-align:center;">유형</th>
+            <th style="padding:7px 8px;text-align:center;">전도일</th>
+            <th style="padding:7px 8px;text-align:center;">전체<br>행수</th>
+            <th style="padding:7px 8px;text-align:center;">이력<br>행수</th>
+            <th style="padding:7px 8px;text-align:center;">동일저장<br>(중복오류)</th>
+            <th style="padding:7px 8px;text-align:center;">최신저장일시</th>
+            <th style="padding:7px 8px;text-align:center;">수정</th>
+          </tr>
+        </thead>
+        <tbody id="dup-list"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- 설정 모달 -->
@@ -5191,6 +5262,107 @@ async function syncJoFromServer() {
 
 
 // ── 탭 전환 ──────────────────────────────────────────────────────────────────────
+
+// ── TAB 4: 문서번호 관리 ─────────────────────────────────────────────────────
+function renderTab4() {
+  if (!rawData || !rawData.length) {
+    showToast('먼저 데이터를 불러오세요.');
+    return;
+  }
+
+  // rawData 기준으로 문서번호별 그룹핑
+  var groups = {};
+  rawData.forEach(function(r) {
+    var doc = r.docNumber || '';
+    if (!doc) return;
+    if (!groups[doc]) {
+      groups[doc] = {
+        doc: doc,
+        jo: r.jo || '',
+        type: r.evangType || '',
+        date: r.date || '',
+        rows: []
+      };
+    }
+    groups[doc].rows.push(r.savedAt || '');
+  });
+
+  var allDocs = Object.values(groups);
+  var totalRows = rawData.length;
+  var uniqueDocs = allDocs.length;
+
+  // 중복 = 2행 이상인 문서번호
+  var dupDocs = allDocs.filter(function(g) { return g.rows.length > 1; });
+
+  // 이력 행 = 중복 문서번호에서 최신 1건 제외한 나머지
+  var histRows = dupDocs.reduce(function(sum, g) { return sum + g.rows.length - 1; }, 0);
+
+  // 동일 저장일시 = 진짜 중복 오류 (수정이력이 아닌 것)
+  dupDocs.forEach(function(g) {
+    var seen = {};
+    var dupCount = 0;
+    g.rows.forEach(function(t) {
+      if (seen[t]) dupCount++;
+      seen[t] = true;
+    });
+    g.dupSavedAt = dupCount;
+    g.latestSavedAt = g.rows.slice().sort().reverse()[0];
+  });
+
+  // 정렬: 동일저장일시 오류 먼저, 그 다음 행수 많은 순
+  dupDocs.sort(function(a, b) {
+    if (b.dupSavedAt !== a.dupSavedAt) return b.dupSavedAt - a.dupSavedAt;
+    return b.rows.length - a.rows.length;
+  });
+
+  // 요약 카드 업데이트
+  document.getElementById('dup-total-cnt').textContent  = dupDocs.length + '건';
+  document.getElementById('dup-unique-cnt').textContent = uniqueDocs;
+  document.getElementById('dup-row-cnt').textContent    = totalRows;
+  document.getElementById('dup-doc-cnt').textContent    = dupDocs.length;
+  document.getElementById('dup-hist-cnt').textContent   = histRows;
+  document.getElementById('dup-list-cnt').textContent   = '(' + dupDocs.length + '개 문서번호)';
+
+  var empty = document.getElementById('dup-empty');
+  var table = document.getElementById('dup-table');
+  var tbody = document.getElementById('dup-list');
+
+  if (!dupDocs.length) {
+    empty.style.display = 'block';
+    table.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  tbody.innerHTML = dupDocs.map(function(g, i) {
+    var bg = i % 2 === 0 ? '#fff' : '#f8f9ff';
+    var errBg = g.dupSavedAt > 0 ? '#fff3e0' : bg;
+    var safeDoc = g.doc.replace(/'/g, "\'");
+    var dupBadge = g.dupSavedAt > 0
+      ? '<span style="background:#e65100;color:#fff;border-radius:3px;padding:1px 5px;font-size:9px;font-weight:700;">' + g.dupSavedAt + '건 오류</span>'
+      : '<span style="color:#4caf50;font-size:9px;">정상이력</span>';
+    return '<tr style="background:' + errBg + ';">' +
+      '<td style="padding:6px 8px;font-weight:700;">' +
+        '<a href="#" onclick="openInIndex(\'' + safeDoc + '\');return false;" ' +
+        'style="color:#1565c0;text-decoration:underline;">' + g.doc + '</a>' +
+      '</td>' +
+      '<td style="padding:6px 8px;text-align:center;">' + g.jo + '조</td>' +
+      '<td style="padding:6px 8px;text-align:center;font-size:10px;">' + (g.type || '—') + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;font-size:10px;">' + (g.date || '—') + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;font-weight:700;color:#e65100;">' + g.rows.length + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;color:#9e9e9e;">' + (g.rows.length - 1) + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;">' + dupBadge + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;font-size:10px;color:#555;">' + (g.latestSavedAt || '—').slice(0, 16) + '</td>' +
+      '<td style="padding:6px 8px;text-align:center;">' +
+        '<button onclick="openInIndex(\'' + safeDoc + '\')" ' +
+        'style="background:#1a3ab0;color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;">수정</button>' +
+      '</td>' +
+      '</tr>';
+  }).join('');
+}
+
 function switchTab(idx) {
   currentTab = idx;
   document.querySelectorAll('.tab').forEach(function(t, i) {
@@ -5199,6 +5371,7 @@ function switchTab(idx) {
   document.querySelectorAll('.page').forEach(function(p, i) {
     p.classList.toggle('active', i === idx);
   });
+  if (idx === 4) renderTab4();
 }
 
 // ── 유틸 ────────────────────────────────────────────────────────────────────
