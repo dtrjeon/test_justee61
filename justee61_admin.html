@@ -3888,6 +3888,25 @@ function renderTab2(data, w) {
       var w7ok = w7recs >= 1 ? '<span class="badge b-green">✓' + w7recs + '</span>' : '<span class="badge b-gray">' + w7recs + '</span>';
       var suryoOk = isSuryoComplete(c, t, w7recs) ? '<span class="badge b-green">완료</span>' : '<span class="badge b-gray">미완료</span>';
 
+      // 개인전도 횟수: 조원별 개별 집계 (이름/횟수 2열 그리드)
+      var joMembers2 = MEMBERS.filter(function(m) { return Number(m.jo) === Number(jo); });
+      var personalRows = joMembers2.map(function(m) {
+        var cnt = joRecs.filter(function(r) {
+          if (r.evangType !== '개인') return false;
+          var eName = (r.relationMember || '').replace(/\(.*?\)/g, '').trim();
+          return eName === m.name;
+        }).length;
+        return { name: m.name, cnt: cnt };
+      });
+
+      // 개인전도 칸: 이름/횟수 2열 그리드
+      var personalCell = '<div style="display:grid;grid-template-columns:auto auto;gap:1px 6px;text-align:left;">' +
+        personalRows.map(function(p) {
+          return '<span style="color:#666;font-size:9px;white-space:nowrap;">' + p.name + '</span>' +
+            '<span style="font-weight:800;color:' + (p.cnt > 0 ? '#1565c0' : '#bbb') + ';text-align:right;">' + (p.cnt > 0 ? p.cnt : '—') + '</span>';
+        }).join('') +
+        '</div>';
+
       html += '<tr>' +
         '<td></td>' +
         '<td class="td-jo">' + jo + '조</td>' +
@@ -3896,6 +3915,7 @@ function renderTab2(data, w) {
         '<td>' + rel6 + '</td><td>' + ques2 + '</td><td>' + w7ok + '</td>' +
         '<td>' + suryoOk + '</td>' +
         '<td>' + (g || '—') + '</td>' +
+        '<td style="font-size:10px;text-align:left;padding:4px 6px;">' + (personalCell || '—') + '</td>' +
         '<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>' +
         '<td>' + (d ? '<span class="badge b-red">' + d + '</span>' : '—') + '</td>' +
         '<td>—</td>' +
