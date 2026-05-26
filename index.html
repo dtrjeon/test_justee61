@@ -1799,8 +1799,8 @@ pre.code-block {
 <div class="topbar">
   <div class="tab-btns">
     <button class="tab-btn active" onclick="switchTab('form')">✏️ 작성</button>
-    <button class="tab-btn" onclick="switchTab('preview')">📄 임상</button>
-    <button class="tab-btn" onclick="switchTab('suju')">📋 수주반</button>
+    <button class="tab-btn" id="tab-btn-preview" onclick="switchTab('preview')" style="display:none;">📄 임상</button>
+    <button class="tab-btn" onclick="switchTab('suju')">👁️ 미리보기</button>
     <button class="tab-btn" onclick="switchTab('history')">📁 기록</button>
   </div>
   <div class="topbar-right">
@@ -1810,7 +1810,7 @@ pre.code-block {
     </div>
     <button class="icon-btn" onclick="openPresetModal()" title="내 프리셋 설정" style="font-size:15px;">👤</button>
     <button class="icon-btn" onclick="confirmReset()" title="화면 초기화" style="font-size:15px;">🔄</button>
-    <button class="icon-btn" onclick="handleSheetBtn()" style="display:none;">⚙️</button>
+
   </div>
 </div>
 
@@ -2529,12 +2529,31 @@ pre.code-block {
       <select id="search-type" onchange="onSearchTypeChange()" style="flex:1;">
         <option value="doc_number">문서번호</option>
         <option value="jo">조</option>
-        <option value="week">주차</option>
+        <option value="week" selected>주차</option>
+        <option value="evang_type">복음제시유형</option>
         <option value="leader">훈련자(조장)</option>
         <option value="trainer">훈련자</option>
         <option value="trainee1">훈련생</option>
       </select>
       <input type="text" id="search-input" placeholder="검색어 입력..." onkeydown="if(event.key==='Enter')filterHistory()" style="flex:2;">
+      <select id="search-evang-type" onchange="filterHistory()" style="flex:2;display:none;border:1px solid rgba(32,80,200,0.2);border-radius:7px;padding:8px 10px;font-size:14px;outline:none;background:#fff;color:#333;">
+        <option value="">전체</option>
+        <option value="관계(팀)">관계(팀)</option>
+        <option value="질문지(팀)">질문지(팀)</option>
+        <option value="7일후(팀)">7일후(팀)</option>
+        <option value="개인">개인</option>
+        <option value="관계">관계</option>
+        <option value="QQ">QQ</option>
+      </select>
+      <select id="search-jo-sel" onchange="filterHistory()" style="flex:2;display:none;border:1px solid rgba(32,80,200,0.2);border-radius:7px;padding:8px 10px;font-size:14px;outline:none;background:#fff;color:#333;">
+        <option value="">전체</option>
+      </select>
+      <select id="search-week-sel" onchange="filterHistory()" style="flex:2;display:none;border:1px solid rgba(32,80,200,0.2);border-radius:7px;padding:8px 10px;font-size:14px;outline:none;background:#fff;color:#333;">
+        <option value="">전체</option>
+      </select>
+      <select id="search-member-sel" onchange="filterHistory()" style="flex:2;display:none;border:1px solid rgba(32,80,200,0.2);border-radius:7px;padding:8px 10px;font-size:14px;outline:none;background:#fff;color:#333;">
+        <option value="">전체</option>
+      </select>
       <button type="button" onclick="filterHistory()" style="background:#2050c8;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">🔍 조회</button>
     </div>
     <button class="search-clear" onclick="clearSearch()" title="초기화">✕</button>
@@ -3373,10 +3392,30 @@ function _openPresetModalNow() {
   btnRow.appendChild(btnLater);
   btnRow.appendChild(btnClear);
   modal.appendChild(h3);
+  // ── 앱 설정 섹션 ──────────────────────────────────────────
+  var s = getAppSettings();
+  var settingsSection = document.createElement('div');
+  settingsSection.style.cssText = 'margin-top:16px;border-top:1px solid #eee;padding-top:14px;';
+  settingsSection.innerHTML = '<div style="font-size:10px;font-weight:700;color:rgba(32,80,200,.5);letter-spacing:2px;margin-bottom:10px;">앱 설정</div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+    + '<div>'
+    + '<div style="font-size:13px;font-weight:700;color:#222;">📄 임상 탭 표시</div>'
+    + '<div style="font-size:11px;color:#888;margin-top:2px;">탭바에 임상(A4) 탭 추가</div>'
+    + '</div>'
+    + '<label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">'
+    + '<input type="checkbox" id="toggle-imsang" ' + (s.showImsang ? 'checked' : '') + ' '
+    + 'style="opacity:0;width:0;height:0;" onchange="onToggleImsang(this.checked)">'
+    + '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'
+    + (s.showImsang ? '#1a3ab0' : '#ccc') + ';border-radius:24px;transition:.3s;" id="toggle-imsang-track">'
+    + '<span style="position:absolute;height:18px;width:18px;left:' + (s.showImsang ? '23px' : '3px') + ';bottom:3px;background:#fff;border-radius:50%;transition:.3s;" id="toggle-imsang-thumb"></span>'
+    + '</span></label>'
+    + '</div>';
+
   modal.appendChild(p);
   modal.appendChild(list);
   modal.appendChild(btnRow);
   modal.appendChild(tempSection);
+  modal.appendChild(settingsSection);
   bg.appendChild(modal);
   document.body.appendChild(bg);
 }
@@ -4322,6 +4361,36 @@ function switchTab(tab) {
   }
 }
 
+
+// ── 앱 설정 모달 ──────────────────────────────────────────────────────────────
+var LS_APP_SETTINGS = 'app_settings';
+
+function getAppSettings() {
+  try { return JSON.parse(localStorage.getItem(LS_APP_SETTINGS) || '{}'); } catch(e) { return {}; }
+}
+function saveAppSettings(s) {
+  localStorage.setItem(LS_APP_SETTINGS, JSON.stringify(s));
+}
+
+function applyAppSettings() {
+  var s = getAppSettings();
+  var previewBtn = document.getElementById('tab-btn-preview');
+  if (previewBtn) previewBtn.style.display = s.showImsang ? '' : 'none';
+}
+
+
+function onToggleImsang(checked) {
+  var s = getAppSettings();
+  s.showImsang = checked;
+  saveAppSettings(s);
+  applyAppSettings();
+  // 토글 UI 업데이트
+  var track = document.getElementById('toggle-imsang-track');
+  var thumb = document.getElementById('toggle-imsang-thumb');
+  if (track) track.style.background = checked ? '#1a3ab0' : '#ccc';
+  if (thumb) thumb.style.left = checked ? '23px' : '3px';
+}
+
 function openModal() {
   // URL은 코드에 고정 — 모달 불필요
 }
@@ -5001,17 +5070,74 @@ function toggleSearch() {
 
 function onSearchTypeChange() {
   var type = document.getElementById('search-type').value;
-  var input = document.getElementById('search-input');
-  var placeholders = {
-    doc_number: '예: 61-9-질-1',
-    jo: '예: 9',
-    week: '예: 7',
-    leader: '이름 입력',
-    trainer: '이름 입력',
-    trainee1: '이름 입력'
-  };
-  input.placeholder = placeholders[type] || '검색어 입력...';
-  input.value = '';
+  var input       = document.getElementById('search-input');
+  var evangSel    = document.getElementById('search-evang-type');
+  var joSel       = document.getElementById('search-jo-sel');
+  var weekSel     = document.getElementById('search-week-sel');
+  var memberSel   = document.getElementById('search-member-sel');
+
+  // 모두 숨기고 input도 숨김
+  [input, evangSel, joSel, weekSel, memberSel].forEach(function(el) {
+    if (el) { el.style.display = 'none'; el.value = el.tagName === 'SELECT' ? '' : ''; }
+  });
+
+  if (type === 'evang_type') {
+    if (evangSel) evangSel.style.display = '';
+
+  } else if (type === 'jo') {
+    // 조 셀렉트 빌드
+    if (joSel) {
+      joSel.innerHTML = '<option value="">전체</option>';
+      var jd = getJoData();
+      jd.forEach(function(j) {
+        var opt = document.createElement('option');
+        opt.value = String(j.jo);
+        opt.textContent = j.jo + '조';
+        joSel.appendChild(opt);
+      });
+      joSel.style.display = '';
+    }
+
+  } else if (type === 'week') {
+    // 주차 셀렉트 빌드 (1~13주차)
+    if (weekSel) {
+      weekSel.innerHTML = '<option value="">전체</option>';
+      for (var w = 1; w <= 13; w++) {
+        var opt = document.createElement('option');
+        opt.value = String(w);
+        opt.textContent = w + '주차';
+        weekSel.appendChild(opt);
+      }
+      weekSel.style.display = '';
+    }
+
+  } else if (type === 'leader' || type === 'trainer' || type === 'trainee1') {
+    // 조원 이름 셀렉트 빌드
+    if (memberSel) {
+      memberSel.innerHTML = '<option value="">전체</option>';
+      var jd2 = getJoData();
+      var names = [];
+      jd2.forEach(function(j) {
+        if (type === 'leader'   && j.leader)   names.push(j.leader);
+        if (type === 'trainer'  && j.trainer)  names.push(j.trainer);
+        if (type === 'trainee1' && j.trainee)  names.push(j.trainee);
+      });
+      names.forEach(function(name) {
+        var opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        memberSel.appendChild(opt);
+      });
+      memberSel.style.display = '';
+    }
+
+  } else {
+    // 문서번호 등 텍스트 입력
+    input.placeholder = '예: 61-9-질-1';
+    input.style.display = '';
+  }
+
+  filterHistory();
 }
 
 function filterHistory() {
@@ -5048,11 +5174,26 @@ function filterHistory() {
       }
     }
     // 검색어 필터
-    if (q) {
+    var selMap = {
+      evang_type: 'search-evang-type',
+      jo:         'search-jo-sel',
+      week:       'search-week-sel',
+      leader:     'search-member-sel',
+      trainer:    'search-member-sel',
+      trainee1:   'search-member-sel'
+    };
+    if (selMap[type]) {
+      var selEl = document.getElementById(selMap[type]);
+      var selVal = selEl ? selEl.value : '';
+      if (selVal) {
+        var rVal = (r[type] || '').toString();
+        c.style.display = (rVal === selVal) ? '' : 'none';
+      } else {
+        c.style.display = '';
+      }
+    } else if (q) {
       var val = (r[type] || '').toString().toLowerCase();
-      // 조 검색은 정확히 일치 (1 입력 시 10조, 11조 제외)
-      var matched = (type === 'jo' || type === 'week') ? (val === q) : val.includes(q);
-      c.style.display = matched ? '' : 'none';
+      c.style.display = val.includes(q) ? '' : 'none';
     } else {
       c.style.display = '';
     }
@@ -5060,7 +5201,13 @@ function filterHistory() {
 }
 
 function clearSearch() {
-  document.getElementById('search-input').value = '';
+  ['search-input','search-evang-type','search-jo-sel','search-week-sel','search-member-sel'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.value = ''; el.style.display = 'none'; }
+  });
+  document.getElementById('search-input').style.display = '';
+  document.getElementById('search-input').placeholder = '예: 61-9-질-1';
+  document.getElementById('search-type').value = 'week';
   _presetFilterActive = false;
   var btn = document.getElementById('preset-filter-btn');
   if (btn) {
@@ -6625,6 +6772,13 @@ async function handleOcrImage(event) {
 }
 
 window.onload = function() {
+  // 앱 설정 적용 (임상 탭 on/off 등)
+  applyAppSettings();
+
+  // 검색 타입 초기값 주차로 설정
+  var stEl = document.getElementById('search-type');
+  if (stEl) { stEl.value = 'week'; if (typeof onSearchTypeChange === 'function') onSearchTypeChange(); }
+
   // iOS Safari 홈 화면 추가 안내 배너
   (function() {
     var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
