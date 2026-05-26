@@ -2532,7 +2532,7 @@ function openInIndex(docNumber) {
         record: json.record,
         ts: Date.now()
       }));
-      window.open('https://dtrjeon.github.io/justee_suji/index.html', '_blank');
+      window.open('https://dtrjeon.github.io/test_justee61/index.html', '_blank');
       showToast('✅ index.html을 열고 있습니다...');
     })
     .catch(function(e) {
@@ -2543,7 +2543,7 @@ function openInIndex(docNumber) {
         record: null,
         ts: Date.now()
       }));
-      window.open('https://dtrjeon.github.io/justee_suji/index.html', '_blank');
+      window.open('https://dtrjeon.github.io/test_justee61/index.html', '_blank');
     });
 }
 
@@ -4466,7 +4466,7 @@ function checkAllVersions() {
   }
 
   // ── Index 버전 확인 — index.html 직접 fetch ────────────────
-  var INDEX_URL = 'https://dtrjeon.github.io/justee_suji/index.html';
+  var INDEX_URL = 'https://dtrjeon.github.io/test_justee61/index.html';
   fetch(INDEX_URL, { cache: 'no-cache' })
     .then(function(r) { return r.text(); })
     .then(function(html) {
