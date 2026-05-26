@@ -2867,11 +2867,19 @@ function applyFormData(r) {
     if (wrap) wrap.style.display = 'none';
   }
 
-  // 6. 통계
-  ['contact', 'gospel', 'target', 'decision', 'reject', 'confirm', 'believer'].forEach(function(k) {
+  // 6. 통계 (불러오기 시)
+  // contact/gospel/target 은 저장값 복원
+  ['contact', 'gospel', 'target'].forEach(function(k) {
     var el = document.getElementById('t_' + k);
     if (el) el.value = (r[k] !== undefined && r[k] !== '') ? r[k] : '';
   });
+  // decision/reject/confirm/believer 는 진단결과 저장 버튼으로만 설정 → 항상 0으로 초기화
+  ['decision', 'reject', 'confirm', 'believer'].forEach(function(k) {
+    var el = document.getElementById('t_' + k);
+    if (el) el.value = '0';
+  });
+  // 진단결과 이전 상태 초기화 (진단결과 저장 버튼 재사용 시 차감 오류 방지)
+  _lastSavedDiagResult = '';
 
   // 7. 인적정보
   sv('q3_location', r.location);
