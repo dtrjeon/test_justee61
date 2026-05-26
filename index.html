@@ -1826,7 +1826,7 @@ pre.code-block {
   <div class="hd-eyebrow">EVANGELISM FIELD REPORT</div>
   <div class="hd-title">공개 <span>보고서</span></div>
   <div class="hd-sub">현장전도 보고서</div>
-  <div class="hd-badge">📅 전도일: <input type="date" id="report-date" oninput="syncPreview()" style="background:transparent;border:none;font-size:16px;color:rgba(20,50,160,1);outline:none;width:auto;padding:0;"></div>
+  <div class="hd-badge">📅 전도일: <input type="date" id="report-date" oninput="autoWeekFromDate();syncPreview()" style="background:transparent;border:none;font-size:16px;color:rgba(20,50,160,1);outline:none;width:auto;padding:0;"></div>
 </div>
 <div class="con">
   <!-- 임시저장 배너 -->
@@ -3964,6 +3964,40 @@ function unlock7ilhuStats() {
     var el = document.getElementById(id);
     if (el) { el.readOnly = false; el.style.background = ''; el.style.color = ''; }
   });
+}
+
+
+// ── 전도일 기준 주차 자동 계산 ────────────────────────────────────────────────
+function autoWeekFromDate() {
+  var dateVal = document.getElementById('report-date').value;
+  if (!dateVal) return;
+
+  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-01';
+  var startDate  = new Date(trainStart);
+  var inputDate  = new Date(dateVal);
+
+  if (isNaN(startDate) || isNaN(inputDate)) return;
+
+  // 주차 시작을 월요일 기준으로 정렬
+  // 1주: 시작일이 속한 월~일
+  var startMonday = new Date(startDate);
+  var dow = startDate.getDay(); // 0=일, 1=월 ...
+  var diffToMonday = (dow === 0) ? -6 : 1 - dow;
+  startMonday.setDate(startDate.getDate() + diffToMonday);
+
+  var diffDays = Math.floor((inputDate - startMonday) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return; // 시작일 이전이면 미설정
+
+  var week = Math.floor(diffDays / 7) + 1;
+
+  // 주차 범위 체크 (1~13)
+  if (week < 1 || week > 13) return;
+
+  var weekEl = document.getElementById('report-week');
+  if (weekEl) {
+    weekEl.value = String(week);
+    syncPreview();
+  }
 }
 
 function onEvangTypeChange() {
