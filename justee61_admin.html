@@ -513,6 +513,18 @@ body {
   border-bottom: 1px solid #c5cde8;
 }
 
+/* 개인전도 불참 조원 행 */
+.tbl-scroll table tr.personal-absent td {
+  background: #fafafa;
+  opacity: 0.6;
+}
+
+/* 팀전도 불참 조원 행 */
+.tbl-scroll table tr.team-absent td {
+  background: #fff5f5;
+  opacity: 0.75;
+}
+
 .tbl-scroll table tr.inactive-row td {
   color: #bbb;
   background: #fafafa;
@@ -2008,7 +2020,7 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycbyipko__9-xEAnxVZevyT17P6via2wU40Nx1Dx-RI5EWeSRKZj5Hj6ihbEogIpSxtfF/exec',
+  url: 'https://script.google.com/macros/s/AKfycbyQ3HBbSEIFfw4g9U9K1vj46dOK7IjWpkY3Ntg2lmP8x1GCophV1NaIXCoMPwG3nJbF/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
@@ -3063,7 +3075,7 @@ function renderTab0(data, w) {
     });
     if (!joRecs.length) return;
     var joMembers = MEMBERS.filter(function(m) {
-      return m.jo === jo;
+      return String(m.jo) === String(jo);
     });
     joMembers.forEach(function(m) {
       var action = m.role === '리더' ? (joRecs[0] ? joRecs[0].leaderAction : '') :
@@ -3158,7 +3170,7 @@ function renderTab0(data, w) {
 
   jos.forEach(function(jo) {
     var joMembers = MEMBERS.filter(function(m) {
-      return m.jo === jo;
+      return String(m.jo) === String(jo);
     });
     var joRecs = data.filter(function(r) {
       return String(r.jo) === String(jo);
@@ -3241,7 +3253,8 @@ function renderTab0(data, w) {
         // 2건째 이상 첫 조원행: 구분선 추가
         var extraBorderStyle = (ri > 0 && mi === 0) ? 'border-top:2px solid #8fa3d0;' : '';
 
-        html += '<tr class="jo-row active-row' + (isFirst ? ' jo-row-first' : '') + '">' +
+        var absentClass = (isPersonal && action !== '하였고') ? ' personal-absent' : (action === '불참하였고' ? ' team-absent' : '');
+        html += '<tr class="jo-row active-row' + (isFirst ? ' jo-row-first' : '') + absentClass + '">' +
           // 조번호: 첫 번째 건의 첫 번째 조원에만 전체 rowspan
           (!joNumRendered ? '<td class="td-jo" rowspan="' + totalRowspan + '" style="position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 #c5cde8;">' + jo + '</td>' : '') +
           '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fff;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + extraBorderStyle + '">' + m.name + '</td>' +
@@ -3295,7 +3308,7 @@ function renderTab0(data, w) {
 
         // 참관 셀 — 팀전도 참관자만 회색 마크, 개인전도는 빈칸
         html += '<td style="text-align:center;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' +
-          ((!isPersonal && action === '참관하였고') ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9e9e9e;vertical-align:middle;"></span>' : '') +
+          (!isPersonal && action === '참관하였고' ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9e9e9e;vertical-align:middle;" title="참관"></span>' : '') +
           '</td>';
 
         // 복음참여 9칸
@@ -3305,7 +3318,7 @@ function renderTab0(data, w) {
             html += '<td style="' + (pi2 === 8 ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle + '"></td>';
           }
         } else if (isPersonal && action !== '하였고') {
-          // 개인전도 불참자 → 빈칸
+          // 개인전도 — 전도자(하였고) 외 나머지는 모두 빈칸
           for (var pi3 = 0; pi3 < 9; pi3++) {
             html += '<td style="' + (pi3 === 8 ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle + '"></td>';
           }
@@ -3330,9 +3343,9 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.date ? rec.date.slice(5).replace('-', '/') : '') + '</td>';
         }
         // 불참자 열 — 조원별 개별 셀
-        var isAbsent = false;
+        // absentType: 'personal'=개인전도불참, 'team'=팀전도불참, 'error'=잘못된참관, ''=정상
+        var absentType = '';
         if (isPersonal) {
-          // 개인전도: 전도자가 아닌 조원은 불참
           var mmAction = m.role === '리더' ? (rec ? rec.leaderAction : '') :
             m.role === '훈련자' ? (rec ? rec.trainerAction : '') :
             (rec ? rec.traineeAction : '');
@@ -3340,14 +3353,35 @@ function renderTab0(data, w) {
             var evangName = rec ? (rec.relationMember || '').replace(/\(.*?\)/g, '').trim() : '';
             mmAction = (evangName && m.name === evangName) ? '하였고' : '';
           }
-          isAbsent = (mmAction !== '하였고');
+          if (mmAction === '하였고') {
+            absentType = '';           // 전도자 — 정상
+          } else if (mmAction === '참관하였고') {
+            absentType = 'error';      // 개인전도에서 참관하였고 → 오류
+          } else {
+            absentType = 'personal';   // 개인전도 불참 (정상)
+          }
         } else {
-          // 팀전도: 불참하였고
-          isAbsent = (action === '불참하였고');
+          if (action === '불참하였고') absentType = 'team'; // 팀전도 불참
         }
-        html += '<td style="text-align:center;' + extraBorderStyle + '">' +
-          (isAbsent ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#bdbdbd;vertical-align:middle;" title="불참"></span>' : '') +
-          '</td>';
+
+        // 마크 렌더
+        var absentMark = '';
+        if (absentType === 'personal') {
+          // 개인전도 불참 — 회색 단일 원
+          absentMark = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#bdbdbd;vertical-align:middle;" title="개인전도 불참"></span>';
+        } else if (absentType === 'team') {
+          // 팀전도 불참 — 빨간 2중 원
+          absentMark = '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid #e53935;background:transparent;vertical-align:middle;box-shadow:inset 0 0 0 2px #e53935;position:relative;" title="팀전도 불참">' +
+            '<span style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#e53935;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"></span></span>';
+        } else if (absentType === 'error') {
+          // 개인전도인데 참관하였고로 입력 → 오류 경고 (클릭 시 index.html에서 수정)
+          var safeDocErr = (rec ? rec.docNumber : '').replace(/'/g, "\\'");
+          absentMark = '<span onclick="openInIndex(\'' + safeDocErr + '\')" ' +
+            'style="display:inline-flex;align-items:center;gap:2px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:2px 5px;font-size:9px;font-weight:700;color:#856404;white-space:nowrap;cursor:pointer;" ' +
+            'title="클릭 → index.html에서 수정 (개인전도인데 참관하였고로 잘못 입력됨)">⚠️ 수정필요</span>';
+        }
+
+        html += '<td style="text-align:center;' + extraBorderStyle + '">' + absentMark + '</td>';
         html += '</tr>';
       });
     });

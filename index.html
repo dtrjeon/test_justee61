@@ -2708,7 +2708,7 @@ const DIAG_MAP = {
   }
 };
 let currentMode = 'server';
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbyipko__9-xEAnxVZevyT17P6via2wU40Nx1Dx-RI5EWeSRKZj5Hj6ihbEogIpSxtfF/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbyQ3HBbSEIFfw4g9U9K1vj46dOK7IjWpkY3Ntg2lmP8x1GCophV1NaIXCoMPwG3nJbF/exec';
 var _lastSavedDiagResult = '';
 
 var _autoSaveTimer = null;
@@ -4685,8 +4685,83 @@ async function handleSubmit() {
     }
     return;
   }
+  // ── 개인전도 참관 선택 경고 ──────────────────────────────────────────────────
+  var personalWarn = checkPersonalActionWarning();
+  if (personalWarn) {
+    if (!confirm(personalWarn + '\n\n그래도 제출하시겠습니까?\n(취소 후 해당 조원의 행동을 수정해 주세요)')) {
+      return;
+    }
+  }
+  // ── 통계 수치 2 이상 경고 (접촉횟수 제외) ──────────────────────────────────
+  var statsWarn = checkStatsOverflow();
+  if (statsWarn) {
+    if (!confirm(statsWarn + '\n\n그래도 제출하시겠습니까?\n(취소 후 해당 수치를 확인해 주세요)')) {
+      return;
+    }
+  }
   await submitServer();
 }
+
+// 통계 수치 2 이상 검사 (접촉횟수 제외)
+function checkStatsOverflow() {
+  // 질문지(팀) 전도는 다수 대상자 가능 — 검사 제외
+  var type = (document.getElementById('evang_type') || {}).value || '';
+  if (type === '질문지(팀)') return '';
+
+  var fields = [
+    { id: 't_gospel',   label: '복음제시' },
+    { id: 't_target',   label: '전도대상' },
+    { id: 't_decision', label: '결신' },
+    { id: 't_reject',   label: '보류/거절' },
+    { id: 't_confirm',  label: '확신' },
+    { id: 't_believer', label: '이미신자' }
+  ];
+  var problems = [];
+  fields.forEach(function(f) {
+    var el = document.getElementById(f.id);
+    var val = el ? parseInt(el.value) || 0 : 0;
+    if (val >= 2) {
+      problems.push(f.label + ': ' + val);
+      // 해당 입력 필드 강조
+      if (el) {
+        el.style.outline = '2px solid #e65100';
+        el.style.background = '#fff3e0';
+        setTimeout(function(elem) {
+          return function() {
+            elem.style.outline = '';
+            elem.style.background = '';
+          };
+        }(el), 3000);
+      }
+    }
+  });
+  if (!problems.length) return '';
+  return '⚠️ 통계 수치 확인 필요\n\n다음 항목이 2 이상으로 입력되었습니다:\n• ' + problems.join('\n• ') +
+    '\n\n(한 번에 복음을 제시한 경우 맞다면 무시하세요)';
+}
+
+// 개인전도 유형인데 참관하였고로 선택된 조원 검사
+function checkPersonalActionWarning() {
+  var type = (document.getElementById('evang_type') || {}).value || '';
+  var isPersonal = (type === '개인' || type === '관계' || type === 'QQ');
+  if (!isPersonal) return '';
+
+  var problems = [];
+  // MEMBERS 배열에서 현재 조 멤버 확인
+  if (typeof MEMBERS !== 'undefined') {
+    MEMBERS.forEach(function(m) {
+      var actionEl = document.querySelector('input[name="' + m.id + '_action"]:checked');
+      var action = actionEl ? actionEl.value : '';
+      if (action === '참관하였고') {
+        problems.push(m.name + '(' + m.label + ')');
+      }
+    });
+  }
+
+  if (!problems.length) return '';
+  return '⚠️ 개인전도는 전도자 1명만 [하였고], 나머지는 [불참하였고]로 선택해야 합니다.\n\n현재 [참관하였고]로 선택된 조원:\n• ' + problems.join('\n• ');
+}
+
 async function submitServer() {
   if (!scriptUrl) {
     openModal();
