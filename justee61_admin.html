@@ -1009,6 +1009,15 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
 <div class="week-bar">
   <label>주차</label>
   <select class="week-select" id="week-select" onchange="onWeekChange()"></select>
+  <label style="margin-left:6px;">유형</label>
+  <select class="week-select" id="evang-type-select" onchange="onWeekChange()" style="min-width:90px;">
+    <option value="">전체</option>
+    <option value="관계">관계(팀)</option>
+    <option value="질문지">질문지(팀)</option>
+    <option value="개인">개인</option>
+    <option value="7일후">7일후(팀)</option>
+    <option value="QQ">QQ</option>
+  </select>
   <button class="act-btn primary" onclick="loadData()">🔄 불러오기</button>
 </div>
 
@@ -1162,7 +1171,12 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <div class="tbl-wrap" style="border-left:4px solid #ef4444;">
       <div class="tbl-head" style="background:#fef2f2;display:flex;justify-content:space-between;align-items:center;">
         <span class="tbl-head-title" style="color:#ef4444;">⚠️ 문서번호 · 전도유형 불일치 <span id="mismatch-count" style="font-size:11px;font-weight:400;color:#ef4444;"></span></span>
-        <button onclick="document.getElementById('mismatch-panel').style.display='none'" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button onclick="fixAllEvangTypes()" id="fix-all-btn" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">🔧 전체 일괄 수정</button>
+          <button onclick="document.getElementById('gas-guide-modal').style.display='block';document.getElementById('gas-guide-overlay').style.display='block';" style="background:transparent;border:1px solid #ef4444;color:#ef4444;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;" title="GAS 코드 안내">GAS ?</button>
+          <span id="fix-all-status" style="font-size:10px;color:#666;"></span>
+          <button onclick="document.getElementById('mismatch-panel').style.display='none'" style="background:none;border:none;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+        </div>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:11px;">
         <thead>
@@ -1170,10 +1184,45 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
             <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #fecaca;">문서번호</th>
             <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #fecaca;">조</th>
             <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #fecaca;">입력 유형</th>
-            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #fecaca;">예상 유형</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #fecaca;">올바른 유형</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #fecaca;">수정</th>
           </tr>
         </thead>
         <tbody id="mismatch-list"></tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- 문서번호 재넘버링 패널 -->
+  <div id="renumber-panel" style="display:none;margin-bottom:12px;">
+    <div class="tbl-wrap" style="border-left:4px solid #f57f17;">
+      <div class="tbl-head" style="background:#fffde7;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <span class="tbl-head-title" style="color:#f57f17;">🔢 문서번호 재넘버링 <span id="renumber-count" style="font-size:11px;font-weight:400;color:#f57f17;"></span></span>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <button onclick="previewRenumber()" id="renumber-preview-btn" style="background:#f57f17;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">🔍 미리보기</button>
+          <button onclick="applyRenumber()" id="renumber-apply-btn" style="display:none;background:#e65100;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;">✅ 전체 적용</button>
+          <button onclick="document.getElementById('renumber-gas-modal').style.display='block';document.getElementById('renumber-gas-overlay').style.display='block';" style="background:transparent;border:1px solid #f57f17;color:#f57f17;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;" title="GAS 코드 안내">GAS ?</button>
+          <span id="renumber-status" style="font-size:10px;color:#666;"></span>
+          <button onclick="document.getElementById('renumber-panel').style.display='none'" style="background:none;border:none;color:#f57f17;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+      </div>
+      <div id="renumber-empty" style="padding:14px 16px;font-size:11px;color:#999;">
+        🔍 미리보기 버튼을 눌러 재넘버링 대상을 확인하세요.<br>
+        <span style="font-size:10px;color:#bbb;">기준: 조·유형별 전도일 오름차순으로 1번부터 순서 재배정</span>
+      </div>
+      <table id="renumber-table" style="display:none;width:100%;border-collapse:collapse;font-size:11px;">
+        <thead>
+          <tr style="background:#fffde7;">
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ffe082;">현재 문서번호</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ffe082;">→ 새 문서번호</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ffe082;">전도일</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ffe082;">조</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ffe082;">유형</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid #ffe082;">상태</th>
+          </tr>
+        </thead>
+        <tbody id="renumber-list"></tbody>
       </table>
     </div>
   </div>
@@ -1183,6 +1232,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title" style="line-height:1.7;">조별 상세 현황<br><span style="font-size:10px;font-weight:500;color:var(--text2);"><span id="week-label-0">—</span>주차&nbsp;&nbsp;<span id="week-period-0"></span></span></span>
       <div style="display:flex;align-items:center;gap:8px;">
+        <button onclick="showRenumberPanel()" style="background:#f57f17;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">🔢 번호 재설정</button>
         <button onclick="exportCsv('tb-weekly','tab0_주간현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
         <button onclick="exportPdf('tb-weekly','tab0_주간현황')" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ PDF</button>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;" onclick="toggleInactiveRows()">
@@ -1951,7 +2001,7 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycbwl6UtAaQ3fwSkqOePGr0ll-5VYnOo9Z5IDTYLG6P2VXEV1M2K55TCJAHf5BpPId39Z/exec',
+  url: 'https://script.google.com/macros/s/AKfycbyipko__9-xEAnxVZevyT17P6via2wU40Nx1Dx-RI5EWeSRKZj5Hj6ihbEogIpSxtfF/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
@@ -2023,7 +2073,9 @@ function calcCurrentWeek() {
 }
 let currentTab = 0,
   currentWeek = calcCurrentWeek();
-let allData = []; // 구글시트에서 불러온 전체 레코드
+let currentEvangType = ''; // 복음제시 유형 필터
+let allData = []; // 구글시트에서 불러온 전체 레코드 (최신 1건/문서번호)
+let rawData  = []; // 원본 전체 행 (수정이력 포함)
 
 // ── 비밀번호 ─────────────────────────────────────────────────────────────────
 // ⚠️ 보안을 위해 배포 전 반드시 변경하세요
@@ -2128,6 +2180,11 @@ window.onload = function() {
 function buildWeekSelect() {
   var sel = document.getElementById('week-select');
   sel.innerHTML = '';
+  // 전체 옵션
+  var oAll = document.createElement('option');
+  oAll.value = 0;
+  oAll.textContent = '전체';
+  sel.appendChild(oAll);
   for (var w = 1; w <= 13; w++) {
     var o = document.createElement('option');
     o.value = w;
@@ -2138,7 +2195,8 @@ function buildWeekSelect() {
 }
 
 function onWeekChange() {
-  currentWeek = parseInt(document.getElementById('week-select').value);
+  currentWeek = parseInt(document.getElementById('week-select').value) || 0;
+  currentEvangType = document.getElementById('evang-type-select') ? document.getElementById('evang-type-select').value : '';
   renderAll();
 }
 
@@ -2160,6 +2218,7 @@ async function loadData() {
   if (window.TEST_MODE) {
     showToast('🧪 테스트 데이터 로드 중...');
     var parsed = parseRecords(window.TEST_DATA.records || []);
+    rawData = parsed.slice();
     var latestMap = {};
     parsed.forEach(function(r) {
       var key = r.docNumber || r.savedAt;
@@ -2193,6 +2252,9 @@ async function loadData() {
     var json = await res.json();
     if (json.status !== 'ok') throw new Error(json.message || '오류');
     var parsed = parseRecords(json.records || []);
+
+    // ── 원본 전체 보존 (수정이력 포함) ──
+    rawData = parsed.slice();
 
     // ── 문서번호 기준 최신 레코드만 유지 (이력은 시트에 보존) ──
     // 동일 문서번호가 여러 개면 저장일시가 가장 최근인 것만 사용
@@ -2241,7 +2303,13 @@ function parseRecords(raw) {
       week: num(g('주차')),
       date: g('전도일'),
       docNumber: g('문서번호'),
-      evangType: g('전도유형'),
+      evangType: (function() {
+        var doc = g('문서번호');
+        var raw = g('전도유형');
+        // 문서번호에 '7일후'가 포함된 경우 전도유형을 강제 보정
+        if (doc.indexOf('7일후') > -1) return '7일후(팀)';
+        return raw;
+      })(),
       evangCount: num(g('횟수')),
       jo: g('조'),
       leader: g('훈련자(조장)'),
@@ -2301,12 +2369,29 @@ function num(v) {
 // ── 렌더링 총괄 ──────────────────────────────────────────────────────────────
 function renderAll() {
   var w = currentWeek;
-  var weekData = allData.filter(function(r) {
-    return Number(r.week) === w;
-  });
-  var accData = allData.filter(function(r) {
-    return Number(r.week) <= w;
-  });
+  var et = (typeof currentEvangType !== 'undefined') ? currentEvangType : '';
+
+  // 유형 필터 함수
+  function matchType(r) {
+    if (!et) return true;
+    var t = (r.evangType || '').toString();
+    if (et === '관계') return t === '관계(팀)';
+    if (et === '질문지') return t === '질문지(팀)';
+    if (et === '7일후') return t === '7일후(팀)';
+    if (et === '개인') return t === '개인';
+    if (et === 'QQ') return t.indexOf('QQ') > -1 || t.indexOf('qq') > -1;
+    return true;
+  }
+
+  var weekData, accData;
+  if (w === 0) {
+    // 전체 주차
+    weekData = allData.filter(function(r) { return matchType(r); });
+    accData  = weekData;
+  } else {
+    weekData = allData.filter(function(r) { return Number(r.week) === w && matchType(r); });
+    accData  = allData.filter(function(r) { return Number(r.week) <= w && matchType(r); });
+  }
   updatePeriodTxt(w);
   renderTab0(weekData, w);
   renderTab1(accData, w);
@@ -2318,6 +2403,7 @@ function renderAll() {
 function updatePeriodTxt(w) {
   var el = document.getElementById('week-period-0');
   if (!el) return;
+  if (w === 0) { el.textContent = '전체 주차'; return; }
   if (!CFG.trainStart) { el.textContent = ''; return; }
 
   // 훈련 시작일 기준 해당 주의 월요일 계산
@@ -2442,6 +2528,9 @@ function openInIndex(docNumber) {
     });
 }
 
+// 전역: 현재 불일치 목록 캐시
+var _mismatches = [];
+
 function checkMismatch(data) {
   var TYPE_MAP = {
     '관': '관계(팀)', '관계': '관계(팀)',
@@ -2449,7 +2538,7 @@ function checkMismatch(data) {
     '7일후': '7일후(팀)',
     '개인': '개인'
   };
-  var mismatches = [];
+  _mismatches = [];
   data.forEach(function(r) {
     var doc = String(r.docNumber || '');
     var etype = String(r.evangType || '');
@@ -2459,35 +2548,295 @@ function checkMismatch(data) {
       var key = parts[2];
       var expected = TYPE_MAP[key];
       if (expected && expected !== etype) {
-        mismatches.push({ doc: doc, jo: r.jo, etype: etype, expected: expected });
+        _mismatches.push({ doc: doc, jo: r.jo, etype: etype, expected: expected });
       }
     }
   });
 
   var panel = document.getElementById('mismatch-panel');
-  var list = document.getElementById('mismatch-list');
+  var list  = document.getElementById('mismatch-list');
   var count = document.getElementById('mismatch-count');
   if (!panel || !list) return;
 
-  if (mismatches.length === 0) {
+  if (_mismatches.length === 0) {
     panel.style.display = 'none';
     return;
   }
 
-  count.textContent = '(' + mismatches.length + '건)';
-  list.innerHTML = mismatches.map(function(m, i) {
+  count.textContent = '(' + _mismatches.length + '건)';
+  list.innerHTML = _mismatches.map(function(m, i) {
     var bg = i % 2 === 0 ? '#fff' : '#fef9f9';
-    return '<tr style="background:' + bg + ';">' +
+    var safeDoc = m.doc.replace(/'/g, "\\'");
+    var safeExp = m.expected.replace(/'/g, "\\'");
+    var safeOld = m.etype.replace(/'/g, "\\'");
+    return '<tr id="mm-row-' + i + '" style="background:' + bg + ';">' +
       '<td style="padding:5px 8px;font-weight:600;">' +
-        '<a href="#" onclick="openInIndex(\'' + m.doc + '\');return false;" ' +
+        '<a href="#" onclick="openInIndex(\'' + safeDoc + '\');return false;" ' +
         'style="color:#1565c0;text-decoration:underline;cursor:pointer;">' + m.doc + '</a>' +
       '</td>' +
       '<td style="padding:5px 8px;text-align:center;">' + m.jo + '조</td>' +
-      '<td style="padding:5px 8px;text-align:center;color:#ef4444;">' + m.etype + '</td>' +
-      '<td style="padding:5px 8px;text-align:center;color:#1565c0;">' + m.expected + '</td>' +
+      '<td style="padding:5px 8px;text-align:center;color:#ef4444;text-decoration:line-through;">' + m.etype + '</td>' +
+      '<td style="padding:5px 8px;text-align:center;color:#1565c0;font-weight:700;">→ ' + m.expected + '</td>' +
+      '<td style="padding:5px 8px;text-align:center;">' +
+        '<button id="mm-btn-' + i + '" onclick="fixOneEvangType(' + i + ',\'' + safeDoc + '\',\'' + safeExp + '\',\'' + safeOld + '\')" ' +
+        'style="background:#1a3ab0;color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;">수정</button>' +
+      '</td>' +
       '</tr>';
   }).join('');
   panel.style.display = 'block';
+}
+
+// ── 개별 유형 수정 ────────────────────────────────────────────────────────────
+async function fixOneEvangType(idx, docNumber, newType, oldType) {
+  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
+  var btn = document.getElementById('mm-btn-' + idx);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+  try {
+    var res = await fetch(CFG.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'fix_evang_type', docNumber: docNumber, newType: newType, oldType: oldType || '' })
+    });
+    var json = await res.json();
+    if (json.status === 'ok') {
+      var row = document.getElementById('mm-row-' + idx);
+      if (row) row.style.background = '#f0fdf4';
+      if (btn) { btn.textContent = '✅'; btn.style.background = '#2e7d32'; }
+      showToast('✅ ' + docNumber + ' → ' + newType + ' 수정 완료');
+    } else throw new Error(json.message || '오류');
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '수정'; }
+    showToast('❌ 수정 실패: ' + e.message);
+  }
+}
+
+// ── 일괄 유형 수정 ────────────────────────────────────────────────────────────
+async function fixAllEvangTypes() {
+  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
+  if (_mismatches.length === 0) { showToast('수정할 항목이 없습니다.'); return; }
+  var statusEl = document.getElementById('fix-all-status');
+  var btn = document.getElementById('fix-all-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 수정 중...'; }
+
+  var success = 0, fail = 0;
+  for (var i = 0; i < _mismatches.length; i++) {
+    var m = _mismatches[i];
+    if (statusEl) statusEl.textContent = (i + 1) + '/' + _mismatches.length + ' 처리 중...';
+    try {
+      var res = await fetch(CFG.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'fix_evang_type', docNumber: m.doc, newType: m.expected, oldType: m.etype || '' })
+      });
+      var json = await res.json();
+      if (json.status === 'ok') {
+        success++;
+        var row = document.getElementById('mm-row-' + i);
+        var btn2 = document.getElementById('mm-btn-' + i);
+        if (row) row.style.background = '#f0fdf4';
+        if (btn2) { btn2.textContent = '✅'; btn2.disabled = true; btn2.style.background = '#2e7d32'; }
+      } else fail++;
+    } catch(e) { fail++; }
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '🔧 전체 일괄 수정'; }
+  if (statusEl) statusEl.textContent = '완료: ' + success + '건 성공' + (fail ? ', ' + fail + '건 실패' : '');
+  showToast('✅ 일괄 수정 완료: ' + success + '/' + _mismatches.length + '건');
+  // 3초 후 데이터 재로드
+  setTimeout(function() { loadData(); }, 3000);
+}
+
+
+// ── 문서번호 재넘버링 ─────────────────────────────────────────────────────────
+var _renumberPlan = []; // { oldDoc, newDoc, date, jo, typeKey, changed }
+
+function showRenumberPanel() {
+  var panel = document.getElementById('renumber-panel');
+  if (panel) {
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function previewRenumber() {
+  if (!allData || !allData.length) { showToast('먼저 데이터를 불러오세요.'); return; }
+
+  // rawData가 있으면 사용 (수정이력 포함 전체), 없으면 allData fallback
+  var source = (rawData && rawData.length) ? rawData : allData;
+
+  // 문서번호 세 번째 파트(유형 약자) 추출
+  function typeKey(r) {
+    var parts = (r.docNumber || '').split('-');
+    return parts.length >= 3 ? parts[2] : '';
+  }
+
+  // 기수 추출 (문서번호 첫 번째 파트, 없으면 CFG에서)
+  function kisuOf(r) {
+    var parts = (r.docNumber || '').split('-');
+    return parts[0] || '61';
+  }
+
+  // 조·유형 기준 그룹핑
+  var groups = {};
+  source.forEach(function(r) {
+    if (!r.docNumber) return;
+    var tk = typeKey(r);
+    if (!tk) return;
+    // 개인전도는 이름 파트도 그룹 키에 포함 (61-4-개인-이나경-1 → 키: "4|개인|이나경")
+    var op = (r.docNumber || '').split('-');
+    var personPart = (tk === '개인' && op[3]) ? op[3] : '';
+    var k = (r.jo || '?') + '|' + tk + (personPart ? '|' + personPart : '');
+    if (!groups[k]) groups[k] = { kisu: kisuOf(r), jo: String(r.jo || ''), tkey: tk, person: personPart, recs: [] };
+    groups[k].recs.push(r);
+  });
+
+  _renumberPlan = [];
+
+  // 조 번호 오름차순 → 유형 → 이름 순으로 그룹 정렬
+  var sortedKeys = Object.keys(groups).sort(function(a, b) {
+    var ga = groups[a], gb = groups[b];
+    var joA = parseInt(ga.jo) || 0, joB = parseInt(gb.jo) || 0;
+    if (joA !== joB) return joA - joB;
+    if (ga.tkey !== gb.tkey) return ga.tkey < gb.tkey ? -1 : 1;
+    return (ga.person || '') < (gb.person || '') ? -1 : 1;
+  });
+
+  sortedKeys.forEach(function(k) {
+    var g = groups[k];
+    // ★ 핵심: 전도일 오름차순으로 정렬 → 순서대로 1, 2, 3 ... 부여
+    var recs = g.recs.slice().sort(function(a, b) {
+      var da = a.date || '', db = b.date || '';
+      if (da !== db) return da < db ? -1 : 1;
+      // 전도일 같으면 기존 문서번호 순으로 안정 정렬
+      return (a.docNumber || '') < (b.docNumber || '') ? -1 : 1;
+    });
+
+    recs.forEach(function(r, idx) {
+      var oldDoc = r.docNumber;
+      var seq = idx + 1;
+      var newDoc = g.kisu + '-' + g.jo + '-' + g.tkey
+                 + (g.person ? '-' + g.person : '')
+                 + '-' + seq;
+      _renumberPlan.push({
+        oldDoc:  oldDoc,
+        newDoc:  newDoc,
+        date:    r.date || '',
+        jo:      g.jo,
+        typeKey: g.tkey + (g.person ? '/' + g.person : ''),
+        changed: oldDoc !== newDoc
+      });
+    });
+  });
+
+  var changed = _renumberPlan.filter(function(p) { return p.changed; });
+  var tbody = document.getElementById('renumber-list');
+  var table = document.getElementById('renumber-table');
+  var empty = document.getElementById('renumber-empty');
+  var cnt   = document.getElementById('renumber-count');
+  var applyBtn = document.getElementById('renumber-apply-btn');
+
+  cnt.textContent = '(' + changed.length + '건 변경)';
+
+  if (changed.length === 0) {
+    empty.innerHTML = '✅ 모든 문서번호가 올바르게 정렬되어 있습니다.';
+    empty.style.display = 'block';
+    table.style.display = 'none';
+    if (applyBtn) applyBtn.style.display = 'none';
+    return;
+  }
+
+  // 변경 항목 표시 — 같은 oldDoc은 수정이력 묶음으로 표시
+  // 문서번호별로 그룹핑하여 대표(최신) 1건만 행으로 표시 + 이력 건수 뱃지
+  var docGroups = {};
+  changed.forEach(function(p, i) {
+    if (!docGroups[p.oldDoc]) docGroups[p.oldDoc] = { plan: p, idx: i, histCount: 0 };
+    else docGroups[p.oldDoc].histCount++;  // 동일 문서번호 추가 이력
+  });
+
+  // 고유 문서번호 기준으로 표시 (중복 이력은 건수만 표기)
+  var seen = {};
+  tbody.innerHTML = changed.map(function(p, i) {
+    var isFirst = !seen[p.oldDoc];
+    seen[p.oldDoc] = true;
+    var histCount = docGroups[p.oldDoc] ? docGroups[p.oldDoc].histCount : 0;
+    if (!isFirst) {
+      // 이력 행: 연하게 접힌 형태로 표시
+      return '<tr id="rn-row-' + i + '" style="background:#f9f9f9;opacity:0.6;">' +
+        '<td style="padding:3px 8px 3px 20px;color:#999;font-family:monospace;font-size:9px;">└ 수정이력: ' + p.oldDoc + '</td>' +
+        '<td style="padding:3px 8px;color:#888;font-family:monospace;font-size:9px;">→ ' + p.newDoc + '</td>' +
+        '<td style="padding:3px 8px;text-align:center;font-size:9px;color:#999;">' + (p.date || '—') + '</td>' +
+        '<td colspan="2" style="padding:3px 8px;text-align:center;font-size:9px;color:#bbb;">이력행</td>' +
+        '<td style="padding:3px 8px;text-align:center;font-size:9px;" id="rn-status-' + i + '">—</td>' +
+        '</tr>';
+    }
+    var bg = Object.keys(seen).length % 2 === 1 ? '#fff' : '#fffbf0';
+    var histBadge = histCount > 0
+      ? ' <span style="background:#e65100;color:#fff;border-radius:3px;padding:1px 4px;font-size:9px;">+' + histCount + '이력</span>'
+      : '';
+    return '<tr id="rn-row-' + i + '" style="background:' + bg + ';">' +
+      '<td style="padding:5px 8px;color:#c0392b;font-family:monospace;font-size:10px;">' + p.oldDoc + histBadge + '</td>' +
+      '<td style="padding:5px 8px;color:#1565c0;font-family:monospace;font-size:10px;font-weight:700;">→ ' + p.newDoc + '</td>' +
+      '<td style="padding:5px 8px;text-align:center;font-size:10px;">' + (p.date || '—') + '</td>' +
+      '<td style="padding:5px 8px;text-align:center;">' + p.jo + '조</td>' +
+      '<td style="padding:5px 8px;text-align:center;font-size:10px;">' + p.typeKey + '</td>' +
+      '<td style="padding:5px 8px;text-align:center;" id="rn-status-' + i + '">—</td>' +
+      '</tr>';
+  }).join('');
+
+  // 건수 표시: 고유 문서번호 수 + 전체 행 수(이력 포함)
+  var uniqueCount = Object.keys(docGroups).length;
+  cnt.textContent = '(' + uniqueCount + '개 문서번호, 시트 ' + changed.length + '행 변경)';
+
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  if (applyBtn) applyBtn.style.display = 'inline-block';
+}
+
+async function applyRenumber() {
+  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
+  var changed = _renumberPlan.filter(function(p) { return p.changed; });
+  if (!changed.length) { showToast('변경할 항목이 없습니다.'); return; }
+
+  var applyBtn  = document.getElementById('renumber-apply-btn');
+  var statusEl  = document.getElementById('renumber-status');
+  if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = '⏳ 적용 중...'; }
+
+  var success = 0, fail = 0;
+  for (var i = 0; i < changed.length; i++) {
+    var p = changed[i];
+    var statusCell = document.getElementById('rn-status-' + i);
+    if (statusCell) statusCell.textContent = '⏳';
+    try {
+      var res = await fetch(CFG.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action:  'renumber_doc',
+          oldDoc:  p.oldDoc,
+          newDoc:  p.newDoc
+        })
+      });
+      var json = await res.json();
+      if (json.status === 'ok') {
+        success++;
+        if (statusCell) statusCell.textContent = '✅';
+        var row = document.getElementById('rn-row-' + i);
+        if (row) row.style.background = '#f0fdf4';
+      } else {
+        fail++;
+        if (statusCell) statusCell.textContent = '❌';
+      }
+    } catch(e) {
+      fail++;
+      if (statusCell) statusCell.textContent = '❌';
+    }
+    if (statusEl) statusEl.textContent = (i + 1) + '/' + changed.length;
+  }
+
+  if (applyBtn) { applyBtn.disabled = false; applyBtn.textContent = '✅ 전체 적용'; }
+  if (statusEl) statusEl.textContent = '완료 ' + success + '건 성공' + (fail ? ', ' + fail + '건 실패' : '');
+  showToast('🔢 재넘버링 완료: ' + success + '/' + changed.length + '건');
+  setTimeout(function() { loadData(); }, 3000);
 }
 
 // ── TAB 0: 주간현황 ──────────────────────────────────────────────────────────
@@ -2546,9 +2895,9 @@ function renderTab0(data, w) {
   data.forEach(function(r) {
     activeJo.add(String(r.jo));
     var et = r.evangType || r.evang_type || '';
-    if (et === '관계(팀)') totalGospelTeam++;
+    if (et === '7일후(팀)') total7dayTeam++;
+    else if (et === '관계(팀)') totalGospelTeam++;
     else if (et === '질문지(팀)') totalQuesTeam++;
-    else if (et === '7일후(팀)') total7dayTeam++;
     else if (et === '개인') totalPersonal++;
     else if (et === '관계') totalRel++;
     else if (et === 'QQ') totalQQ++;
@@ -2611,7 +2960,7 @@ function renderTab0(data, w) {
   }, 0);
   var inactive = totalJo - activeJo.size;
 
-  setText('wb-title', CFG.title + ' [주간현황:' + w + '주]');
+  setText('wb-title', w === 0 ? CFG.title + ' [전체 현황]' : CFG.title + ' [주간현황:' + w + '주]');
   setText('wb-rate', rate > 0 ? rate + '%' : '—');
   setText('s-decision-cnt', totalDecision);
   setText('s-rate-denom', rateDenom);
@@ -2646,7 +2995,7 @@ function renderTab0(data, w) {
   setText('s-active-jo', activeJo.size + '조');
   setText('s-inactive-jo', (totalJo - activeJo.size) + '조');
   setText('s-total-jo', totalJo + '조');
-  setText('week-label-0', w);
+  setText('week-label-0', w === 0 ? '전체' : w);
 
   // 데이터 오류 경고: 복음제시 합계 vs 대상자/결과 합계 불일치 시 표시
   var gospelTotal = totalGospelAll,
@@ -4790,5 +5139,137 @@ function showToast(msg) {
 </div>
 <div id="suryo-info-overlay" onclick="toggleSuryoInfo()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:9998;"></div>
 
+
+<!-- GAS fix_evang_type 안내 모달 -->
+<div id="gas-guide-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:20px 22px;min-width:300px;max-width:420px;max-height:85vh;overflow-y:auto;">
+  <div style="font-weight:800;font-size:14px;color:#1a3a9e;margin-bottom:8px;">📋 GAS 서버 코드 추가 안내</div>
+  <div style="font-size:11px;color:#555;line-height:1.7;margin-bottom:6px;">
+    <b>doPost</b> 함수 내 switch/if 블록에 아래 코드를 추가하세요.<br>
+    수정 시 <b>마지막 컬럼에 이력(변경 전 값·일시·수정자)</b>을 자동 기록합니다.
+  </div>
+  <pre style="background:#1e2a3a;color:#7ec88a;font-size:9.5px;border-radius:8px;padding:12px;overflow-x:auto;white-space:pre-wrap;line-height:1.65;">if (body.action === 'fix_evang_type') {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('전도보고서');
+  if (!sheet) return ok({message:'시트 없음'});
+
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol)
+                     .getValues()[0];
+  var docCol  = headers.indexOf('문서번호') + 1;
+  var typeCol = headers.indexOf('전도유형') + 1;
+  if (!docCol || !typeCol)
+    return ok({message:'컬럼 없음'});
+
+  // ── 이력 컬럼 확인 / 생성 ──────────────────
+  var histHeader = '전도유형_수정이력';
+  var histCol = headers.indexOf(histHeader) + 1;
+  if (!histCol) {
+    // 마지막 컬럼 다음에 새 헤더 추가
+    histCol = lastCol + 1;
+    sheet.getRange(1, histCol).setValue(histHeader);
+  }
+
+  // ── 행별 수정 처리 ─────────────────────────
+  var data = sheet.getDataRange().getValues();
+  var now  = Utilities.formatDate(
+               new Date(), 'Asia/Seoul',
+               'yyyy-MM-dd HH:mm:ss');
+  var updated = 0;
+
+  for (var i = 1; i &lt; data.length; i++) {
+    if (String(data[i][docCol-1]) !== String(body.docNumber))
+      continue;
+
+    var oldVal = data[i][typeCol-1];   // 현재 시트 값
+    var prevHist = data[i][histCol-1]; // 기존 이력
+
+    // 전도유형 수정
+    sheet.getRange(i+1, typeCol).setValue(body.newType);
+
+    // 이력 누적 (최신이 위)
+    var entry = '[' + now + '] '
+      + (body.oldType || oldVal)
+      + ' → ' + body.newType;
+    var newHist = prevHist
+      ? entry + '
+' + prevHist
+      : entry;
+    sheet.getRange(i+1, histCol).setValue(newHist);
+
+    updated++;
+  }
+  return ok({updated: updated});
+}</pre>
+  <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.6;">
+    ⚠️ 시트 이름이 다르면 <b>'전도보고서'</b>를 실제 시트명으로 변경하세요.<br>
+    📌 이력 컬럼(<b>전도유형_수정이력</b>)은 없으면 자동 생성됩니다.<br>
+    📌 같은 문서번호가 여러 행일 경우 모든 행에 기록됩니다.
+  </div>
+  <button onclick="document.getElementById('gas-guide-modal').style.display='none';document.getElementById('gas-guide-overlay').style.display='none';" style="margin-top:14px;width:100%;background:#1a3a9e;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">확인</button>
+</div>
+<div id="gas-guide-overlay" onclick="document.getElementById('gas-guide-modal').style.display='none';this.style.display='none';" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:9998;"></div>
+
+<!-- GAS renumber_doc 안내 모달 -->
+<div id="renumber-gas-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.18);padding:20px 22px;min-width:300px;max-width:430px;max-height:85vh;overflow-y:auto;">
+  <div style="font-weight:800;font-size:14px;color:#e65100;margin-bottom:8px;">📋 GAS 서버 코드 — 문서번호 재넘버링</div>
+  <div style="font-size:11px;color:#555;line-height:1.7;margin-bottom:6px;">
+    <b>doPost</b> 함수 내 switch/if 블록에 아래 코드를 추가하세요.<br>
+    문서번호 변경 시 <b>마지막 컬럼에 이력(변경 전 번호·일시)</b>을 자동 기록합니다.
+  </div>
+  <pre style="background:#1e2a3a;color:#7ec88a;font-size:9.5px;border-radius:8px;padding:12px;overflow-x:auto;white-space:pre-wrap;line-height:1.65;">if (body.action === 'renumber_doc') {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('전도보고서');
+  if (!sheet) return ok({message:'시트 없음'});
+
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol)
+                     .getValues()[0];
+  var docCol = headers.indexOf('문서번호') + 1;
+  if (!docCol) return ok({message:'문서번호 컬럼 없음'});
+
+  // ── 이력 컬럼 확인 / 생성 ──────────────────
+  var histHeader = '문서번호_수정이력';
+  var histCol = headers.indexOf(histHeader) + 1;
+  if (!histCol) {
+    histCol = lastCol + 1;
+    sheet.getRange(1, histCol).setValue(histHeader);
+  }
+
+  // ── 행별 수정 처리 ─────────────────────────
+  var data = sheet.getDataRange().getValues();
+  var now  = Utilities.formatDate(
+               new Date(), 'Asia/Seoul',
+               'yyyy-MM-dd HH:mm:ss');
+  var updated = 0;
+
+  for (var i = 1; i &lt; data.length; i++) {
+    if (String(data[i][docCol-1]) !== String(body.oldDoc))
+      continue;
+
+    var prevHist = data[i][histCol-1];
+
+    // 문서번호 수정
+    sheet.getRange(i+1, docCol).setValue(body.newDoc);
+
+    // 이력 누적 (최신이 위)
+    var entry = '[' + now + '] '
+      + body.oldDoc + ' → ' + body.newDoc;
+    var newHist = prevHist
+      ? entry + '\n' + prevHist
+      : entry;
+    sheet.getRange(i+1, histCol).setValue(newHist);
+
+    updated++;
+  }
+  return ok({updated: updated});
+}</pre>
+  <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.6;">
+    ⚠️ 시트 이름이 다르면 <b>'전도보고서'</b>를 실제 시트명으로 변경하세요.<br>
+    📌 이력 컬럼(<b>문서번호_수정이력</b>)은 없으면 자동 생성됩니다.<br>
+    📌 이력은 최신 순으로 누적되며 덮어쓰지 않습니다.
+  </div>
+  <button onclick="document.getElementById('renumber-gas-modal').style.display='none';document.getElementById('renumber-gas-overlay').style.display='none';" style="margin-top:14px;width:100%;background:#e65100;color:#fff;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;">확인</button>
+</div>
+<div id="renumber-gas-overlay" onclick="document.getElementById('renumber-gas-modal').style.display='none';this.style.display='none';" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);z-index:9998;"></div>
 </body>
 </html>
