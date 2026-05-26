@@ -2970,12 +2970,25 @@ function applyFormData(r) {
     buildPersonalMemberSelect();
 
     var pmSel = document.getElementById('personal_member');
-    if (pmSel && r.relation_member) {
-      var pmName = r.relation_member.replace(/\(.*?\)/g, '').trim();
-      for (var pi = 0; pi < pmSel.options.length; pi++) {
-        if (pmSel.options[pi].value === pmName) {
-          pmSel.value = pmName;
-          break;
+    if (pmSel) {
+      // 1순위: relation_member에서 이름 추출
+      var pmName = (r.relation_member || '').replace(/\(.*?\)/g, '').trim();
+
+      // 2순위: relation_member 없으면 문서번호에서 추출 (61-4-개인-이나경-1)
+      if (!pmName && r.doc_number) {
+        var docParts = r.doc_number.split('-');
+        // 형식: 기수-조-유형-이름-번호 (5파트 이상이면 이름 있음)
+        if (docParts.length >= 5 && docParts[2] === '개인') {
+          pmName = docParts[3];
+        }
+      }
+
+      if (pmName) {
+        for (var pi = 0; pi < pmSel.options.length; pi++) {
+          if (pmSel.options[pi].value === pmName) {
+            pmSel.value = pmName;
+            break;
+          }
         }
       }
     }
