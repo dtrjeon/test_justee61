@@ -1006,7 +1006,7 @@ select {
   border: 1px solid rgba(32, 80, 200, 0.2);
   border-radius: 7px;
   padding: 8px 12px;
-  font-size: 16px;
+  font-size: 14px;
   outline: none;
   width: 100%;
 }
@@ -1019,7 +1019,7 @@ select {
   border: 1px solid rgba(32, 80, 200, 0.2);
   border-radius: 7px;
   padding: 8px 10px;
-  font-size: 16px;
+  font-size: 14px;
   outline: none;
   background: #fff;
   color: #333;
@@ -1035,7 +1035,7 @@ select {
   border: 1.5px solid rgba(32, 80, 200, 0.25);
   border-radius: 7px;
   padding: 8px 10px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   background: #f0f4ff;
   color: #1a3a9e;
@@ -2535,7 +2535,7 @@ pre.code-block {
         <option value="trainee1">훈련생</option>
       </select>
       <input type="text" id="search-input" placeholder="검색어 입력..." onkeydown="if(event.key==='Enter')filterHistory()" style="flex:2;">
-      <button type="button" onclick="filterHistory()" style="background:#2050c8;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">🔍 조회</button>
+      <button type="button" onclick="filterHistory()" style="background:#2050c8;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">🔍 조회</button>
     </div>
     <button class="search-clear" onclick="clearSearch()" title="초기화">✕</button>
   </div>
@@ -3189,6 +3189,26 @@ function applyFormData(r) {
 
 function openPresetModal() {
   // 기존 모달 제거
+  var old = document.getElementById('preset-modal-bg');
+  if (old) old.remove();
+
+  // 서버에서 최신 조정보 로드 후 모달 열기
+  if (scriptUrl) {
+    fetch(scriptUrl + '?action=get_jo', { method: 'GET', redirect: 'follow' })
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.status === 'ok' && json.joData && json.joData.length) {
+          localStorage.setItem('report_jo_data', JSON.stringify(json.joData));
+        }
+      })
+      .catch(function() {})
+      .finally(function() { _openPresetModalNow(); });
+  } else {
+    _openPresetModalNow();
+  }
+}
+
+function _openPresetModalNow() {
   var old = document.getElementById('preset-modal-bg');
   if (old) old.remove();
 
@@ -5030,7 +5050,9 @@ function filterHistory() {
     // 검색어 필터
     if (q) {
       var val = (r[type] || '').toString().toLowerCase();
-      c.style.display = val.includes(q) ? '' : 'none';
+      // 조 검색은 정확히 일치 (1 입력 시 10조, 11조 제외)
+      var matched = (type === 'jo' || type === 'week') ? (val === q) : val.includes(q);
+      c.style.display = matched ? '' : 'none';
     } else {
       c.style.display = '';
     }
