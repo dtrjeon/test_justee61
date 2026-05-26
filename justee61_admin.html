@@ -1617,7 +1617,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
 
 <script>
 // ── 조 구성 데이터 ─────────────────────────────────────────────────────────
-const ADMIN_VERSION = 'admin v2026.05.19';
+const ADMIN_VERSION = 'admin v2026.05.26';
 // 하드코딩 기준 데이터 (step 복원용)
 const HARDCODED_MEMBERS = [{
   jo: 1,
@@ -2020,7 +2020,7 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycbyQ3HBbSEIFfw4g9U9K1vj46dOK7IjWpkY3Ntg2lmP8x1GCophV1NaIXCoMPwG3nJbF/exec',
+  url: 'https://script.google.com/macros/s/AKfycby4Cz4eI1CT89HLsqp79vB7gA_lvJtHSpl8_dONY_cNnadmJgNc4ho1X7rWmyKo1Ko/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
@@ -4456,16 +4456,20 @@ function checkAllVersions() {
     })
     .then(function(json) {
       if (json.status === 'ok') {
-        // GAS 버전
-        if (elGas && json.gasVersion) {
-          elGas.textContent = json.gasVersion;
-          elGas.style.color = '#6a1b9a';
+        // GAS 버전 — admin 버전과 날짜 비교
+        var gasVer = json.gasVersion || json.version || '?';
+        if (elGas) {
+          elGas.textContent = gasVer;
+          var expectedGas = ADMIN_VERSION.replace('admin', 'gas');
+          elGas.style.color = gasVer === expectedGas ? '#2e7d32' : '#e65100';
+          elGas.title = gasVer === expectedGas ? '✅ 최신' : '⚠️ 구버전 — GAS 재배포 필요';
         }
         // Index 버전
         if (elIdx && json.indexVersion) {
           elIdx.textContent = json.indexVersion;
           var expectedIdx = ADMIN_VERSION.replace('admin', 'index');
           elIdx.style.color = json.indexVersion === expectedIdx ? '#2e7d32' : '#e65100';
+          elIdx.title = json.indexVersion === expectedIdx ? '✅ 최신' : '⚠️ 구버전';
         } else if (elIdx) {
           elIdx.textContent = 'GAS 미지원';
           elIdx.style.color = '#999';
