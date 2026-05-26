@@ -3244,7 +3244,10 @@ function _openPresetModalNow() {
   modal.className = 'preset-modal';
 
   var h3 = document.createElement('h3');
-  h3.textContent = '👤 내 프리셋 설정';
+  h3.style.cssText = 'margin:0 0 4px;font-size:16px;font-weight:800;color:#1a3ab0;display:flex;justify-content:space-between;align-items:center;';
+  h3.innerHTML = '👤 내 프리셋 설정'
+    + '<button onclick="closePresetModal()" '
+    + 'style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1;padding:0 2px;">✕</button>';
   var p = document.createElement('p');
   p.textContent = '본인 이름을 선택하면 매번 조·역할이 자동으로 채워집니다.';
 
