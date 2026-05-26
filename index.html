@@ -2142,9 +2142,43 @@ pre.code-block {
   </div>
 
   <div style="display:flex;gap:6px;margin-bottom:8px;">
-    <button type="button" id="draft-btn" onclick="saveDraft()" style="flex:1;padding:12px 6px;border:1px dashed rgba(32,80,200,0.35);border-radius:8px;background:rgba(32,80,200,0.04);font-size:12px;font-weight:600;color:rgba(32,80,200,0.7);cursor:pointer;white-space:nowrap;min-height:50px;">📝 임시저장</button>
-    <button type="button" class="subbtn server-mode" id="submit-btn" onclick="handleSubmit()" style="flex:2;margin-top:0;margin-bottom:0;font-size:13px;letter-spacing:1px;white-space:nowrap;padding:12px 6px;">📤 구글시트 제출</button>
-    <button type="button" onclick="onResetFormBtn()" style="flex:1;padding:12px 6px;border:1px solid rgba(180,0,0,0.25);border-radius:8px;background:rgba(180,0,0,0.04);font-size:12px;font-weight:600;color:#b00;cursor:pointer;white-space:nowrap;min-height:50px;">🔄 초기화</button>
+
+    <!-- 💾 임시저장 -->
+    <button type="button" id="draft-btn" onclick="saveDraft()"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             padding:10px 4px;border:1px dashed rgba(32,80,200,0.35);border-radius:10px;
+             background:rgba(32,80,200,0.04);cursor:pointer;min-height:56px;">
+      <span style="font-size:22px;line-height:1;">💾</span>
+      <span style="font-size:10px;font-weight:700;color:rgba(32,80,200,0.7);white-space:nowrap;">임시저장</span>
+    </button>
+
+    <!-- 👁️ 미리보기 -->
+    <button type="button" onclick="switchTab('suju')"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             padding:10px 4px;border:1px solid rgba(30,140,60,0.3);border-radius:10px;
+             background:rgba(30,140,60,0.05);cursor:pointer;min-height:56px;">
+      <span style="font-size:22px;line-height:1;">👁️</span>
+      <span style="font-size:10px;font-weight:700;color:#1a6b3c;white-space:nowrap;">미리보기</span>
+    </button>
+
+    <!-- 📊 제출하기 -->
+    <button type="button" class="subbtn server-mode" id="submit-btn" onclick="handleSubmit()"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             margin-top:0;margin-bottom:0;padding:10px 4px;border-radius:10px;min-height:56px;
+             font-size:unset;letter-spacing:0;">
+      <span style="font-size:22px;line-height:1;">📊</span>
+      <span style="font-size:10px;font-weight:700;white-space:nowrap;">제출하기</span>
+    </button>
+
+    <!-- 🔄 초기화 -->
+    <button type="button" onclick="onResetFormBtn()"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             padding:10px 4px;border:1px solid rgba(180,0,0,0.25);border-radius:10px;
+             background:rgba(180,0,0,0.04);cursor:pointer;min-height:56px;">
+      <span style="font-size:22px;line-height:1;">🔄</span>
+      <span style="font-size:10px;font-weight:700;color:#b00;white-space:nowrap;">초기화</span>
+    </button>
+
   </div>
   <div style="text-align:right;padding:2px 0 8px;"><span id="app-version-badge" style="font-size:9px;color:rgba(32,80,200,0.25);font-weight:600;cursor:default;" title="파일 버전"></span></div>
 </div>
@@ -2396,6 +2430,48 @@ pre.code-block {
 
   </div><!-- /suju-paper -->
 </div><!-- /suju-wrap -->
+
+  <!-- 수주반 탭 하단 버튼 (작성 탭에서 진입 시만 표시) -->
+  <div id="suju-bottom-btns" style="display:none;gap:6px;padding:12px 16px 16px;">
+
+    <!-- 💾 임시저장 -->
+    <button type="button" onclick="saveDraft()"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             padding:10px 4px;border:1px dashed rgba(32,80,200,0.35);border-radius:10px;
+             background:rgba(32,80,200,0.04);cursor:pointer;min-height:56px;">
+      <span style="font-size:22px;line-height:1;">💾</span>
+      <span style="font-size:10px;font-weight:700;color:rgba(32,80,200,0.7);white-space:nowrap;">임시저장</span>
+    </button>
+
+    <!-- ✏️ 작성으로 -->
+    <button type="button" onclick="switchTab('form')"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             padding:10px 4px;border:1px solid rgba(130,80,200,0.3);border-radius:10px;
+             background:rgba(130,80,200,0.05);cursor:pointer;min-height:56px;">
+      <span style="font-size:22px;line-height:1;">✏️</span>
+      <span style="font-size:10px;font-weight:700;color:#6a1b9a;white-space:nowrap;">작성으로</span>
+    </button>
+
+    <!-- 📊 제출하기 -->
+    <button type="button" onclick="handleSubmit()"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             padding:10px 4px;border:none;border-radius:10px;
+             background:linear-gradient(135deg,#2a5cd8,#1a3ab0);cursor:pointer;min-height:56px;">
+      <span style="font-size:22px;line-height:1;">📊</span>
+      <span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap;">제출하기</span>
+    </button>
+
+    <!-- 🔄 초기화 -->
+    <button type="button" onclick="onResetFormBtn()"
+      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             padding:10px 4px;border:1px solid rgba(180,0,0,0.25);border-radius:10px;
+             background:rgba(180,0,0,0.04);cursor:pointer;min-height:56px;">
+      <span style="font-size:22px;line-height:1;">🔄</span>
+      <span style="font-size:10px;font-weight:700;color:#b00;white-space:nowrap;">초기화</span>
+    </button>
+
+  </div>
+
 </div>
 
 <!-- HISTORY PAGE -->
@@ -2860,7 +2936,8 @@ function applyFormData(r) {
 
   // 5. 개인/관계/QQ 드롭다운 표시
   var wrap = document.getElementById('personal-member-wrap');
-  if (r.evang_type === '개인' || r.evang_type === '관계' || r.evang_type === 'QQ') {
+  // 전도자 선택: 개인만 표시
+  if (r.evang_type === '개인') {
     if (wrap) {
       wrap.style.display = 'block';
       buildPersonalMemberSelect();
@@ -2882,7 +2959,6 @@ function applyFormData(r) {
   });
   // 진단결과 이전 상태 초기화 (진단결과 저장 버튼 재사용 시 차감 오류 방지)
   _lastSavedDiagResult = '';
-  _isApplyingFormData = false;
 
   // 7. 인적정보
   sv('q3_location', r.location);
@@ -2975,9 +3051,14 @@ function applyFormData(r) {
   // 17. 7일후(팀) 자동설정 — 모든 필드 복원 후 마지막에 적용
   _pre7ilhu = null; // 불러오기 시에는 스냅샷 복원 차단
   if (r.evang_type === '7일후(팀)') apply7ilhu();
+  // QQ/질문지(팀) → 관계조원 "-" 자동
+  if (r.evang_type === 'QQ' || r.evang_type === '질문지(팀)') {
+    var qqRelSel = document.getElementById('q3_relation_member');
+    if (qqRelSel) qqRelSel.value = '-';
+  }
 
   // 18. 개인전도 — personal_member 복원 + 불참 자동설정 + 파트 자동설정 + 관계 동기화
-  if (r.evang_type === '개인' || r.evang_type === '관계' || r.evang_type === 'QQ') {
+  if (r.evang_type === '개인') {
     buildPersonalMemberSelect();
 
     var pmSel = document.getElementById('personal_member');
@@ -3025,15 +3106,25 @@ function applyFormData(r) {
         if (radioEl) radioEl.checked = true;
       });
 
-      // 관계 드롭다운 동기화
+      // 관계 드롭다운 동기화 — 개인전도는 전도자와 동일하게 설정
       var relSel = document.getElementById('q3_relation_member');
-      if (relSel && !r.relation_member) {
+      if (relSel) {
+        var matched2 = false;
         for (var ri2 = 0; ri2 < relSel.options.length; ri2++) {
           var optName = relSel.options[ri2].value.replace(/\(.*?\)/g, '').trim();
           if (optName === selMember || relSel.options[ri2].value === selMember) {
             relSel.value = relSel.options[ri2].value;
+            matched2 = true;
             break;
           }
+        }
+        // 옵션에 없으면 직접 추가
+        if (!matched2) {
+          var opt2 = document.createElement('option');
+          opt2.value = selMember;
+          opt2.textContent = selMember;
+          relSel.appendChild(opt2);
+          relSel.value = selMember;
         }
       }
 
@@ -3063,6 +3154,7 @@ function applyFormData(r) {
     }
   }
 
+  _isApplyingFormData = false; // 불러오기 완료 — 이벤트 재활성화
   syncPreview();
 }
 
@@ -3786,12 +3878,25 @@ function unlock7ilhuStats() {
 function onEvangTypeChange() {
   var type = v('evang_type');
   var wrap = document.getElementById('personal-member-wrap');
-  if (type === '개인' || type === '관계' || type === 'QQ') {
+  // 전도자 선택(조원): 개인만 표시
+  if (type === '개인') {
     wrap.style.display = 'block';
     buildPersonalMemberSelect();
   } else {
     wrap.style.display = 'none';
     document.getElementById('personal_member').value = '';
+  }
+
+  // 관계(대상자 모신분) 자동 설정
+  var relSel2 = document.getElementById('q3_relation_member');
+  if (type === '질문지(팀)' || type === 'QQ') {
+    // 질문지(팀), QQ → "-" 자동
+    if (relSel2) relSel2.value = '-';
+  } else if (type === '관계(팀)' || type === '관계' || type === '7일후(팀)') {
+    // 수동 선택 또는 7일후(팀) 자동처리 — 현재 값 유지
+  } else {
+    // 다른 유형으로 변경 시 "-"였으면 초기화
+    if (relSel2 && relSel2.value === '-') relSel2.value = '';
   }
 
   if (type === '7일후(팀)') {
@@ -4049,7 +4154,6 @@ function updateScbState(state) {
   else label.textContent = '오류';
 }
 
-
 function applyMode(mode, announce) {
   currentMode = mode;
   var btn = document.getElementById('submit-btn');
@@ -4082,7 +4186,7 @@ function applyMode(mode, announce) {
   } else {
     if (btn) {
       btn.className = 'subbtn server-mode';
-      btn.textContent = '📤 구글시트 제출';
+      btn.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;">제출하기</span>';
     }
     if (hp) {
       hp.className = (hp.classList.contains('active') ? 'page active ' : 'page ') + 'server-bg';
@@ -4113,7 +4217,11 @@ function handleSheetBtn() {
   openModal();
 }
 
+var currentTab = 'form'; // 현재 탭 추적
+
 function switchTab(tab) {
+  var prevTab = currentTab;
+  currentTab = tab;
   var pageIds = {
     form: 'form-page',
     preview: 'preview-page',
@@ -4142,6 +4250,10 @@ function switchTab(tab) {
     syncPreview();
     syncSuju();
     scaleSujuPaper();
+    // 진입 경로 기록 — form/작성에서 온 경우만 하단 버튼 표시
+    var fromForm = (prevTab === 'form');
+    var sujuBtns = document.getElementById('suju-bottom-btns');
+    if (sujuBtns) sujuBtns.style.display = fromForm ? 'flex' : 'none';
   } else if (tab === 'preview') {
     syncPreview();
     setTimeout(scalePreviewPaper, 100);
@@ -4774,7 +4886,7 @@ async function submitServer() {
   }
   var btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = '⏳ 제출 중...';
+  btn.innerHTML = '<span style="font-size:22px;line-height:1;">⏳</span><span style="font-size:10px;font-weight:700;">제출 중</span>';
   try {
     var payload = Object.assign({}, collectFormData(), {
       _seq: getNextSeq()
@@ -4793,7 +4905,7 @@ async function submitServer() {
       var btn2 = document.getElementById('submit-btn');
       if (btn2) {
         btn2.style.background = '';
-        btn2.innerHTML = '📤 구글시트 제출';
+        btn2.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;">제출하기</span>';
       }
       // 자동 초기화 제거 — 하단 초기화 버튼으로 수동 처리
     } else throw new Error(json.message || '제출 실패');
@@ -4802,7 +4914,7 @@ async function submitServer() {
     updateScbState('error');
   }
   btn.disabled = false;
-  btn.textContent = '📤 구글시트 제출';
+  btn.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;">제출하기</span>';
 }
 
 var _presetFilterActive = false;
@@ -5720,7 +5832,6 @@ function openAdminModal() {
   status.style.color = 'rgba(40,80,160,0.6)';
   document.getElementById('admin-modal-bg').classList.add('open');
 }
-
 
 // ── 멀티 선택 출력 ──────────────────────────────────────
 function toggleMultiSelect() {
@@ -6696,7 +6807,6 @@ window.onload = function() {
     }
   })();
 };
-
 
 // ── 문서 삭제 권한 체크 및 버튼 표시 ────────────────────────────────────────
 var ADMIN_PW_INDEX = '5600'; // 관리자 비밀번호 (admin.html과 동일)
