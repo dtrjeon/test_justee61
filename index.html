@@ -2710,6 +2710,7 @@ const DIAG_MAP = {
 let currentMode = 'server';
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbw-eZkhrWAOpJkEpl1sMlYKbGHPgVCA21LESN6ZgXXH4Ii-MU0SL778jvQ-dY6LyxDb/exec';
 var _lastSavedDiagResult = '';
+var _isApplyingFormData = false; // 불러오기 중 자동 통계 설정 방지
 
 var _autoSaveTimer = null;
 var _lastAutoSaveData = '';
@@ -2790,6 +2791,7 @@ function loadDraft() {
 }
 
 function applyFormData(r) {
+  _isApplyingFormData = true;
   var sv = function(id, val) {
     var el = document.getElementById(id);
     if (el) el.value = val || '';
@@ -2880,6 +2882,7 @@ function applyFormData(r) {
   });
   // 진단결과 이전 상태 초기화 (진단결과 저장 버튼 재사용 시 차감 오류 방지)
   _lastSavedDiagResult = '';
+  _isApplyingFormData = false;
 
   // 7. 인적정보
   sv('q3_location', r.location);
@@ -4401,6 +4404,7 @@ function onQ5Change() {
 }
 
 function onTestimony6Change() {
+  if (_isApplyingFormData) return; // 불러오기 중 무시
   var scrollY = window.scrollY;
   var t6 = radio('testimony6'),
     hv = radio('heaven'),
@@ -4433,6 +4437,7 @@ function onTestimony6Change() {
 }
 
 function onYeopjeopChange() {
+  if (_isApplyingFormData) return; // 불러오기 중 무시
   // 모바일에서 포커스 이동으로 인한 스크롤 방지
   var scrollY = window.scrollY;
   var hv = radio('heaven'),
