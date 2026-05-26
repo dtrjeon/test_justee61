@@ -4442,50 +4442,47 @@ function checkAllVersions() {
   var elGas = document.getElementById('ver-gas');
   if (elIdx) elIdx.textContent = '확인 중...';
   if (elGas) elGas.textContent = '확인 중...';
-  if (!CFG.url) {
-    if (elIdx) elIdx.textContent = '서버 미연결';
-    if (elGas) elGas.textContent = '서버 미연결';
-    return;
+
+  // ── GAS 버전 확인 ──────────────────────────────────────────
+  if (CFG.url) {
+    fetch(CFG.url + '?action=get_version', { method: 'GET', redirect: 'follow' })
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.status === 'ok') {
+          var gasVer = json.gasVersion || json.version || '?';
+          if (elGas) {
+            elGas.textContent = gasVer;
+            var expectedGas = ADMIN_VERSION.replace('admin', 'gas');
+            elGas.style.color = gasVer === expectedGas ? '#2e7d32' : '#e65100';
+            elGas.title = gasVer === expectedGas ? '✅ 최신' : '⚠️ 구버전 — GAS 재배포 필요';
+          }
+        }
+      })
+      .catch(function() {
+        if (elGas) { elGas.textContent = '확인 실패'; elGas.style.color = '#e65100'; }
+      });
+  } else {
+    if (elGas) { elGas.textContent = '서버 미연결'; elGas.style.color = '#999'; }
   }
-  fetch(CFG.url + '?action=get_version', {
-      method: 'GET',
-      redirect: 'follow'
-    })
-    .then(function(r) {
-      return r.json();
-    })
-    .then(function(json) {
-      if (json.status === 'ok') {
-        // GAS 버전 — admin 버전과 날짜 비교
-        var gasVer = json.gasVersion || json.version || '?';
-        if (elGas) {
-          elGas.textContent = gasVer;
-          var expectedGas = ADMIN_VERSION.replace('admin', 'gas');
-          elGas.style.color = gasVer === expectedGas ? '#2e7d32' : '#e65100';
-          elGas.title = gasVer === expectedGas ? '✅ 최신' : '⚠️ 구버전 — GAS 재배포 필요';
-        }
-        // Index 버전
-        if (elIdx && json.indexVersion) {
-          elIdx.textContent = json.indexVersion;
-          var expectedIdx = ADMIN_VERSION.replace('admin', 'index');
-          elIdx.style.color = json.indexVersion === expectedIdx ? '#2e7d32' : '#e65100';
-          elIdx.title = json.indexVersion === expectedIdx ? '✅ 최신' : '⚠️ 구버전';
-        } else if (elIdx) {
-          elIdx.textContent = 'GAS 미지원';
-          elIdx.style.color = '#999';
-        }
+
+  // ── Index 버전 확인 — index.html 직접 fetch ────────────────
+  var INDEX_URL = 'https://dtrjeon.github.io/justee_suji/index.html';
+  fetch(INDEX_URL, { cache: 'no-cache' })
+    .then(function(r) { return r.text(); })
+    .then(function(html) {
+      var m = html.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
+      var idxVer = m ? m[1] : '?';
+      if (elIdx) {
+        elIdx.textContent = idxVer;
+        var expectedIdx = ADMIN_VERSION.replace('admin', 'index');
+        elIdx.style.color = idxVer === expectedIdx ? '#2e7d32' : '#e65100';
+        elIdx.title = idxVer === expectedIdx ? '✅ 최신' : '⚠️ 구버전 — index.html 재업로드 필요';
       }
     })
     .catch(function() {
-      if (elIdx) {
-        elIdx.textContent = '확인 실패';
-        elIdx.style.color = '#c00';
-      }
-      if (elGas) {
-        elGas.textContent = '확인 실패';
-        elGas.style.color = '#c00';
-      }
+      if (elIdx) { elIdx.textContent = '확인 실패'; elIdx.style.color = '#e65100'; }
     });
+
 }
 // 하위 호환
 function checkIndexVersion() {
