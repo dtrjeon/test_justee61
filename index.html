@@ -2708,7 +2708,7 @@ const DIAG_MAP = {
   }
 };
 let currentMode = 'server';
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbzMmDZvJyc5vUPQV1zqS6ZPbgbsoly3A8r1sfaLEEKELRUAPeDm5Wgdo7-wbrB5pGI9/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbw-eZkhrWAOpJkEpl1sMlYKbGHPgVCA21LESN6ZgXXH4Ii-MU0SL778jvQ-dY6LyxDb/exec';
 var _lastSavedDiagResult = '';
 
 var _autoSaveTimer = null;
@@ -3805,7 +3805,7 @@ function buildPersonalMemberSelect() {
   var jo = v('q1_jo');
   var joData = getJoData();
   var found = joData.find(function(j) {
-    return j.jo === jo;
+    return String(j.jo) === String(jo);
   });
   if (found) {
     var members = [{
@@ -4038,10 +4038,6 @@ function updateScbState(state) {
   else label.textContent = '오류';
 }
 
-function setMode(mode) {
-  currentMode = mode;
-  applyMode(mode, true);
-}
 
 function applyMode(mode, announce) {
   currentMode = mode;
@@ -4158,24 +4154,6 @@ function openModal() {
   // URL은 코드에 고정 — 모달 불필요
 }
 
-function closeModal() {}
-
-function toggleDropdown(who, event) {
-  if (event) event.stopPropagation();
-  var trigger = document.querySelector('#' + who + '-ms-wrap .ms-trigger');
-  var dropdown = document.getElementById(who + '-ms-dropdown');
-  var isOpen = dropdown.classList.contains('open');
-  document.querySelectorAll('.ms-dropdown').forEach(function(d) {
-    d.classList.remove('open');
-  });
-  document.querySelectorAll('.ms-trigger').forEach(function(t) {
-    t.classList.remove('open');
-  });
-  if (!isOpen) {
-    dropdown.classList.add('open');
-    trigger.classList.add('open');
-  }
-}
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.multiselect-wrap')) {
     document.querySelectorAll('.ms-dropdown').forEach(function(d) {
@@ -5730,9 +5708,6 @@ function openAdminModal() {
   document.getElementById('admin-modal-bg').classList.add('open');
 }
 
-function closeAdminModal() {
-  document.getElementById('admin-modal-bg').classList.remove('open');
-}
 
 // ── 멀티 선택 출력 ──────────────────────────────────────
 function toggleMultiSelect() {
@@ -6663,16 +6638,40 @@ window.onload = function() {
         }, 500);
       }
 
+      // 조정보 로드 완료 후 폼 적용 (buildPersonalMemberSelect 타이밍 보장)
+      function applyAfterJo(record) {
+        // localStorage에 조정보가 있으면 바로 적용
+        if (localStorage.getItem('report_jo_data')) {
+          applyAndShow(record);
+          return;
+        }
+        // 없으면 서버에서 조정보 먼저 로드
+        if (scriptUrl) {
+          fetch(scriptUrl + '?action=get_jo', { method: 'GET', redirect: 'follow' })
+            .then(function(r) { return r.json(); })
+            .then(function(j) {
+              if (j.status === 'ok' && j.joData && j.joData.length) {
+                localStorage.setItem('report_jo_data', JSON.stringify(j.joData));
+                buildJoDropdown && buildJoDropdown();
+              }
+            })
+            .catch(function() {})
+            .finally(function() { applyAndShow(record); });
+        } else {
+          applyAndShow(record);
+        }
+      }
+
       // record가 있으면 바로 적용, 없으면 GAS에서 직접 조회
       if (obj.record) {
-        applyAndShow(obj.record);
+        applyAfterJo(obj.record);
       } else if (scriptUrl && obj.docNumber) {
         showStatus('⏳ 레코드 조회 중...', '');
         fetch(scriptUrl + '?action=get_by_doc&docNumber=' + encodeURIComponent(obj.docNumber), { redirect: 'follow' })
           .then(function(res) { return res.json(); })
           .then(function(json) {
             if (json.status === 'ok' && json.record) {
-              applyAndShow(json.record);
+              applyAfterJo(json.record);
             } else {
               showStatus('❌ ' + (json.message || '레코드를 찾을 수 없습니다.'), 'error');
             }

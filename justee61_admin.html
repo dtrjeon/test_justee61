@@ -1561,13 +1561,16 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     </div>
 
     <div class="modal-section">
-      <label>📧 알림 이메일 <span style="font-size:10px;font-weight:400;color:var(--text3);">보고서 제출 시 알림 수신 (여러 개는 쉼표로 구분)</span></label>
-      <input type="text" id="set-emails" placeholder="admin@gmail.com, admin2@gmail.com">
-      <div style="display:flex;gap:6px;margin-top:6px;">
-        <button class="modal-btn" style="flex:1;font-size:11px;" onclick="saveEmailsToServer()">📤 서버에 저장</button>
-        <button class="modal-btn" style="flex:1;font-size:11px;" onclick="loadEmailsFromServer()">☁️ 서버에서 불러오기</button>
+      <label>📧 그룹별 알림 이메일 <span style="font-size:10px;font-weight:400;color:var(--text3);">보고서 제출 시 관리자 + 해당 그룹장에게 발송</span></label>
+      <div id="email-sheet-editor" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="modal-btn" style="flex:1;font-size:11px;" onclick="saveEmailSheet()">📤 저장 + 서버동기화</button>
+        <button class="modal-btn" style="flex:1;font-size:11px;" onclick="loadEmailSheet()">☁️ 서버에서 불러오기</button>
       </div>
       <div id="email-save-status" style="font-size:10px;color:var(--text3);margin-top:4px;"></div>
+      <div style="font-size:9px;color:#aaa;margin-top:4px;line-height:1.6;">
+        ※ 여러 이메일은 쉼표로 구분 &nbsp;|&nbsp; GAS 재배포 후 구글 시트에 <b>이메일</b> 탭이 자동 생성됩니다.
+      </div>
     </div>
 
     <hr class="modal-divider">
@@ -2020,7 +2023,7 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycbzMmDZvJyc5vUPQV1zqS6ZPbgbsoly3A8r1sfaLEEKELRUAPeDm5Wgdo7-wbrB5pGI9/exec',
+  url: 'https://script.google.com/macros/s/AKfycbw-eZkhrWAOpJkEpl1sMlYKbGHPgVCA21LESN6ZgXXH4Ii-MU0SL778jvQ-dY6LyxDb/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
@@ -2697,7 +2700,6 @@ async function fixAllEvangTypes() {
   showToast((window.SIM_MODE ? '🧪 [시뮬] ' : '✅ ') + '일괄 수정 완료: ' + success + '/' + _mismatches.length + '건');
   setTimeout(function() { loadData(); }, window.SIM_MODE ? 800 : 3000);
 }
-
 
 
 // ── 시뮬레이션 모드 ───────────────────────────────────────────────────────────
@@ -4427,11 +4429,12 @@ function openSettings() {
   var grpEl = document.getElementById('set-group');
   if (banEl) banEl.value = localStorage.getItem('suju_ban') || '수지주일반';
   if (grpEl) grpEl.value = localStorage.getItem('suju_group') || '';
-  document.getElementById('set-emails').value = localStorage.getItem('mon_emails') || '';
-  document.getElementById('email-save-status').textContent = '';
   buildGroupSettings();
   buildJoAssign();
   adminBuildJoEditor();
+  // 이메일 시트 에디터 빌드 + 서버에서 불러오기
+  buildEmailSheetEditor(null);
+  if (CFG.url) loadEmailSheet();
   document.getElementById('settings-modal').classList.add('show');
 }
 
@@ -4483,10 +4486,6 @@ function checkAllVersions() {
       if (elIdx) { elIdx.textContent = '확인 실패'; elIdx.style.color = '#e65100'; }
     });
 
-}
-// 하위 호환
-function checkIndexVersion() {
-  checkAllVersions();
 }
 
 // ── CSV 조원 일괄 업로드 ────────────────────────────────────────────
@@ -5014,9 +5013,6 @@ function saveSettings() {
       leader: document.getElementById('grp-leader-' + i).value || g.leader
     };
   });
-  // 이메일 로컬 저장
-  var emails = document.getElementById('set-emails').value.trim();
-  if (emails) localStorage.setItem('mon_emails', emails);
   // 반·그룹 저장
   var banEl = document.getElementById('set-ban');
   var grpEl = document.getElementById('set-group');
@@ -5037,67 +5033,72 @@ function saveSettings() {
 }
 
 // ── 이메일 알림 설정 ─────────────────────────────────────────────────────────
-async function saveEmailsToServer() {
-  var emails = document.getElementById('set-emails').value.trim();
+
+
+// ── 이메일 시트 편집 UI 빌드 ────────────────────────────────────────────────
+var _emailRows = [
+  { label: '관리자',  email: '' },
+  { label: 'A그룹장', email: '' },
+  { label: 'B그룹장', email: '' },
+  { label: 'C그룹장', email: '' },
+  { label: 'D그룹장', email: '' }
+];
+
+function buildEmailSheetEditor(rows) {
+  if (rows && rows.length) _emailRows = rows;
+  var wrap = document.getElementById('email-sheet-editor');
+  if (!wrap) return;
+  wrap.innerHTML = _emailRows.map(function(r, i) {
+    return '<div style="display:flex;align-items:center;gap:6px;">' +
+      '<span style="min-width:60px;font-size:11px;font-weight:700;color:#1a3a9e;">' + r.label + '</span>' +
+      '<input type="email" multiple data-idx="' + i + '" value="' + (r.email || '') + '" ' +
+        'placeholder="이메일 (쉼표로 여러 개)" ' +
+        'style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;" ' +
+        'oninput="_emailRows[' + i + '].email=this.value">' +
+      '</div>';
+  }).join('');
+}
+
+async function loadEmailSheet() {
   var status = document.getElementById('email-save-status');
-  if (!CFG.url) {
-    showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.');
-    return;
-  }
-  if (!emails) {
-    showToast('⚠️ 이메일을 입력하세요.');
-    return;
-  }
-  status.textContent = '⏳ 저장 중...';
+  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
+  if (status) { status.textContent = '⏳ 불러오는 중...'; status.style.color = 'var(--text3)'; }
   try {
-    var res = await fetch(CFG.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain'
-      },
-      body: JSON.stringify({
-        action: 'save_email',
-        emails: emails
-      })
-    });
+    var res = await fetch(CFG.url + '?action=get_email_sheet', { method: 'GET', redirect: 'follow' });
     var json = await res.json();
-    if (json.status === 'ok') {
-      localStorage.setItem('mon_emails', emails);
-      status.textContent = '✅ 서버에 저장됐습니다.';
-      status.style.color = 'var(--green)';
-      showToast('✅ 이메일 알림 주소 저장 완료');
-    } else throw new Error(json.message || '오류');
-  } catch (e) {
-    status.textContent = '❌ 저장 실패: ' + e.message;
-    status.style.color = 'var(--red)';
+    if (json.status === 'ok' && json.rows && json.rows.length) {
+      buildEmailSheetEditor(json.rows);
+      if (status) { status.textContent = '✅ 불러오기 완료'; status.style.color = 'var(--green)'; }
+    } else {
+      buildEmailSheetEditor(null);
+      if (status) { status.textContent = '(서버에 저장된 이메일 없음 — 기본값 사용)'; status.style.color = 'var(--text3)'; }
+    }
+  } catch(e) {
+    if (status) { status.textContent = '❌ 불러오기 실패: ' + e.message; status.style.color = 'var(--red)'; }
   }
 }
 
-async function loadEmailsFromServer() {
+async function saveEmailSheet() {
   var status = document.getElementById('email-save-status');
-  if (!CFG.url) {
-    showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.');
-    return;
-  }
-  status.textContent = '⏳ 불러오는 중...';
+  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
+  if (status) { status.textContent = '⏳ 저장 중...'; status.style.color = 'var(--text3)'; }
+  // 현재 입력값 수집
+  var rows = _emailRows.map(function(r) {
+    return { label: r.label, email: r.email || '' };
+  });
   try {
-    var res = await fetch(CFG.url + '?action=get_email', {
-      method: 'GET',
-      redirect: 'follow'
+    var res = await fetch(CFG.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'save_email_sheet', rows: rows })
     });
     var json = await res.json();
-    if (json.status === 'ok' && json.emails) {
-      document.getElementById('set-emails').value = json.emails;
-      localStorage.setItem('mon_emails', json.emails);
-      status.textContent = '✅ 서버에서 불러왔습니다.';
-      status.style.color = 'var(--green)';
-    } else {
-      status.textContent = '(서버에 저장된 이메일 없음)';
-      status.style.color = 'var(--text3)';
-    }
-  } catch (e) {
-    status.textContent = '❌ 불러오기 실패: ' + e.message;
-    status.style.color = 'var(--red)';
+    if (json.status === 'ok') {
+      if (status) { status.textContent = '✅ 저장 완료'; status.style.color = 'var(--green)'; }
+      showToast('✅ 이메일 시트 저장 완료');
+    } else throw new Error(json.message || '오류');
+  } catch(e) {
+    if (status) { status.textContent = '❌ 저장 실패: ' + e.message; status.style.color = 'var(--red)'; }
   }
 }
 
@@ -5188,62 +5189,6 @@ async function syncJoFromServer() {
   }
 }
 
-async function syncJoToServer() {
-  if (!CFG.url) {
-    showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.');
-    return;
-  }
-  var joMap = {};
-  var kisu = localStorage.getItem('mon_kisu') || '61';
-  MEMBERS.forEach(function(m) {
-    if (!joMap[m.jo]) joMap[m.jo] = {
-      jo: String(m.jo),
-      leader: '',
-      trainer: '',
-      trainee: '',
-      leaderStep: '',
-      trainerStep: '',
-      traineeStep: '',
-      group: m.group || '',
-      kisu: m.kisu || kisu
-    };
-    if (m.role === '리더') {
-      joMap[m.jo].leader = m.name;
-      joMap[m.jo].leaderStep = m.step || '';
-    } else if (m.role === '훈련자') {
-      joMap[m.jo].trainer = m.name;
-      joMap[m.jo].trainerStep = m.step || '';
-    } else if (m.role === '훈련생') {
-      joMap[m.jo].trainee = m.name;
-      joMap[m.jo].traineeStep = m.step || '';
-    }
-  });
-  // ban 정보 추가
-  var ban = localStorage.getItem('suju_ban') || '수지주일반';
-  var joArray = Object.values(joMap).sort(function(a, b) {
-    return Number(a.jo) - Number(b.jo);
-  });
-  joArray.forEach(function(j) {
-    j.ban = ban;
-  });
-  try {
-    var res = await fetch(CFG.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain'
-      },
-      body: JSON.stringify({
-        action: 'save_jo',
-        joData: joArray
-      })
-    });
-    var json = await res.json();
-    if (json.status === 'ok') showToast('✅ 조정보 서버 동기화 완료');
-    else showToast('❌ 서버 저장 실패: ' + json.message);
-  } catch (e) {
-    showToast('❌ 서버 저장 실패: ' + e.message);
-  }
-}
 
 // ── 탭 전환 ──────────────────────────────────────────────────────────────────────
 function switchTab(idx) {
