@@ -1022,6 +1022,10 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
 <div class="week-bar">
   <label>주차</label>
   <select class="week-select" id="week-select" onchange="onWeekChange()"></select>
+  <label style="margin-left:6px;">조</label>
+  <select class="week-select" id="jo-select" onchange="onWeekChange()" style="min-width:70px;">
+    <option value="">전체</option>
+  </select>
   <label style="margin-left:6px;">유형</label>
   <select class="week-select" id="evang-type-select" onchange="onWeekChange()" style="min-width:90px;">
     <option value="">전체</option>
@@ -2165,6 +2169,7 @@ function calcCurrentWeek() {
 let currentTab = 0,
   currentWeek = calcCurrentWeek();
 let currentEvangType = ''; // 복음제시 유형 필터
+let currentJo = '';         // 조 필터
 let allData = []; // 구글시트에서 불러온 전체 레코드 (최신 1건/문서번호)
 let rawData  = []; // 원본 전체 행 (수정이력 포함)
 
@@ -2242,6 +2247,7 @@ window.onload = function() {
   }
 
   buildWeekSelect();
+  buildJoSelect();
   updateConnBadge();
   // 조정보(단계 포함) 항상 서버에서 최신으로 로드
   if (CFG.url) {
@@ -2268,6 +2274,22 @@ window.onload = function() {
   });
 };
 
+function buildJoSelect() {
+  var sel = document.getElementById('jo-select');
+  if (!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">전체</option>';
+  var joSet = new Set();
+  MEMBERS.forEach(function(m) { if (m.jo) joSet.add(Number(m.jo)); });
+  Array.from(joSet).sort(function(a,b){ return a-b; }).forEach(function(jo) {
+    var opt = document.createElement('option');
+    opt.value = String(jo);
+    opt.textContent = jo + '조';
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+}
+
 function buildWeekSelect() {
   var sel = document.getElementById('week-select');
   sel.innerHTML = '';
@@ -2288,6 +2310,7 @@ function buildWeekSelect() {
 function onWeekChange() {
   currentWeek = parseInt(document.getElementById('week-select').value) || 0;
   currentEvangType = document.getElementById('evang-type-select') ? document.getElementById('evang-type-select').value : '';
+  currentJo = document.getElementById('jo-select') ? document.getElementById('jo-select').value : '';
   renderAll();
 }
 
@@ -2460,17 +2483,22 @@ function num(v) {
 // ── 렌더링 총괄 ──────────────────────────────────────────────────────────────
 function renderAll() {
   var w = currentWeek;
-  var et = (typeof currentEvangType !== 'undefined') ? currentEvangType : '';
+  var et  = (typeof currentEvangType !== 'undefined') ? currentEvangType : '';
+  var jof = (typeof currentJo !== 'undefined') ? currentJo : '';
 
-  // 유형 필터 함수
+  // 유형 + 조 필터 함수
   function matchType(r) {
-    if (!et) return true;
-    var t = (r.evangType || '').toString();
-    if (et === '관계') return t === '관계(팀)';
-    if (et === '질문지') return t === '질문지(팀)';
-    if (et === '7일후') return t === '7일후(팀)';
-    if (et === '개인') return t === '개인';
-    if (et === 'QQ') return t.indexOf('QQ') > -1 || t.indexOf('qq') > -1;
+    // 유형 필터
+    if (et) {
+      var t = (r.evangType || '').toString();
+      if (et === '관계'   && t !== '관계(팀)')  return false;
+      if (et === '질문지' && t !== '질문지(팀)') return false;
+      if (et === '7일후'  && t !== '7일후(팀)')  return false;
+      if (et === '개인'   && t !== '개인')        return false;
+      if (et === 'QQ'     && t.indexOf('QQ') < 0 && t.indexOf('qq') < 0) return false;
+    }
+    // 조 필터
+    if (jof && String(r.jo) !== jof) return false;
     return true;
   }
 
@@ -3509,7 +3537,12 @@ function renderWeekly2Html(data, w) {
       var relCnt   = myRecs.filter(function(r){ return r.evangType==='관계(팀)'; }).length;
       var quesCnt  = myRecs.filter(function(r){ return r.evangType==='질문지(팀)'; }).length;
       var day7Cnt  = myRecs.filter(function(r){ return r.evangType==='7일후(팀)'; }).length;
-      var persCnt  = myRecs.filter(function(r){ return r.evangType==='개인'; }).length;
+      // 개인전도 횟수: 전도자 선택(조원) = relationMember 기준
+      var persCnt  = allRecs.filter(function(r){
+        if (r.evangType !== '개인') return false;
+        var eName = (r.relationMember || '').replace(/\(.*?\)/g, '').trim();
+        return eName === m.name;
+      }).length;
 
       // 결신 횟수 (전도유형별)
       var relDec  = myRecs.filter(function(r){ return (r.evangType==='관계(팀)'||r.evangType==='관계') && r.result==='결신'; }).length;
@@ -3554,8 +3587,11 @@ function renderWeekly2Html(data, w) {
         (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(joDay7Cnt>=1?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+(joDay7Cnt>=1?'<b style="color:var(--green)">✔ '+joDay7Cnt+'</b>':'—')+'</td>' : '') +
         // 수료요건 — 첫 행에만 rowspan
         (mi===0 ? '<td style="text-align:center;border-right:1px solid #c5cde8;'+(isSuryoComplete(joRelCnt,joQuesDateCnt,joDay7Cnt)?'background:#fffde7;':'')+'" rowspan="'+rowspan+'">'+joComplete+'</td>' : '') +
-        // 개인전도
-        '<td style="text-align:center;font-weight:700;border-right:1px solid #c5cde8;">'+(persCnt||'—')+'</td>' +
+        // 개인전도 — 이름(좌) + 횟수(우) 한 행에 표시
+        '<td style="text-align:left;border-right:1px solid #c5cde8;padding:2px 4px;white-space:nowrap;max-width:70px;overflow:hidden;">' +
+          '<span style="color:#666;font-size:9px;">' + m.name + '</span>' +
+          '<span style="float:right;font-weight:800;font-size:10px;margin-left:4px;color:' + (persCnt > 0 ? '#1565c0' : '#bbb') + ';">' + (persCnt > 0 ? persCnt : '—') + '</span>' +
+        '</td>' +
         // 복음참여 파트
         PARTS2.map(function(p, pi){
           var cnt = partCounts[p];
