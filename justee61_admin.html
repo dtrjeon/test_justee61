@@ -1019,6 +1019,14 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <option value="QQ">QQ</option>
   </select>
   <button class="act-btn primary" onclick="loadData()">🔄 불러오기</button>
+  <button id="sim-mode-btn" class="act-btn" onclick="toggleSimMode()"
+    style="background:#e8f5e9;color:#2e7d32;border:1px solid #2e7d32;"
+    title="시뮬레이션 모드: GAS 없이 로컬 데이터로 테스트">🧪 시뮬</button>
+  <button class="act-btn" onclick="toggleMismatchPanel()" id="mismatch-open-btn"
+    style="background:#fff3f3;color:#ef4444;border:1px solid #ef4444;display:none;"
+    title="전도유형 불일치 항목 보기">⚠️ 유형불일치 <span id="mismatch-open-cnt"></span></button>
+  <button class="act-btn" onclick="showRenumberPanel()"
+    style="background:#fff8e1;color:#f57f17;border:1px solid #f57f17;">🔢 번호재설정</button>
 </div>
 
 <!-- TAB 0: 주간현황 -->
@@ -1232,7 +1240,6 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title" style="line-height:1.7;">조별 상세 현황<br><span style="font-size:10px;font-weight:500;color:var(--text2);"><span id="week-label-0">—</span>주차&nbsp;&nbsp;<span id="week-period-0"></span></span></span>
       <div style="display:flex;align-items:center;gap:8px;">
-        <button onclick="showRenumberPanel()" style="background:#f57f17;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">🔢 번호 재설정</button>
         <button onclick="exportCsv('tb-weekly','tab0_주간현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
         <button onclick="exportPdf('tb-weekly','tab0_주간현황')" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ PDF</button>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;" onclick="toggleInactiveRows()">
@@ -2560,10 +2567,19 @@ function checkMismatch(data) {
 
   if (_mismatches.length === 0) {
     panel.style.display = 'none';
+    var ob = document.getElementById('mismatch-open-btn');
+    if (ob) ob.style.display = 'none';
     return;
   }
 
   count.textContent = '(' + _mismatches.length + '건)';
+
+  // 상단 week-bar 버튼 표시
+  var openBtn = document.getElementById('mismatch-open-btn');
+  var openCnt = document.getElementById('mismatch-open-cnt');
+  if (openBtn) { openBtn.style.display = 'inline-block'; }
+  if (openCnt) { openCnt.textContent = '(' + _mismatches.length + ')'; }
+
   list.innerHTML = _mismatches.map(function(m, i) {
     var bg = i % 2 === 0 ? '#fff' : '#fef9f9';
     var safeDoc = m.doc.replace(/'/g, "\\'");
@@ -2588,9 +2604,21 @@ function checkMismatch(data) {
 
 // ── 개별 유형 수정 ────────────────────────────────────────────────────────────
 async function fixOneEvangType(idx, docNumber, newType, oldType) {
-  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
   var btn = document.getElementById('mm-btn-' + idx);
   if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+
+  // ── 시뮬레이션 모드 ──────────────────────────────────────
+  if (window.SIM_MODE) {
+    await simDelay(400);
+    simFixEvangType(docNumber, newType, oldType || '');
+    var row = document.getElementById('mm-row-' + idx);
+    if (row) row.style.background = '#f0fdf4';
+    if (btn) { btn.textContent = '✅'; btn.style.background = '#2e7d32'; }
+    showToast('🧪 [시뮬] ' + docNumber + ' → ' + newType);
+    return;
+  }
+  // ── 실서버 ───────────────────────────────────────────────
+  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
   try {
     var res = await fetch(CFG.url, {
       method: 'POST',
@@ -2612,8 +2640,8 @@ async function fixOneEvangType(idx, docNumber, newType, oldType) {
 
 // ── 일괄 유형 수정 ────────────────────────────────────────────────────────────
 async function fixAllEvangTypes() {
-  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
   if (_mismatches.length === 0) { showToast('수정할 항목이 없습니다.'); return; }
+  if (!window.SIM_MODE && !CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
   var statusEl = document.getElementById('fix-all-status');
   var btn = document.getElementById('fix-all-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ 수정 중...'; }
@@ -2622,6 +2650,19 @@ async function fixAllEvangTypes() {
   for (var i = 0; i < _mismatches.length; i++) {
     var m = _mismatches[i];
     if (statusEl) statusEl.textContent = (i + 1) + '/' + _mismatches.length + ' 처리 중...';
+
+    // ── 시뮬레이션 ──────────────────────────────────────────
+    if (window.SIM_MODE) {
+      await simDelay(120);
+      simFixEvangType(m.doc, m.expected, m.etype || '');
+      success++;
+      var row = document.getElementById('mm-row-' + i);
+      var btn2 = document.getElementById('mm-btn-' + i);
+      if (row) row.style.background = '#f0fdf4';
+      if (btn2) { btn2.textContent = '✅'; btn2.disabled = true; btn2.style.background = '#2e7d32'; }
+      continue;
+    }
+    // ── 실서버 ───────────────────────────────────────────────
     try {
       var res = await fetch(CFG.url, {
         method: 'POST',
@@ -2640,15 +2681,92 @@ async function fixAllEvangTypes() {
   }
 
   if (btn) { btn.disabled = false; btn.textContent = '🔧 전체 일괄 수정'; }
-  if (statusEl) statusEl.textContent = '완료: ' + success + '건 성공' + (fail ? ', ' + fail + '건 실패' : '');
-  showToast('✅ 일괄 수정 완료: ' + success + '/' + _mismatches.length + '건');
-  // 3초 후 데이터 재로드
-  setTimeout(function() { loadData(); }, 3000);
+  if (statusEl) statusEl.textContent = (window.SIM_MODE ? '🧪 시뮬 ' : '') + '완료: ' + success + '건 성공' + (fail ? ', ' + fail + '건 실패' : '');
+  showToast((window.SIM_MODE ? '🧪 [시뮬] ' : '✅ ') + '일괄 수정 완료: ' + success + '/' + _mismatches.length + '건');
+  setTimeout(function() { loadData(); }, window.SIM_MODE ? 800 : 3000);
 }
 
 
+
+// ── 시뮬레이션 모드 ───────────────────────────────────────────────────────────
+window.SIM_MODE = false;
+
+function toggleSimMode() {
+  window.SIM_MODE = !window.SIM_MODE;
+  var btn = document.getElementById('sim-mode-btn');
+  if (window.SIM_MODE) {
+    // TEST_DATA로 강제 로드
+    window.TEST_MODE = true;
+    if (btn) {
+      btn.textContent = '🧪 시뮬 ON';
+      btn.style.background = '#2e7d32';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#2e7d32';
+    }
+    loadData();
+    showToast('🧪 시뮬레이션 모드 ON — 실제 서버에 저장되지 않습니다');
+  } else {
+    window.TEST_MODE = false;
+    if (btn) {
+      btn.textContent = '🧪 시뮬';
+      btn.style.background = '#e8f5e9';
+      btn.style.color = '#2e7d32';
+      btn.style.borderColor = '#2e7d32';
+    }
+    showToast('시뮬레이션 모드 OFF');
+  }
+}
+
+// 시뮬: 딜레이 (진행감 연출)
+function simDelay(ms) {
+  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
+// 시뮬: 전도유형 수정 — rawData / allData 메모리 직접 업데이트
+function simFixEvangType(docNumber, newType, oldType) {
+  var now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  var histEntry = '[' + now + '] ' + (oldType || '?') + ' → ' + newType + ' (시뮬)';
+  [rawData, allData].forEach(function(arr) {
+    arr.forEach(function(r) {
+      if (r.docNumber === docNumber) {
+        r.evangType = newType;
+        r._simEvangHist = r._simEvangHist
+          ? histEntry + '\n' + r._simEvangHist
+          : histEntry;
+      }
+    });
+  });
+}
+
+// 시뮬: 문서번호 재넘버링 — rawData / allData 메모리 직접 업데이트
+function simRenumberDoc(oldDoc, newDoc) {
+  var now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  var histEntry = '[' + now + '] ' + oldDoc + ' → ' + newDoc + ' (시뮬)';
+  [rawData, allData].forEach(function(arr) {
+    arr.forEach(function(r) {
+      if (r.docNumber === oldDoc) {
+        r.docNumber = newDoc;
+        r._simDocHist = r._simDocHist
+          ? histEntry + '\n' + r._simDocHist
+          : histEntry;
+      }
+    });
+  });
+}
+
 // ── 문서번호 재넘버링 ─────────────────────────────────────────────────────────
 var _renumberPlan = []; // { oldDoc, newDoc, date, jo, typeKey, changed }
+
+function toggleMismatchPanel() {
+  var panel = document.getElementById('mismatch-panel');
+  if (!panel) return;
+  if (panel.style.display === 'none' || panel.style.display === '') {
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    panel.style.display = 'none';
+  }
+}
 
 function showRenumberPanel() {
   var panel = document.getElementById('renumber-panel');
@@ -2793,12 +2911,12 @@ function previewRenumber() {
 }
 
 async function applyRenumber() {
-  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
   var changed = _renumberPlan.filter(function(p) { return p.changed; });
   if (!changed.length) { showToast('변경할 항목이 없습니다.'); return; }
+  if (!window.SIM_MODE && !CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
 
-  var applyBtn  = document.getElementById('renumber-apply-btn');
-  var statusEl  = document.getElementById('renumber-status');
+  var applyBtn = document.getElementById('renumber-apply-btn');
+  var statusEl = document.getElementById('renumber-status');
   if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = '⏳ 적용 중...'; }
 
   var success = 0, fail = 0;
@@ -2806,15 +2924,24 @@ async function applyRenumber() {
     var p = changed[i];
     var statusCell = document.getElementById('rn-status-' + i);
     if (statusCell) statusCell.textContent = '⏳';
+
+    // ── 시뮬레이션 ──────────────────────────────────────────
+    if (window.SIM_MODE) {
+      await simDelay(80);
+      simRenumberDoc(p.oldDoc, p.newDoc);
+      success++;
+      if (statusCell) statusCell.textContent = '✅';
+      var row = document.getElementById('rn-row-' + i);
+      if (row) row.style.background = '#f0fdf4';
+      if (statusEl) statusEl.textContent = (i + 1) + '/' + changed.length;
+      continue;
+    }
+    // ── 실서버 ───────────────────────────────────────────────
     try {
       var res = await fetch(CFG.url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          action:  'renumber_doc',
-          oldDoc:  p.oldDoc,
-          newDoc:  p.newDoc
-        })
+        body: JSON.stringify({ action: 'renumber_doc', oldDoc: p.oldDoc, newDoc: p.newDoc })
       });
       var json = await res.json();
       if (json.status === 'ok') {
@@ -2834,9 +2961,9 @@ async function applyRenumber() {
   }
 
   if (applyBtn) { applyBtn.disabled = false; applyBtn.textContent = '✅ 전체 적용'; }
-  if (statusEl) statusEl.textContent = '완료 ' + success + '건 성공' + (fail ? ', ' + fail + '건 실패' : '');
-  showToast('🔢 재넘버링 완료: ' + success + '/' + changed.length + '건');
-  setTimeout(function() { loadData(); }, 3000);
+  if (statusEl) statusEl.textContent = (window.SIM_MODE ? '🧪 시뮬 ' : '') + '완료 ' + success + '건 성공' + (fail ? ', ' + fail + '건 실패' : '');
+  showToast((window.SIM_MODE ? '🧪 [시뮬] ' : '🔢 ') + '재넘버링 완료: ' + success + '/' + changed.length + '건');
+  setTimeout(function() { loadData(); }, window.SIM_MODE ? 800 : 3000);
 }
 
 // ── TAB 0: 주간현황 ──────────────────────────────────────────────────────────
