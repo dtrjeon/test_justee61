@@ -628,7 +628,7 @@ tr:last-child td {
   font-weight: 700;
   color: #1a2a6c;
   font-size: 11px;
-  border-top: 2.2px solid #222222;
+  border-top: 2.0px solid #222222;
 }
 
 /* BADGES */
@@ -3267,19 +3267,19 @@ function renderTab0(data, w) {
   var lastGroup = '';
   var html = '';
 
-  var joIdx = 0; // 조 순서 (첫 번째 조는 경계선 없음)
+  var prevJo = null; // 이전 조 번호 추적
+  var newGroupRendered = false; // 그룹 행 직후 여부
   jos.forEach(function(jo) {
     var joMembers = MEMBERS.filter(function(m) {
       return String(m.jo) === String(jo);
     });
-    var joBorderStyle = joIdx > 0 ? 'border-top:2.2px solid #222222;' : '';
-    joIdx++;
     var joRecs = data.filter(function(r) {
       return String(r.jo) === String(jo);
     });
     var grp = joMembers[0] && joMembers[0].group;
     if (grp && grp !== lastGroup) {
       lastGroup = grp;
+      newGroupRendered = true;
       var grpObj = CFG.groups.find(function(g) {
         return g.id === grp;
       }) || {
@@ -3290,6 +3290,10 @@ function renderTab0(data, w) {
         grp + '그룹' + (grpObj.leader ? ' — ' + grpObj.leader : '') +
         '</td></tr>';
     }
+    // 조 경계선: 이전 조가 있고 그룹 행이 바로 앞에 없는 경우만
+    var joBorderStyle = (prevJo !== null && !newGroupRendered) ? 'border-top:2.0px solid #222222;' : '';
+    newGroupRendered = false;
+    prevJo = jo;
 
     // 데이터 없는 조: 미실시 1행 렌더
     if (!joRecs.length || !joRecs[0].docNumber) {
@@ -3304,23 +3308,23 @@ function renderTab0(data, w) {
           '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fafafa;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + 'opacity:0.55;' + inactBorder + '">' + m.name + '</td>' +
           '<td class="td-role" style="opacity:0.55;' + inactBorder + '">' + roleBadge + '</td>' +
           '<td class="td-step" style="border-right:1px solid #c5cde8;color:#999;' + inactBorder + '">' + displayStep + '</td>' +
-          (mi === 0 ? '<td rowspan="' + rowspan + '" colspan="15" style="color:#bbb;font-size:9px;text-align:center;background:#f5f5f5;letter-spacing:1px;">　미　실　시　</td>' : '') +
-          '<td style="font-size:14px;text-align:center;border-left:1px solid #c5cde8;"></td>';
+          (mi === 0 ? '<td rowspan="' + rowspan + '" colspan="15" style="color:#bbb;font-size:9px;text-align:center;background:#f5f5f5;letter-spacing:1px;' + inactBorder + '">　미　실　시　</td>' : '') +
+          '<td style="font-size:14px;text-align:center;border-left:1px solid #c5cde8;' + inactBorder + '"></td>';
         // 복음참여 9칸 빈칸
         for (var pi0 = 0; pi0 < 9; pi0++) {
-          html += '<td style="' + (pi0 === 8 ? 'border-right:1px solid #c5cde8;' : '') + '"></td>';
+          html += '<td style="' + (pi0 === 8 ? 'border-right:1px solid #c5cde8;' : '') + inactBorder + '"></td>';
         }
         // 후속양육 + 전도일 (첫 행만 rowspan) + 불참자 (조원별 개별 셀 — 미실시는 전원 빈칸)
         if (mi === 0) {
           html +=
-            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
-            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
-            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
-            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
-            '<td rowspan="' + rowspan + '" style="color:#ddd;">—</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;"></td>';
+            '<td rowspan="' + rowspan + '" style="color:#ddd;' + inactBorder + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;' + inactBorder + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;' + inactBorder + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;' + inactBorder + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="color:#ddd;' + inactBorder + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + inactBorder + '"></td>';
         }
-        html += '<td style="text-align:center;"></td>';
+        html += '<td style="text-align:center;' + inactBorder + '"></td>';
         html += '</tr>';
       });
       return;
@@ -3387,7 +3391,7 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="font-size:10px;border-right:1px solid #c5cde8;' + nameBorderStyle + '">' + (rec.gospelDelivery || rec.gospelPlace || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.heaven || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.reason || '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;' + nameBorderStyle + '"><span class="badge b-orange">' + (rec.diagResult ? rec.diagResult.split('|')[0].replace('진단:', '').trim() : '—') + '</span></td>' +
+            '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;min-width:44px;' + nameBorderStyle + '"><span class="badge b-orange" style="white-space:nowrap;font-size:9px;">' + (rec.diagResult ? (rec.diagResult.split('결과:')[1] || rec.diagResult.split('|')[0].replace('진단:','').trim()).replace(/\|.*/,'').trim() : '—') + '</span></td>' +
             '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;' + nameBorderStyle + '"><span class="badge ' + resultCls + '">' + result + '</span></td>';
         }
 
@@ -3423,17 +3427,17 @@ function renderTab0(data, w) {
         if (!isPersonal && action === '참관하였고') {
           // 팀전도 참관 → 빈칸
           for (var pi2 = 0; pi2 < 9; pi2++) {
-            html += '<td style="' + (pi2 === 8 ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle + '"></td>';
+            html += '<td style="' + (pi2 === 8 ? 'border-right:1px solid #c5cde8;' : '') + nameBorderStyle + '"></td>';
           }
         } else if (isPersonal && action !== '하였고') {
           // 개인전도 — 전도자(하였고) 외 나머지는 모두 빈칸
           for (var pi3 = 0; pi3 < 9; pi3++) {
-            html += '<td style="' + (pi3 === 8 ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle + '"></td>';
+            html += '<td style="' + (pi3 === 8 ? 'border-right:1px solid #c5cde8;' : '') + nameBorderStyle + '"></td>';
           }
         } else {
           PARTS.forEach(function(p, pi) {
             var isLast = pi === PARTS.length - 1;
-            var borderStyle = (isLast ? 'border-right:1px solid #c5cde8;' : '') + extraBorderStyle;
+            var borderStyle = (isLast ? 'border-right:1px solid #c5cde8;' : '') + nameBorderStyle;
             if (action !== '하였고') { html += '<td style="' + borderStyle + '"></td>'; return; }
             if (partArr.indexOf(p) > -1) { html += '<td style="text-align:center;' + borderStyle + '">' + dot + '</td>'; return; }
             html += '<td style="text-align:center;color:#e0e0e0;font-size:10px;' + borderStyle + '">·</td>';
@@ -3443,12 +3447,12 @@ function renderTab0(data, w) {
         // 후속양육 + 전도일 (건당 첫 조원에만 rowspan) + 불참자 (조원별 개별 셀)
         if (isRecFirst) {
           html +=
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('7일') > -1 ? '●' : '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('24') > -1 ? '●' : '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('예배') > -1 ? '●' : '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && rec.followup.indexOf('새가족') > -1 ? '●' : '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.followup && (rec.followup.indexOf('하지') > -1 || rec.followup.indexOf('못') > -1) ? '●' : '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + extraBorderStyle + '">' + (rec.date ? rec.date.slice(5).replace('-', '/') : '') + '</td>';
+            '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.followup && rec.followup.indexOf('7일') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.followup && rec.followup.indexOf('24') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.followup && rec.followup.indexOf('예배') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.followup && rec.followup.indexOf('새가족') > -1 ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.followup && (rec.followup.indexOf('하지') > -1 || rec.followup.indexOf('못') > -1) ? '●' : '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;border-left:1px solid #c5cde8;' + nameBorderStyle + '">' + (rec.date ? rec.date.slice(5).replace('-', '/') : '') + '</td>';
         }
         // 불참자 열 — 조원별 개별 셀
         // absentType: 'personal'=개인전도불참, 'team'=팀전도불참, 'error'=잘못된참관, ''=정상
@@ -3489,7 +3493,7 @@ function renderTab0(data, w) {
             'title="클릭 → index.html에서 수정 (개인전도인데 참관하였고로 잘못 입력됨)">⚠️ 수정필요</span>';
         }
 
-        html += '<td style="text-align:center;' + extraBorderStyle + '">' + absentMark + '</td>';
+        html += '<td style="text-align:center;' + nameBorderStyle + '">' + absentMark + '</td>';
         html += '</tr>';
       });
     });
