@@ -3348,7 +3348,7 @@ function renderTab0(data, w) {
         var isFirst = (ri === 0 && mi === 0);
         var isRecFirst = (mi === 0);
         // 2건째 이상 첫 조원행: 구분선 추가
-        var extraBorderStyle = (ri > 0 && mi === 0) ? 'border-top:2px solid #8fa3d0;' : '';
+        var extraBorderStyle = (ri > 0 && mi === 0) ? 'border-top:2.5px solid #222222;' : '';
 
         var absentClass = (isPersonal && action !== '하였고') ? ' personal-absent' : (action === '불참하였고' ? ' team-absent' : '');
         html += '<tr class="jo-row active-row' + (isFirst ? ' jo-row-first' : '') + absentClass + '">' +
