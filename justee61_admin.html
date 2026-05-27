@@ -628,6 +628,7 @@ tr:last-child td {
   font-weight: 700;
   color: #1a2a6c;
   font-size: 11px;
+  border-top: 2.2px solid #222222;
 }
 
 /* BADGES */
@@ -3265,10 +3266,13 @@ function renderTab0(data, w) {
   var lastGroup = '';
   var html = '';
 
+  var joIdx = 0; // 조 순서 (첫 번째 조는 경계선 없음)
   jos.forEach(function(jo) {
     var joMembers = MEMBERS.filter(function(m) {
       return String(m.jo) === String(jo);
     });
+    var joBorderStyle = joIdx > 0 ? 'border-top:2.2px solid #222222;' : '';
+    joIdx++;
     var joRecs = data.filter(function(r) {
       return String(r.jo) === String(jo);
     });
@@ -3348,27 +3352,29 @@ function renderTab0(data, w) {
         var isFirst = (ri === 0 && mi === 0);
         var isRecFirst = (mi === 0);
         // 2건째 이상 첫 조원행: 구분선 추가
-        var extraBorderStyle = (ri > 0 && mi === 0) ? 'border-top:2.5px solid #222222;' : '';
+        var extraBorderStyle = (ri > 0 && mi === 0) ? 'border-top:2px solid #8fa3d0;' : '';
 
         var absentClass = (isPersonal && action !== '하였고') ? ' personal-absent' : (action === '불참하였고' ? ' team-absent' : '');
+        // 조 첫 번째 행에만 조 경계선 적용
+        var rowBorderStyle = (ri === 0 && mi === 0) ? joBorderStyle : '';
         html += '<tr class="jo-row active-row' + (isFirst ? ' jo-row-first' : '') + absentClass + '">' +
           // 조번호: 첫 번째 건의 첫 번째 조원에만 전체 rowspan
-          (!joNumRendered ? '<td class="td-jo" rowspan="' + totalRowspan + '" style="position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 #c5cde8;">' + jo + '</td>' : '') +
-          '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fff;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + extraBorderStyle + '">' + m.name + '</td>' +
-          '<td class="td-role" style="' + extraBorderStyle + '">' + roleBadge + '</td>' +
-          '<td class="td-step" style="border-right:1px solid #c5cde8;' + extraBorderStyle + '">' + displayStep + '</td>';
+          (!joNumRendered ? '<td class="td-jo" rowspan="' + totalRowspan + '" style="position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 #c5cde8;' + joBorderStyle + '">' + jo + '</td>' : '') +
+          '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fff;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + rowBorderStyle + '">' + m.name + '</td>' +
+          '<td class="td-role" style="' + rowBorderStyle + '">' + roleBadge + '</td>' +
+          '<td class="td-step" style="border-right:1px solid #c5cde8;' + rowBorderStyle + '">' + displayStep + '</td>';
 
         joNumRendered = true;
 
         // 전도내용 셀 (건당 첫 조원에만 rowspan)
         if (isRecFirst) {
           html +=
-            '<td rowspan="' + rowspan + '" style="font-size:10px;color:#1a3a9e;font-weight:700;' + extraBorderStyle + '">' + (rec.docNumber || '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.evangType || '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">—</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">—</td>' +
-            '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.religion || '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.gender || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;color:#1a3a9e;font-weight:700;' + rowBorderStyle + '">' + (rec.docNumber || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;' + rowBorderStyle + '">' + (rec.evangType || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + rowBorderStyle + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="' + rowBorderStyle + '">—</td>' +
+            '<td rowspan="' + rowspan + '" style="font-size:10px;' + rowBorderStyle + '">' + (rec.religion || '—') + '</td>' +
+            '<td rowspan="' + rowspan + '" style="' + rowBorderStyle + '">' + (rec.gender || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + extraBorderStyle + '">' + (rec.age || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.region || rec.location || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="font-size:10px;' + extraBorderStyle + '">' + (rec.relationMember || '—') + '</td>' +
