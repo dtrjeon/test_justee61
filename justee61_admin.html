@@ -3613,7 +3613,8 @@ function renderWeekly2Html(data, w) {
 
       // 전도유형별 횟수
       var relCnt   = myRecs.filter(function(r){ return r.evangType==='관계(팀)'; }).length;
-      var quesCnt  = myRecs.filter(function(r){ return r.evangType==='질문지(팀)'; }).length;
+      var _qRecs   = myRecs.filter(function(r){ return r.evangType==='질문지(팀)'; });
+      var quesCnt  = new Set(_qRecs.map(function(r){ return r.date; }).filter(Boolean)).size;
       var day7Cnt  = myRecs.filter(function(r){ return r.evangType==='7일후(팀)'; }).length;
       // 개인전도 횟수: 전도자 선택(조원) = relationMember 기준
       var persCnt  = allRecs.filter(function(r){
@@ -4155,7 +4156,9 @@ function printTab2Pdf() {
                            });
 
       var relCnt  = joRecs.filter(function(r){ return r.evangType==='관계(팀)'; }).length;
-      var quesCnt = joRecs.filter(function(r){ return r.evangType==='질문지(팀)'; }).length;
+      var _qRecs2  = joRecs.filter(function(r){ return r.evangType==='질문지(팀)'; });
+      var quesRawCnt = _qRecs2.length; // 횟수
+      var quesCnt  = new Set(_qRecs2.map(function(r){ return r.date; }).filter(Boolean)).size; // 고유 날짜 수
       var day7Cnt = joRecs.filter(function(r){ return r.evangType === '7일후(팀)'; }).length;
       var suryoOk = isSuryoComplete(relCnt, quesCnt, day7Cnt);
 
@@ -4193,10 +4196,11 @@ function printTab2Pdf() {
           '<td>' + m.name + '</td>' +
           '<td class="c">' + roleLabel + '</td>' +
           '<td class="c">' + (m.step||'—') + '</td>' +
-          (mi===0 ? '<td class="c suryo-cell" rowspan="'+rowspan+'" style="background:'+suryoBg+';color:'+suryoColor+';font-weight:700;">' + suryo + '</td>' : '') +
           (mi===0 ? '<td class="c" rowspan="'+rowspan+'">' + rel6  + '</td>' : '') +
+          (mi===0 ? '<td class="c" rowspan="'+rowspan+'">' + (quesRawCnt||'—') + '</td>' : '') +
           (mi===0 ? '<td class="c" rowspan="'+rowspan+'">' + ques3 + '</td>' : '') +
           (mi===0 ? '<td class="c" rowspan="'+rowspan+'">' + w7ok  + '</td>' : '') +
+          (mi===0 ? '<td class="c suryo-cell" rowspan="'+rowspan+'" style="background:'+suryoBg+';color:'+suryoColor+';font-weight:700;">' + suryo + '</td>' : '') +
           '<td class="c">' + (indivCnt||'—') + '</td>' +
           partCells +
           '</tr>';
@@ -5577,7 +5581,8 @@ function drawSuryoChart() {
   joNums.forEach(function(jo) {
     var recs = data.filter(function(r){ return String(r.jo) === String(jo); });
     var rel  = recs.filter(function(r){ return r.evangType === '관계(팀)'; }).length;
-    var ques = recs.filter(function(r){ return r.evangType === '질문지(팀)'; }).length;
+    var _qChart = recs.filter(function(r){ return r.evangType === '질문지(팀)'; });
+    var ques    = new Set(_qChart.map(function(r){ return r.date; }).filter(Boolean)).size;
     var day7 = recs.filter(function(r){ return r.evangType === '7일후(팀)'; }).length;
     labels.push(jo + '조');
     relArr.push(rel);
