@@ -5593,7 +5593,7 @@ function drawSuryoChart() {
   var canvas = document.getElementById('suryo-chart-canvas');
   if (!canvas) return;
 
-  var GOAL = 10; // 수료 목표값
+  var GOAL = 10;
 
   // ── 데이터 수집 ──────────────────────────────────────────────────────────
   var data   = (suryoChartData && suryoChartData.length) ? suryoChartData : (rawData || []);
@@ -5613,24 +5613,20 @@ function drawSuryoChart() {
   if (!labels.length) return;
 
   // ── 크기 계산 ─────────────────────────────────────────────────────────────
-  var MARGIN_L = 30, MARGIN_R = 16, MARGIN_T = 20, MARGIN_B = 38;
+  var MARGIN_L = 30, MARGIN_R = 50, MARGIN_T = 20, MARGIN_B = 38;
   var H = 200;
 
-  // 패널 실제 가용 너비에 맞게 그룹 폭 자동 산정
-  var panel = document.getElementById('suryo-chart-panel');
+  var panel  = document.getElementById('suryo-chart-panel');
   var availW = (panel ? panel.clientWidth - 32 : 400) - MARGIN_L - MARGIN_R;
-  var n = labels.length;
-  var GROUP_GAP = Math.max(6, Math.floor(availW / n * 0.18));
-  var groupW = Math.floor((availW - GROUP_GAP * (n - 1)) / n);
-  groupW = Math.max(groupW, 30); // 최소 30px
-  var BAR_GAP = Math.max(2, Math.floor(groupW * 0.08));
-  var BAR_W   = Math.max(6, Math.floor((groupW - BAR_GAP * 2) / 3));
-  var totalW  = MARGIN_L + n * (groupW + GROUP_GAP) - GROUP_GAP + MARGIN_R;
+  var n      = labels.length;
+  var BAR_GAP = Math.max(6, Math.floor(availW / n * 0.25));
+  var BAR_W   = Math.max(12, Math.floor((availW - BAR_GAP * (n - 1)) / n));
+  var totalW  = MARGIN_L + n * (BAR_W + BAR_GAP) - BAR_GAP + MARGIN_R;
   var chartH  = H - MARGIN_T - MARGIN_B;
 
-  var maxVal = Math.max.apply(null, relArr.concat(quesArr).concat(day7Arr).concat([GOAL]));
-  // Y축 최대값은 GOAL 이상 + 여백
-  maxVal = Math.max(maxVal, GOAL) + 1;
+  // Y축 최대값: 누적합 or GOAL 중 큰 값 + 여백
+  var stackMax = Math.max.apply(null, relArr.map(function(r,i){ return r + quesArr[i] + day7Arr[i]; }));
+  var maxVal   = Math.max(stackMax, GOAL) + 1;
 
   canvas.width        = totalW;
   canvas.height       = H;
@@ -5642,15 +5638,14 @@ function drawSuryoChart() {
 
   // ── Y축 그리드 & 레이블 ──────────────────────────────────────────────────
   var yTicks = [];
-  for (var v = 0; v <= maxVal; v += 2) yTicks.push(v);
-  if (yTicks[yTicks.length - 1] < maxVal) yTicks.push(Math.ceil(maxVal));
+  for (var v = 0; v <= Math.ceil(maxVal); v += 2) yTicks.push(v);
 
-  ctx.font = '9px sans-serif';
+  ctx.font      = '9px sans-serif';
   ctx.textAlign = 'right';
   yTicks.forEach(function(tv) {
     var y = MARGIN_T + chartH - (tv / maxVal) * chartH;
-    ctx.strokeStyle = tv === GOAL ? 'rgba(180,80,80,0.15)' : '#eeeff3';
-    ctx.lineWidth   = tv === GOAL ? 1.5 : 1;
+    ctx.strokeStyle = '#eeeff3';
+    ctx.lineWidth   = 1;
     ctx.beginPath();
     ctx.moveTo(MARGIN_L, y);
     ctx.lineTo(totalW - MARGIN_R, y);
@@ -5659,7 +5654,7 @@ function drawSuryoChart() {
     ctx.fillText(tv, MARGIN_L - 3, y + 3);
   });
 
-  // ── 수료 목표선 (점선 + 레이블) ──────────────────────────────────────────
+  // ── 수료 목표선 ──────────────────────────────────────────────────────────
   var goalY = MARGIN_T + chartH - (GOAL / maxVal) * chartH;
   ctx.save();
   ctx.setLineDash([4, 3]);
@@ -5670,41 +5665,58 @@ function drawSuryoChart() {
   ctx.lineTo(totalW - MARGIN_R, goalY);
   ctx.stroke();
   ctx.restore();
-  ctx.fillStyle  = '#c97b7b';
-  ctx.font       = 'bold 8px sans-serif';
-  ctx.textAlign  = 'right';
-  ctx.fillText('목표 ' + GOAL, totalW - MARGIN_R, goalY - 3);
+  ctx.fillStyle = '#c97b7b';
+  ctx.font      = 'bold 8px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('목표 ' + GOAL, totalW - MARGIN_R + 3, goalY + 3);
 
-  // ── 막대 그리기 ──────────────────────────────────────────────────────────
-  var colors = ['#5b7fa6', '#7a9e7e', '#b0907a'];
+  // ── 누적 막대 그리기 ─────────────────────────────────────────────────────
+  var colors = ['#5b7fa6', '#7a9e7e', '#b0907a'];  // 관계, 질문지, 7일후
+  var baseY  = MARGIN_T + chartH;
+
   labels.forEach(function(lbl, gi) {
-    var x0 = MARGIN_L + gi * (groupW + GROUP_GAP);
-    var cx = x0 + groupW / 2; // 그룹 중심 X
+    var bx     = MARGIN_L + gi * (BAR_W + BAR_GAP);
+    var cx     = bx + BAR_W / 2;
+    var stack  = [relArr[gi], quesArr[gi], day7Arr[gi]];
+    var total  = stack[0] + stack[1] + stack[2];
+    var curY   = baseY;
 
-    [relArr[gi], quesArr[gi], day7Arr[gi]].forEach(function(val, bi) {
-      var bh = maxVal > 0 ? (val / maxVal) * chartH : 0;
-      var bx = x0 + bi * (BAR_W + BAR_GAP);
-      var by = MARGIN_T + chartH - bh;
+    stack.forEach(function(val, bi) {
+      if (val <= 0) return;
+      var bh = (val / maxVal) * chartH;
+      var by = curY - bh;
+      var isTop = (bi === stack.length - 1) || stack.slice(bi + 1).every(function(v){ return v === 0; });
 
-      // 목표 초과 여부에 따라 약간 밝게
-      var exceeded = (bi === 0 && val >= GOAL);
-      ctx.fillStyle = exceeded ? colors[bi] : colors[bi];
-      ctx.globalAlpha = exceeded ? 1.0 : 0.82;
+      ctx.fillStyle   = colors[bi];
+      ctx.globalAlpha = 0.85;
       ctx.beginPath();
-      if (bh > 0) {
-        ctx.roundRect ? ctx.roundRect(bx, by, BAR_W, bh, [2, 2, 0, 0]) : ctx.rect(bx, by, BAR_W, bh);
-        ctx.fill();
+      if (isTop && ctx.roundRect) {
+        ctx.roundRect(bx, by, BAR_W, bh, [2, 2, 0, 0]);
+      } else {
+        ctx.rect(bx, by, BAR_W, bh);
       }
+      ctx.fill();
       ctx.globalAlpha = 1.0;
 
-      // 값 표시
-      if (val > 0) {
-        ctx.fillStyle  = '#444';
-        ctx.font       = 'bold 8px sans-serif';
-        ctx.textAlign  = 'center';
-        ctx.fillText(val, bx + BAR_W / 2, by - 2);
+      // 구간 값 (막대 폭이 충분할 때만)
+      if (bh > 10 && BAR_W > 16) {
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font      = 'bold 8px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(val, cx, by + bh / 2 + 3);
       }
+
+      curY = by;
     });
+
+    // 누적 합계 값 (막대 상단)
+    if (total > 0) {
+      var topY = baseY - (total / maxVal) * chartH;
+      ctx.fillStyle = '#444';
+      ctx.font      = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(total, cx, topY - 3);
+    }
 
     // X 레이블
     ctx.fillStyle = '#666';
