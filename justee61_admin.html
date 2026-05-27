@@ -1066,7 +1066,8 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <!-- 복음제시 -->
     <div class="tbl-wrap" style="margin-bottom:0;display:grid;grid-template-rows:32px 1fr auto;">
       <div class="stat-box-header">복음제시</div>
-      <table style="font-size:10px;width:100%;border-collapse:collapse;">
+      <table style="font-size:10px;width:100%;border-collapse:collapse;table-layout:fixed;">
+        <colgroup><col style="width:70%"><col style="width:30%"></colgroup>
         <tbody>
           <tr><td colspan="2" class="td-left" style="background:#f0f4ff;font-weight:700;font-size:10px;color:#1a3ab0;padding:3px 6px;">팀전도<br>(훈련생포함)</td></tr>
           <tr><td class="td-left" style="padding:3px 6px;">관계(팀)</td><td id="s-gospel-team" style="font-weight:700;text-align:right;padding:3px 6px;">—</td></tr>
@@ -1085,15 +1086,16 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
 
     <!-- 대상자구분 -->
     <div class="tbl-wrap" style="margin-bottom:0;display:grid;grid-template-rows:32px 1fr auto;">
-      <div class="stat-box-header">대상자구분</div>
-      <table style="font-size:10px;width:100%;border-collapse:collapse;">
+      <div class="stat-box-header">대상자<br>구분</div>
+      <table style="font-size:10px;width:100%;border-collapse:collapse;table-layout:fixed;">
+        <colgroup><col style="width:70%"><col style="width:30%"></colgroup>
         <tbody>
-          <tr><td class="td-left" style="padding:3px 6px;">지인/지인가족</td><td id="d-local" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">가족</td><td id="d-family" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">지구촌교인</td><td id="d-church" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">질문지</td><td id="d-ques" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">7일후</td><td id="d-7day" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">훈련생</td><td id="d-trainee" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">지인/지인가족</td><td id="d-local" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">가족</td><td id="d-family" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">지구촌교인</td><td id="d-church" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">질문지</td><td id="d-ques" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">7일후</td><td id="d-7day" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">훈련생</td><td id="d-trainee" style="text-align:right;padding:3px 6px;">—</td></tr>
         </tbody>
       </table>
       <table style="font-size:10px;width:100%;border-collapse:collapse;border-top:2px solid rgba(26,58,176,0.25);">
@@ -1104,13 +1106,14 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <!-- 관계/질문지 결과 -->
     <div class="tbl-wrap" style="margin-bottom:0;display:grid;grid-template-rows:32px 1fr auto;">
       <div class="stat-box-header">관계/질문지 결과</div>
-      <table style="font-size:10px;width:100%;border-collapse:collapse;">
+      <table style="font-size:10px;width:100%;border-collapse:collapse;table-layout:fixed;">
+        <colgroup><col style="width:70%"><col style="width:30%"></colgroup>
         <tbody>
-          <tr><td class="td-left" style="padding:3px 6px;">이미<br>신자</td><td id="r-believer" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">결신</td><td id="r-decision" style="color:var(--red);font-weight:700;text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">확신<br>부족</td><td id="r-confirm" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">보류</td><td id="r-reject" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">거절</td><td id="r-refuse" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">이미<br>신자</td><td id="r-believer" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">결신</td><td id="r-decision" style="color:var(--red);font-weight:700;text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">확신<br>부족</td><td id="r-confirm" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">보류</td><td id="r-reject" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">거절</td><td id="r-refuse" style="text-align:right;padding:3px 6px;">—</td></tr>
         </tbody>
       </table>
       <table style="font-size:10px;width:100%;border-collapse:collapse;border-top:2px solid rgba(26,58,176,0.25);">
@@ -1121,14 +1124,15 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <!-- 후속양육 연결 -->
     <div class="tbl-wrap" style="margin-bottom:0;display:grid;grid-template-rows:32px 1fr auto;">
       <div class="stat-box-header">후속양육 연결</div>
-      <table style="font-size:10px;width:100%;border-collapse:collapse;">
+      <table style="font-size:10px;width:100%;border-collapse:collapse;table-layout:fixed;">
+        <colgroup><col style="width:70%"><col style="width:30%"></colgroup>
         <tbody>
-          <tr><td class="td-left" style="padding:3px 6px;">7일후<br>재방문</td><td id="fu-7day" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">24시간전화</td><td id="fu-24h" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">예배참석약속</td><td id="fu-worship" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">새가족반연결</td><td id="fu-new" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">목장<br>연결</td><td id="fu-mokjang" style="text-align:right;padding:3px 6px;">—</td></tr>
-          <tr><td class="td-left" style="padding:3px 6px;">하지 못</td><td id="fu-none" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">7일후<br>재방문</td><td id="fu-7day" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">24시간전화</td><td id="fu-24h" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">예배참석약속</td><td id="fu-worship" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">새가족반연결</td><td id="fu-new" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">목장<br>연결</td><td id="fu-mokjang" style="text-align:right;padding:3px 6px;">—</td></tr>
+          <tr style="height:24px;"><td class="td-left" style="padding:3px 6px;">하지 못</td><td id="fu-none" style="text-align:right;padding:3px 6px;">—</td></tr>
         </tbody>
       </table>
       <table style="font-size:10px;width:100%;border-collapse:collapse;border-top:2px solid rgba(26,58,176,0.25);">
