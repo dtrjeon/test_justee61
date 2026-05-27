@@ -1648,7 +1648,28 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     </div>
 
     <hr class="modal-divider">
-    <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:8px;">✏️ 조 편집</div>
+    <!-- STEP 1: 그룹 편성 설정 -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+      <span style="background:#1a3ab0;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">1</span>
+      <div style="font-size:11px;font-weight:700;color:var(--primary);">그룹 편성 설정 <span style="font-size:9px;font-weight:400;color:var(--text3);">그룹 추가 후 그룹명·그룹장을 입력하세요</span></div>
+    </div>
+    <div id="group-settings"></div>
+
+    <hr class="modal-divider">
+    <!-- STEP 2: 조별 그룹 배정 -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <span style="background:#1a3ab0;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">2</span>
+      <div style="font-size:11px;font-weight:700;color:var(--primary);">조별 그룹 배정 <span style="font-size:9px;font-weight:400;color:var(--text3);">조를 클릭하여 그룹을 순환 선택하세요</span></div>
+    </div>
+    <div id="jo-assign-hint" style="font-size:10px;color:var(--text3);margin-bottom:8px;"></div>
+    <div class="jo-assign-grid" id="jo-assign"></div>
+
+    <hr class="modal-divider">
+    <!-- STEP 3: 조 편집 -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+      <span style="background:#1a3ab0;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">3</span>
+      <div style="font-size:11px;font-weight:700;color:var(--primary);">조 편집 <span style="font-size:9px;font-weight:400;color:var(--text3);">조원 이름·단계를 입력하세요 (그룹은 위에서 자동 반영됩니다)</span></div>
+    </div>
     <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">그룹·조·이름·단계를 직접 입력하거나 CSV 파일로 일괄 등록하세요.</div>
 
     <!-- CSV 일괄 업로드 -->
@@ -1672,16 +1693,6 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <div id="admin-jo-editor-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;max-height:280px;overflow-y:auto;"></div>
     <button class="modal-btn" style="width:100%;margin-bottom:4px;background:rgba(32,80,200,0.07);border:1.5px dashed rgba(32,80,200,0.3);color:var(--primary);font-size:11px;" onclick="adminAddJoRow()">+ 조 추가</button>
     <button class="modal-btn ok" style="width:100%;margin-bottom:4px;" onclick="adminSaveJoData()">💾 조정보 저장 + 서버동기화</button>
-
-    <hr class="modal-divider">
-    <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:10px;">그룹 편성 설정</div>
-
-    <div id="group-settings"></div>
-
-    <hr class="modal-divider">
-    <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:8px;">조별 그룹 배정</div>
-    <div style="font-size:10px;color:var(--text3);margin-bottom:8px;">조를 클릭하여 그룹을 순환 선택하세요 (A→B→C→D→없음)</div>
-    <div class="jo-assign-grid" id="jo-assign"></div>
 
     <div class="modal-btns">
       <button class="modal-btn cancel" onclick="closeSettings()">취소</button>
@@ -4783,6 +4794,9 @@ function validateJoNumber(input) {
     input.style.borderColor = '';
     input.title = '';
   }
+  // 조 번호 입력 시 조별 그룹 배정 칩 즉시 갱신
+  clearTimeout(validateJoNumber._t);
+  validateJoNumber._t = setTimeout(function() { buildJoAssign(); }, 350);
 }
 
 function validateStep(input) {
@@ -4913,6 +4927,8 @@ function adminAddJoRow() {
   }));
   list.lastChild.querySelector('input').focus();
   list.scrollTop = list.scrollHeight;
+  // 새 조가 조별 그룹 배정 칩에 즉시 반영되도록 조 번호 입력 후 갱신
+  // (조 번호 입력 이벤트에서도 갱신하도록 validateJoNumber 훅)
 }
 
 function adminSaveJoData() {
@@ -5119,10 +5135,28 @@ function buildJoAssign() {
       '</div>';
   });
   document.getElementById('jo-assign').innerHTML = html;
+  // 순환 힌트 텍스트 동적 업데이트
+  var hintEl = document.getElementById('jo-assign-hint');
+  if (hintEl) {
+    var ids = CFG.groups.map(function(g) { return g.id; });
+    hintEl.textContent = ids.length
+      ? '조를 클릭하여 그룹을 순환 선택하세요 (' + ids.join('→') + '→없음)'
+      : '먼저 위에서 그룹을 추가하세요.';
+  }
 }
 
 function cycleJoGroup(el, jo) {
   // CFG.groups에서 동적으로 순환 목록 생성
+  // 순환 목록 설명 동적 업데이트
+  var groupIds = CFG.groups.map(function(g) { return g.id; });
+  var descEl = document.querySelector('.jo-assign-grid');
+  if (descEl && descEl.previousElementSibling) {
+    var prev = descEl.previousElementSibling;
+    var small = prev.querySelector && prev.querySelector('span[data-cycle-hint]');
+    if (!small) {
+      // 힌트 span 찾기 시도 (부모)
+    }
+  }
   var order = CFG.groups.map(function(g) { return g.id; });
   order.push('');
   var cur = CFG.joGroup[jo] || '';
