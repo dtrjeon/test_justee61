@@ -3759,20 +3759,25 @@ function renderTab1(data, w) {
           partTotals[p] += partCounts[p];
         });
 
-        var g = sum(allRecs, 'gospel'),
-          c = sum(allRecs, 'contact'),
-          t = sum(allRecs, 'target');
-        var d = sum(allRecs, 'decision'),
-          b = sum(allRecs, 'believer'),
-          cf = sum(allRecs, 'confirm'),
-          rj = sum(allRecs, 'reject');
-        totals.gospel += g;
-        totals.contact += c;
-        totals.target += t;
-        totals.decision += d;
-        totals.believer += b;
-        totals.confirm += cf;
-        totals.reject += rj;
+        // 통계: 표시용으로 조 레코드 합산 (합계는 leaderRole만 1회)
+        var g  = sum(allRecs, 'gospel');
+        var c  = sum(allRecs, 'contact');
+        var t  = sum(allRecs, 'target');
+        var d  = sum(allRecs, 'decision');
+        var b  = sum(allRecs, 'believer');
+        var cf = sum(allRecs, 'confirm');
+        var rj = sum(allRecs, 'reject');
+
+        // 합계는 리더 행에서만 1회 더함 (중복 방지)
+        if (m.role === '리더') {
+          totals.gospel   += g;
+          totals.contact  += c;
+          totals.target   += t;
+          totals.decision += d;
+          totals.believer += b;
+          totals.confirm  += cf;
+          totals.reject   += rj;
+        }
 
         var joLeader = MEMBERS.find(function(x) {
           return Number(x.jo) === Number(m.jo) && x.role === '리더';
