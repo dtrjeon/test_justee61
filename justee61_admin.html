@@ -768,8 +768,8 @@ tr:last-child td {
 
 .group-row-setting {
   display: grid;
-  grid-template-columns: 60px 1fr 1fr;
-  gap: 6px;
+  grid-template-columns: 24px 1fr 1fr 2fr 32px;
+  gap: 4px;
   align-items: center;
   margin-bottom: 6px;
   font-size: 11px;
@@ -1634,41 +1634,69 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
       </div>
     </div>
 
-    <div class="modal-section">
-      <label>📧 그룹별 알림 이메일 <span style="font-size:10px;font-weight:400;color:var(--text3);">보고서 제출 시 관리자 + 해당 그룹장에게 발송</span></label>
-      <div id="email-sheet-editor" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
-      <div style="display:flex;gap:6px;margin-top:8px;">
-        <button class="modal-btn" style="flex:1;font-size:11px;" onclick="saveEmailSheet()">📤 저장 + 서버동기화</button>
-        <button class="modal-btn" style="flex:1;font-size:11px;" onclick="loadEmailSheet()">☁️ 서버에서 불러오기</button>
-      </div>
-      <div id="email-save-status" style="font-size:10px;color:var(--text3);margin-top:4px;"></div>
-      <div style="font-size:9px;color:#aaa;margin-top:4px;line-height:1.6;">
-        ※ 여러 이메일은 쉼표로 구분 &nbsp;|&nbsp; GAS 재배포 후 구글 시트에 <b>이메일</b> 탭이 자동 생성됩니다.
-      </div>
-    </div>
+    <!-- 이메일 설정은 아래 그룹편성 설정에 통합됨 -->
+    <div id="email-save-status" style="display:none;"></div>
 
     <hr class="modal-divider">
-    <!-- STEP 1: 그룹 편성 설정 -->
+
+    <!-- ① 그룹 편성 설정 -->
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
       <span style="background:#1a3ab0;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">1</span>
-      <div style="font-size:11px;font-weight:700;color:var(--primary);">그룹 편성 설정 <span style="font-size:9px;font-weight:400;color:var(--text3);">그룹 추가 후 그룹명·그룹장을 입력하세요</span></div>
+      <div style="font-size:11px;font-weight:700;color:var(--primary);">그룹 편성 설정
+        <span style="font-size:9px;font-weight:400;color:var(--text3);">그룹명 · 그룹장 · 이메일 입력 후 서버 동기화</span>
+      </div>
     </div>
+
+    <!-- 관리자 이메일 고정 행 -->
+    <div style="display:grid;grid-template-columns:24px 1fr 1fr 2fr 32px;gap:4px;align-items:center;
+      padding:0 4px 4px;border-bottom:1px solid rgba(26,58,176,0.12);margin-bottom:4px;">
+      <span style="font-size:9px;font-weight:700;color:var(--text3);text-align:center;">구분</span>
+      <span style="font-size:9px;font-weight:700;color:var(--text3);">그룹명</span>
+      <span style="font-size:9px;font-weight:700;color:var(--text3);">그룹장</span>
+      <span style="font-size:9px;font-weight:700;color:var(--text3);">이메일 <span style="font-weight:400;opacity:.6;">(쉼표로 여러 개)</span></span>
+      <span></span>
+    </div>
+    <div style="display:grid;grid-template-columns:24px 1fr 1fr 2fr 32px;gap:4px;align-items:center;
+      margin-bottom:4px;padding:4px;background:#fff8e1;border:1px solid rgba(245,127,23,0.25);border-radius:6px;">
+      <span style="font-size:10px;font-weight:800;color:#e65100;text-align:center;">👑</span>
+      <span style="font-size:11px;font-weight:700;color:#e65100;padding:5px 4px;">관리자</span>
+      <span style="font-size:10px;color:var(--text3);padding:5px 4px;">—</span>
+      <input type="email" multiple id="set-admin-email"
+        placeholder="admin@gmail.com"
+        style="width:100%;padding:5px 7px;border:1px solid rgba(245,127,23,0.4);border-radius:5px;font-size:11px;font-family:'Noto Sans KR',sans-serif;outline:none;background:#fffde7;">
+      <span style="font-size:9px;color:#e65100;text-align:center;" title="관리자는 삭제할 수 없습니다">🔒</span>
+    </div>
+
     <div id="group-settings"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="modal-btn" style="flex:1;font-size:11px;" onclick="saveGroupSettings()">📤 저장 + 서버동기화</button>
+      <button class="modal-btn" style="flex:1;font-size:11px;" onclick="loadGroupSettings()">☁️ 서버에서 불러오기</button>
+    </div>
+    <div id="group-sync-status" style="font-size:10px;color:var(--text3);margin-top:4px;"></div>
+    <div style="font-size:9px;color:#aaa;margin-top:4px;line-height:1.6;">
+      ※ 이메일 여러 개는 쉼표로 구분 &nbsp;|&nbsp; 구글 시트 <b>그룹설정</b> 탭에 자동 저장됩니다.
+    </div>
 
     <hr class="modal-divider">
-    <!-- STEP 2: 조별 그룹 배정 -->
+
+    <!-- ② 조별 그룹 배정 -->
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
       <span style="background:#1a3ab0;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">2</span>
-      <div style="font-size:11px;font-weight:700;color:var(--primary);">조별 그룹 배정 <span style="font-size:9px;font-weight:400;color:var(--text3);">조를 클릭하여 그룹을 순환 선택하세요</span></div>
+      <div style="font-size:11px;font-weight:700;color:var(--primary);">조별 그룹 배정
+        <span style="font-size:9px;font-weight:400;color:var(--text3);">조를 클릭하여 그룹을 순환 선택하세요</span>
+      </div>
     </div>
     <div id="jo-assign-hint" style="font-size:10px;color:var(--text3);margin-bottom:8px;"></div>
     <div class="jo-assign-grid" id="jo-assign"></div>
 
     <hr class="modal-divider">
-    <!-- STEP 3: 조 편집 -->
+
+    <!-- ③ 조 편집 -->
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
       <span style="background:#1a3ab0;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">3</span>
-      <div style="font-size:11px;font-weight:700;color:var(--primary);">조 편집 <span style="font-size:9px;font-weight:400;color:var(--text3);">조원 이름·단계를 입력하세요 (그룹은 위에서 자동 반영됩니다)</span></div>
+      <div style="font-size:11px;font-weight:700;color:var(--primary);">조 편집
+        <span style="font-size:9px;font-weight:400;color:var(--text3);">조원 이름·단계 입력 (그룹은 ②에서 자동 반영)</span>
+      </div>
     </div>
     <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">그룹·조·이름·단계를 직접 입력하거나 CSV 파일로 일괄 등록하세요.</div>
 
@@ -2108,26 +2136,31 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycbw-eZkhrWAOpJkEpl1sMlYKbGHPgVCA21LESN6ZgXXH4Ii-MU0SL778jvQ-dY6LyxDb/exec',
+  url: 'https://script.google.com/macros/s/AKfycbwqu_WWwEWwImtgn5DRFLvraD3m6cc4FeTnmd7joY0y_eKq5Dvz4XK-OfQyGP3p1ERx/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
+  adminEmail: localStorage.getItem('mon_adminEmail') || '',
   groups: JSON.parse(localStorage.getItem('mon_groups') || 'null') || [{
     id: 'A',
     name: 'A그룹',
-    leader: ''
+    leader: '',
+    email: ''
   }, {
     id: 'B',
     name: 'B그룹',
-    leader: ''
+    leader: '',
+    email: ''
   }, {
     id: 'C',
     name: 'C그룹',
-    leader: ''
+    leader: '',
+    email: ''
   }, {
     id: 'D',
     name: 'D그룹',
-    leader: ''
+    leader: '',
+    email: ''
   }, ],
   joGroup: JSON.parse(localStorage.getItem('mon_joGroup') || 'null') || (function() {
     // MEMBERS에서 조 목록 자동 생성 (없으면 1~11 기본값)
@@ -4587,7 +4620,10 @@ function openSettings() {
   adminBuildJoEditor();
   // 이메일 시트 에디터 빌드 + 서버에서 불러오기
   buildEmailSheetEditor(null);
-  if (CFG.url) loadEmailSheet();
+  // 관리자 이메일 입력란 복원
+  var adminEl = document.getElementById('set-admin-email');
+  if (adminEl) adminEl.value = CFG.adminEmail || '';
+  if (CFG.url) loadGroupSettings();
   document.getElementById('settings-modal').classList.add('show');
 }
 
@@ -4794,7 +4830,7 @@ function validateJoNumber(input) {
     input.style.borderColor = '';
     input.title = '';
   }
-  // 조 번호 입력 시 조별 그룹 배정 칩 즉시 갱신
+  // 새 조 번호 입력 시 조별 그룹 배정 칩 즉시 갱신
   clearTimeout(validateJoNumber._t);
   validateJoNumber._t = setTimeout(function() { buildJoAssign(); }, 350);
 }
@@ -4927,8 +4963,6 @@ function adminAddJoRow() {
   }));
   list.lastChild.querySelector('input').focus();
   list.scrollTop = list.scrollHeight;
-  // 새 조가 조별 그룹 배정 칩에 즉시 반영되도록 조 번호 입력 후 갱신
-  // (조 번호 입력 이벤트에서도 갱신하도록 validateJoNumber 훅)
 }
 
 function adminSaveJoData() {
@@ -5071,16 +5105,22 @@ function closeSettings() {
 
 function buildGroupSettings() {
   var container = document.getElementById('group-settings');
-  var html = CFG.groups.map(function(g, i) {
-    return '<div class="group-row-setting" data-grp-idx="' + i + '">' +
-      '<span style="font-weight:700;color:#1a3a9e;min-width:20px;">' + g.id + '</span>' +
-      '<input type="text" value="' + g.name + '" placeholder="그룹명" id="grp-name-' + i + '" style="flex:1;">' +
-      '<input type="text" value="' + g.leader + '" placeholder="그룹장 이름" id="grp-leader-' + i + '" style="flex:1;">' +
-      '<button onclick="removeGroup(' + i + ')" style="background:#fdecea;border:none;border-radius:5px;color:#c00;font-size:10px;font-weight:700;cursor:pointer;padding:3px 6px;flex-shrink:0;" title="그룹 삭제">🗑</button>' +
+  var iS = 'width:100%;padding:5px 7px;border:1px solid rgba(0,0,20,0.15);border-radius:5px;font-size:11px;font-family:"Noto Sans KR",sans-serif;outline:none;';
+  var rows = CFG.groups.map(function(g, i) {
+    return '<div class="group-row-setting" data-grp-idx="' + i + '" ' +
+      'style="display:grid;grid-template-columns:24px 1fr 1fr 2fr 32px;gap:4px;align-items:center;">' +
+      '<span style="font-weight:800;color:#1a3a9e;text-align:center;font-size:13px;">' + g.id + '</span>' +
+      '<input type="text" value="' + (g.name || '') + '" placeholder="' + g.id + '그룹" id="grp-name-' + i + '" style="' + iS + '">' +
+      '<input type="text" value="' + (g.leader || '') + '" placeholder="이름" id="grp-leader-' + i + '" style="' + iS + '">' +
+      '<input type="email" multiple value="' + (g.email || '') + '" placeholder="example@gmail.com" id="grp-email-' + i + '" style="' + iS + '">' +
+      '<button onclick="removeGroup(' + i + ')" style="background:#fdecea;border:none;border-radius:5px;color:#c00;font-size:12px;cursor:pointer;padding:3px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;" title="그룹 삭제">🗑</button>' +
       '</div>';
   }).join('');
-  html += '<button onclick="addGroup()" style="margin-top:6px;background:#e8eeff;border:1px dashed rgba(32,80,200,.3);border-radius:6px;color:#2050c8;font-size:11px;font-weight:700;cursor:pointer;padding:5px 12px;width:100%;">+ 그룹 추가</button>';
-  container.innerHTML = html;
+  var addBtn = '<button onclick="addGroup()" style="margin-top:6px;background:#e8eeff;border:1px dashed rgba(32,80,200,.3);border-radius:6px;color:#2050c8;font-size:11px;font-weight:700;cursor:pointer;padding:5px 12px;width:100%;">+ 그룹 추가</button>';
+  container.innerHTML = rows + addBtn;
+  // 관리자 이메일 입력란에 저장된 값 복원
+  var adminEl = document.getElementById('set-admin-email');
+  if (adminEl && CFG.adminEmail) adminEl.value = CFG.adminEmail;
 }
 
 function addGroup() {
@@ -5091,7 +5131,7 @@ function addGroup() {
     if (used.indexOf(letters[i]) === -1) { nextId = letters[i]; break; }
   }
   if (!nextId) { showToast('⚠️ 더 이상 그룹을 추가할 수 없습니다.'); return; }
-  CFG.groups.push({ id: nextId, name: nextId + '그룹', leader: '' });
+  CFG.groups.push({ id: nextId, name: nextId + '그룹', leader: '', email: '' });
   buildGroupSettings();
   buildJoAssign();
 }
@@ -5135,28 +5175,18 @@ function buildJoAssign() {
       '</div>';
   });
   document.getElementById('jo-assign').innerHTML = html;
-  // 순환 힌트 텍스트 동적 업데이트
+  // 순환 힌트 동적 업데이트
   var hintEl = document.getElementById('jo-assign-hint');
   if (hintEl) {
     var ids = CFG.groups.map(function(g) { return g.id; });
     hintEl.textContent = ids.length
-      ? '조를 클릭하여 그룹을 순환 선택하세요 (' + ids.join('→') + '→없음)'
-      : '먼저 위에서 그룹을 추가하세요.';
+      ? '조를 클릭하여 그룹을 순환 선택하세요 (' + ids.join(' → ') + ' → 없음)'
+      : '먼저 ①에서 그룹을 추가하세요.';
   }
 }
 
 function cycleJoGroup(el, jo) {
   // CFG.groups에서 동적으로 순환 목록 생성
-  // 순환 목록 설명 동적 업데이트
-  var groupIds = CFG.groups.map(function(g) { return g.id; });
-  var descEl = document.querySelector('.jo-assign-grid');
-  if (descEl && descEl.previousElementSibling) {
-    var prev = descEl.previousElementSibling;
-    var small = prev.querySelector && prev.querySelector('span[data-cycle-hint]');
-    if (!small) {
-      // 힌트 span 찾기 시도 (부모)
-    }
-  }
   var order = CFG.groups.map(function(g) { return g.id; });
   order.push('');
   var cur = CFG.joGroup[jo] || '';
@@ -5185,10 +5215,17 @@ function saveSettings() {
   CFG.groups = CFG.groups.map(function(g, i) {
     return {
       id: g.id,
-      name: document.getElementById('grp-name-' + i).value || g.name,
-      leader: document.getElementById('grp-leader-' + i).value || g.leader
+      name: document.getElementById('grp-name-' + i) ? document.getElementById('grp-name-' + i).value || g.name : g.name,
+      leader: document.getElementById('grp-leader-' + i) ? document.getElementById('grp-leader-' + i).value || g.leader : g.leader,
+      email: document.getElementById('grp-email-' + i) ? document.getElementById('grp-email-' + i).value || g.email || '' : g.email || ''
     };
   });
+  // 관리자 이메일 저장
+  var adminEl = document.getElementById('set-admin-email');
+  if (adminEl) {
+    CFG.adminEmail = adminEl.value.trim();
+    localStorage.setItem('mon_adminEmail', CFG.adminEmail);
+  }
   // 반·그룹 저장
   var banEl = document.getElementById('set-ban');
   var grpEl = document.getElementById('set-group');
@@ -5208,74 +5245,102 @@ function saveSettings() {
   if (CFG.url) loadData();
 }
 
-// ── 이메일 알림 설정 ─────────────────────────────────────────────────────────
+// ── 그룹 편성 설정 저장/불러오기 (그룹명 + 그룹장 + 이메일 통합) ──────────
 
-// ── 이메일 시트 편집 UI 빌드 ────────────────────────────────────────────────
-var _emailRows = [
-  { label: '관리자',  email: '' },
-  { label: 'A그룹장', email: '' },
-  { label: 'B그룹장', email: '' },
-  { label: 'C그룹장', email: '' },
-  { label: 'D그룹장', email: '' }
-];
+async function saveGroupSettings() {
+  var status = document.getElementById('group-sync-status');
+  // 관리자 이메일 수집
+  var adminEl = document.getElementById('set-admin-email');
+  if (adminEl) {
+    CFG.adminEmail = adminEl.value.trim();
+    localStorage.setItem('mon_adminEmail', CFG.adminEmail);
+  }
+  // 그룹별 입력값을 CFG.groups에 반영
+  CFG.groups = CFG.groups.map(function(g, i) {
+    return {
+      id: g.id,
+      name: (document.getElementById('grp-name-' + i) || {}).value || g.name,
+      leader: (document.getElementById('grp-leader-' + i) || {}).value || g.leader || '',
+      email: (document.getElementById('grp-email-' + i) || {}).value || g.email || ''
+    };
+  });
+  localStorage.setItem('mon_groups', JSON.stringify(CFG.groups));
+  buildGroupSettings();
+  buildJoAssign();
 
-function buildEmailSheetEditor(rows) {
-  if (rows && rows.length) _emailRows = rows;
-  var wrap = document.getElementById('email-sheet-editor');
-  if (!wrap) return;
-  wrap.innerHTML = _emailRows.map(function(r, i) {
-    return '<div style="display:flex;align-items:center;gap:6px;">' +
-      '<span style="min-width:60px;font-size:11px;font-weight:700;color:#1a3a9e;">' + r.label + '</span>' +
-      '<input type="email" multiple data-idx="' + i + '" value="' + (r.email || '') + '" ' +
-        'placeholder="이메일 (쉼표로 여러 개)" ' +
-        'style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;" ' +
-        'oninput="_emailRows[' + i + '].email=this.value">' +
-      '</div>';
-  }).join('');
+  if (!CFG.url) {
+    showToast('✅ 로컬 저장 완료 (URL 미설정 — 서버 동기화 건너뜀)');
+    if (status) { status.textContent = '✅ 로컬 저장됨 (서버 연결 없음)'; status.style.color = 'var(--text3)'; }
+    return;
+  }
+  if (status) { status.textContent = '⏳ 서버 동기화 중...'; status.style.color = 'var(--text3)'; }
+  try {
+    var payload = {
+      action: 'save_group_settings',
+      adminEmail: CFG.adminEmail,
+      groups: CFG.groups.map(function(g) {
+        return { id: g.id, name: g.name, leader: g.leader, email: g.email };
+      })
+    };
+    var res = await fetch(CFG.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    var json = await res.json();
+    if (json.status === 'ok') {
+      if (status) { status.textContent = '✅ 저장 + 서버동기화 완료'; status.style.color = 'var(--green)'; }
+      showToast('✅ 그룹 편성 저장 완료');
+    } else throw new Error(json.message || '오류');
+  } catch(e) {
+    if (status) { status.textContent = '❌ 서버 저장 실패: ' + e.message; status.style.color = 'var(--red)'; }
+    showToast('⚠️ 로컬 저장됨 (서버 오류: ' + e.message + ')');
+  }
 }
 
-async function loadEmailSheet() {
-  var status = document.getElementById('email-save-status');
+async function loadGroupSettings() {
+  var status = document.getElementById('group-sync-status');
   if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
   if (status) { status.textContent = '⏳ 불러오는 중...'; status.style.color = 'var(--text3)'; }
   try {
-    var res = await fetch(CFG.url + '?action=get_email_sheet', { method: 'GET', redirect: 'follow' });
+    var res = await fetch(CFG.url + '?action=get_group_settings', { method: 'GET', redirect: 'follow' });
     var json = await res.json();
-    if (json.status === 'ok' && json.rows && json.rows.length) {
-      buildEmailSheetEditor(json.rows);
-      if (status) { status.textContent = '✅ 불러오기 완료'; status.style.color = 'var(--green)'; }
+    if (json.status === 'ok' && json.groups && json.groups.length) {
+      // 서버 데이터로 CFG.groups 업데이트 (email 포함)
+      json.groups.forEach(function(sg) {
+        var found = CFG.groups.find(function(g) { return g.id === sg.id; });
+        if (found) {
+          found.name = sg.name || found.name;
+          found.leader = sg.leader || found.leader;
+          found.email = sg.email || found.email || '';
+        } else {
+          CFG.groups.push({ id: sg.id, name: sg.name, leader: sg.leader || '', email: sg.email || '' });
+        }
+      });
+      // 관리자 이메일 복원
+      if (json.adminEmail) {
+        CFG.adminEmail = json.adminEmail;
+        localStorage.setItem('mon_adminEmail', CFG.adminEmail);
+        var adminEl = document.getElementById('set-admin-email');
+        if (adminEl) adminEl.value = CFG.adminEmail;
+      }
+      localStorage.setItem('mon_groups', JSON.stringify(CFG.groups));
+      buildGroupSettings();
+      buildJoAssign();
+      if (status) { status.textContent = '✅ 서버에서 불러오기 완료'; status.style.color = 'var(--green)'; }
+      showToast('✅ 그룹 편성 불러오기 완료');
     } else {
-      buildEmailSheetEditor(null);
-      if (status) { status.textContent = '(서버에 저장된 이메일 없음 — 기본값 사용)'; status.style.color = 'var(--text3)'; }
+      if (status) { status.textContent = '(서버에 저장된 그룹 설정 없음)'; status.style.color = 'var(--text3)'; }
     }
   } catch(e) {
     if (status) { status.textContent = '❌ 불러오기 실패: ' + e.message; status.style.color = 'var(--red)'; }
   }
 }
 
-async function saveEmailSheet() {
-  var status = document.getElementById('email-save-status');
-  if (!CFG.url) { showToast('⚠️ 구글 시트 URL을 먼저 설정하세요.'); return; }
-  if (status) { status.textContent = '⏳ 저장 중...'; status.style.color = 'var(--text3)'; }
-  // 현재 입력값 수집
-  var rows = _emailRows.map(function(r) {
-    return { label: r.label, email: r.email || '' };
-  });
-  try {
-    var res = await fetch(CFG.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'save_email_sheet', rows: rows })
-    });
-    var json = await res.json();
-    if (json.status === 'ok') {
-      if (status) { status.textContent = '✅ 저장 완료'; status.style.color = 'var(--green)'; }
-      showToast('✅ 이메일 시트 저장 완료');
-    } else throw new Error(json.message || '오류');
-  } catch(e) {
-    if (status) { status.textContent = '❌ 저장 실패: ' + e.message; status.style.color = 'var(--red)'; }
-  }
-}
+// 기존 호환성 유지 (이메일 시트 함수 — 내부에서 그룹설정으로 위임)
+function buildEmailSheetEditor() {}
+async function loadEmailSheet() { return loadGroupSettings(); }
+async function saveEmailSheet() { return saveGroupSettings(); }
 
 // ── 조 구성원 업로드 ─────────────────────────────────────────────────────────
 
