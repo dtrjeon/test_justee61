@@ -634,10 +634,11 @@ tr:last-child td {
 /* BADGES */
 .badge {
   display: inline-block;
-  padding: 2px 7px;
+  padding: 2px 5px;
   border-radius: 10px;
   font-size: 10px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .b-red {
@@ -3297,11 +3298,12 @@ function renderTab0(data, w) {
         var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
         var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
         var displayStep = m.step || '—';
+        var inactBorder = (mi === 0) ? joBorderStyle : '';
         html += '<tr class="jo-row inactive-row' + (mi === 0 ? ' jo-row-first' : '') + '" style="background:#fafafa;">' +
-          (mi === 0 ? '<td class="td-jo" rowspan="' + rowspan + '" style="position:sticky;left:0;z-index:2;background:#fafafa;box-shadow:1px 0 0 #c5cde8;color:#e65100;"><span title="미실시">' + jo + '</span></td>' : '') +
-          '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fafafa;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + 'opacity:0.55;">' + m.name + '</td>' +
-          '<td class="td-role" style="opacity:0.55;">' + roleBadge + '</td>' +
-          '<td class="td-step" style="border-right:1px solid #c5cde8;color:#999;">' + displayStep + '</td>' +
+          (mi === 0 ? '<td class="td-jo" rowspan="' + rowspan + '" style="position:sticky;left:0;z-index:2;background:#fafafa;box-shadow:1px 0 0 #c5cde8;color:#e65100;' + joBorderStyle + '"><span title="미실시">' + jo + '</span></td>' : '') +
+          '<td class="td-name" style="position:sticky;left:28px;z-index:2;background:#fafafa;box-shadow:2px 0 4px rgba(26,58,176,0.10);' + roleCls + 'opacity:0.55;' + inactBorder + '">' + m.name + '</td>' +
+          '<td class="td-role" style="opacity:0.55;' + inactBorder + '">' + roleBadge + '</td>' +
+          '<td class="td-step" style="border-right:1px solid #c5cde8;color:#999;' + inactBorder + '">' + displayStep + '</td>' +
           (mi === 0 ? '<td rowspan="' + rowspan + '" colspan="15" style="color:#bbb;font-size:9px;text-align:center;background:#f5f5f5;letter-spacing:1px;">　미　실　시　</td>' : '') +
           '<td style="font-size:14px;text-align:center;border-left:1px solid #c5cde8;"></td>';
         // 복음참여 9칸 빈칸
