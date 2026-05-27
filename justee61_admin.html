@@ -144,11 +144,12 @@ body {
 .week-bar {
   background: #fff;
   border-bottom: 1px solid var(--border);
-  padding: 8px 16px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .week-bar label {
@@ -1036,14 +1037,11 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
     <option value="QQ">QQ</option>
   </select>
   <button class="act-btn primary" onclick="loadData()">🔄 불러오기</button>
-  <button id="sim-mode-btn" class="act-btn" onclick="toggleSimMode()"
-    style="background:#e8f5e9;color:#2e7d32;border:1px solid #2e7d32;"
-    title="시뮬레이션 모드: GAS 없이 로컬 데이터로 테스트">🧪 시뮬</button>
+
   <button class="act-btn" onclick="toggleMismatchPanel()" id="mismatch-open-btn"
     style="background:#fff3f3;color:#ef4444;border:1px solid #ef4444;display:none;"
     title="전도유형 불일치 항목 보기">⚠️ 유형불일치 <span id="mismatch-open-cnt"></span></button>
-  <button class="act-btn" onclick="showRenumberPanel()"
-    style="background:#fff8e1;color:#f57f17;border:1px solid #f57f17;">🔢 번호재설정</button>
+
 </div>
 
 <!-- TAB 0: 주간현황 -->
@@ -1255,15 +1253,16 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
   <div class="tbl-wrap">
     <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;">
       <span class="tbl-head-title" style="line-height:1.7;">조별 상세 현황<br><span style="font-size:10px;font-weight:500;color:var(--text2);"><span id="week-label-0">—</span>주차&nbsp;&nbsp;<span id="week-period-0"></span></span></span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button onclick="exportCsv('tb-weekly','tab0_주간현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
-        <button onclick="exportPdf('tb-weekly','tab0_주간현황')" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ PDF</button>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10px;" onclick="toggleInactiveRows()">
+      <div style="display:flex;align-items:flex-end;gap:8px;">
+        <button onclick="showRenumberPanel()" style="background:#fff8e1;border:1px solid #f57f17;color:#f57f17;border-radius:10px;padding:6px 8px;font-size:9px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:40px;"><span style="font-size:16px;line-height:1;">🔢</span>Re-No</button>
+        <button onclick="exportCsv('tb-weekly','tab0_주간현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:10px;padding:6px 8px;font-size:9px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:40px;"><span style="font-size:16px;line-height:1;">⬇</span>CSV</button>
+        <button onclick="exportPdf('tb-weekly','tab0_주간현황')" style="background:#2050c8;border:none;color:#fff;border-radius:10px;padding:6px 8px;font-size:9px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:40px;"><span style="font-size:16px;line-height:1;">⬇</span>PDF</button>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:10px;" onclick="toggleInactiveRows()">
           <div style="position:relative;width:34px;height:18px;">
             <div id="toggle-track-0" style="position:absolute;top:0;left:0;width:34px;height:18px;background:#4caf50;border-radius:9px;transition:background .2s;"></div>
             <div id="toggle-thumb-0" style="position:absolute;top:2px;left:18px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>
           </div>
-          <span id="toggle-label-0" style="font-weight:700;color:#4caf50;">실시만 보기</span>
+          <span id="toggle-label-0" style="font-weight:700;color:#4caf50;white-space:nowrap;">실시만 보기</span>
         </label>
       </div>
     </div>
