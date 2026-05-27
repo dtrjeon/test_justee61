@@ -1417,6 +1417,21 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
 
   <div class="sec-title">그룹/조별 팀전도 현황</div>
   <!-- 디버그 버튼 (테스트 모드에서만 표시) -->
+  <!-- 수료조건 차트 패널 -->
+  <div id="suryo-chart-panel" style="display:none;background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--primary);">📊 조별 팀전도 현황</div>
+      <div style="display:flex;gap:12px;font-size:9px;">
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;background:#5b7fa6;border-radius:2px;display:inline-block;"></span>관계(팀)</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;background:#7a9e7e;border-radius:2px;display:inline-block;"></span>질문지(팀)</span>
+        <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;background:#b0907a;border-radius:2px;display:inline-block;"></span>7일후(팀)</span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <canvas id="suryo-chart-canvas" style="min-height:180px;"></canvas>
+    </div>
+  </div>
+
   <div id="debug-panel" style="display:none;background:#fffde7;border:1px solid #f59e0b;border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;">
     <b>🧪 디버그 결과</b>
     <pre id="debug-output" style="white-space:pre-wrap;word-break:break-all;font-size:11px;margin-top:8px;"></pre>
@@ -1430,6 +1445,7 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <button onclick="exportCsv('tb-weekly-2','tab2_팀전도현황')" style="background:#f5f5f5;border:1px solid #ddd;color:#555;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ CSV</button>
+        <button onclick="toggleSuryoChart()" id="suryo-chart-btn" style="background:#f0f4ff;border:1px solid #c5cde8;color:#1a3ab0;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;" title="조별 전도 현황 차트">📊</button>
         <button onclick="printTab2Pdf()" style="background:#2050c8;border:none;color:#fff;border-radius:12px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">🖨️ 인쇄/PDF</button>
       </div>
     </div>
@@ -2226,6 +2242,7 @@ let currentEvangType = ''; // 복음제시 유형 필터
 let currentJo = '';         // 조 필터
 let allData = []; // 구글시트에서 불러온 전체 레코드 (최신 1건/문서번호)
 let rawData  = []; // 원본 전체 행 (수정이력 포함)
+let suryoChartData = []; // 수료조건 차트용 — 주차 필터 적용된 데이터
 
 // ── 비밀번호 ─────────────────────────────────────────────────────────────────
 // ⚠️ 보안을 위해 배포 전 반드시 변경하세요
@@ -3951,6 +3968,7 @@ function runDebug() {
 
 // ── TAB 2: 팀전도현황 (누적) ────────────────────────────────────────────────
 function renderTab2(data, w) {
+  suryoChartData = data; // 주차 필터 적용된 데이터 저장
   var tb = document.getElementById('tb-team');
   var html = '';
   var totalDecision = 0,
@@ -4047,6 +4065,9 @@ function renderTab2(data, w) {
   setText('wb-rate-2', rate > 0 ? rate.toFixed(1) + '%' : '—');
   setText('wb-sub-2', '1주 ~ ' + w + '주 누적');
   setText('week-label-2b', w);
+  // 차트 패널이 열려 있으면 즉시 갱신
+  var _cp = document.getElementById('suryo-chart-panel');
+  if (_cp && _cp.style.display !== 'none') drawSuryoChart();
 }
 
 // ── 수료요건 판단 함수 ────────────────────────────────────────────────────────
@@ -5554,6 +5575,150 @@ function sum(arr, key) {
 function setText(id, v) {
   var el = document.getElementById(id);
   if (el) el.textContent = v;
+}
+
+// ── 수료조건 차트 ─────────────────────────────────────────────────────────
+function toggleSuryoChart() {
+  var panel = document.getElementById('suryo-chart-panel');
+  var btn   = document.getElementById('suryo-chart-btn');
+  if (!panel) return;
+  var visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'block';
+  btn.style.background = visible ? '#f0f4ff' : '#1a3ab0';
+  btn.style.color      = visible ? '#1a3ab0' : '#fff';
+  if (!visible) drawSuryoChart();
+}
+
+function drawSuryoChart() {
+  var canvas = document.getElementById('suryo-chart-canvas');
+  if (!canvas) return;
+
+  var GOAL = 10; // 수료 목표값
+
+  // ── 데이터 수집 ──────────────────────────────────────────────────────────
+  var data   = (suryoChartData && suryoChartData.length) ? suryoChartData : (rawData || []);
+  var joNums = Object.keys(CFG.joGroup).map(Number).filter(function(j){ return j > 0; }).sort(function(a,b){ return a - b; });
+
+  var labels = [], relArr = [], quesArr = [], day7Arr = [];
+  joNums.forEach(function(jo) {
+    var recs = data.filter(function(r){ return String(r.jo) === String(jo); });
+    var rel  = recs.filter(function(r){ return r.evangType && r.evangType.indexOf('관계') > -1 && r.evangType.indexOf('팀') > -1; }).length;
+    var ques = recs.filter(function(r){ return r.evangType && r.evangType.indexOf('질문지') > -1; }).length;
+    var day7 = recs.filter(function(r){ return r.followup && r.followup.indexOf('7일') > -1; }).length;
+    labels.push(jo + '조');
+    relArr.push(rel);
+    quesArr.push(ques);
+    day7Arr.push(day7);
+  });
+  if (!labels.length) return;
+
+  // ── 크기 계산 ─────────────────────────────────────────────────────────────
+  var MARGIN_L = 30, MARGIN_R = 16, MARGIN_T = 20, MARGIN_B = 38;
+  var H = 200;
+
+  // 패널 실제 가용 너비에 맞게 그룹 폭 자동 산정
+  var panel = document.getElementById('suryo-chart-panel');
+  var availW = (panel ? panel.clientWidth - 32 : 400) - MARGIN_L - MARGIN_R;
+  var n = labels.length;
+  var GROUP_GAP = Math.max(6, Math.floor(availW / n * 0.18));
+  var groupW = Math.floor((availW - GROUP_GAP * (n - 1)) / n);
+  groupW = Math.max(groupW, 30); // 최소 30px
+  var BAR_GAP = Math.max(2, Math.floor(groupW * 0.08));
+  var BAR_W   = Math.max(6, Math.floor((groupW - BAR_GAP * 2) / 3));
+  var totalW  = MARGIN_L + n * (groupW + GROUP_GAP) - GROUP_GAP + MARGIN_R;
+  var chartH  = H - MARGIN_T - MARGIN_B;
+
+  var maxVal = Math.max.apply(null, relArr.concat(quesArr).concat(day7Arr).concat([GOAL]));
+  // Y축 최대값은 GOAL 이상 + 여백
+  maxVal = Math.max(maxVal, GOAL) + 1;
+
+  canvas.width        = totalW;
+  canvas.height       = H;
+  canvas.style.width  = totalW + 'px';
+  canvas.style.height = H + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, totalW, H);
+
+  // ── Y축 그리드 & 레이블 ──────────────────────────────────────────────────
+  var yTicks = [];
+  for (var v = 0; v <= maxVal; v += 2) yTicks.push(v);
+  if (yTicks[yTicks.length - 1] < maxVal) yTicks.push(Math.ceil(maxVal));
+
+  ctx.font = '9px sans-serif';
+  ctx.textAlign = 'right';
+  yTicks.forEach(function(tv) {
+    var y = MARGIN_T + chartH - (tv / maxVal) * chartH;
+    ctx.strokeStyle = tv === GOAL ? 'rgba(180,80,80,0.15)' : '#eeeff3';
+    ctx.lineWidth   = tv === GOAL ? 1.5 : 1;
+    ctx.beginPath();
+    ctx.moveTo(MARGIN_L, y);
+    ctx.lineTo(totalW - MARGIN_R, y);
+    ctx.stroke();
+    ctx.fillStyle = '#aaa';
+    ctx.fillText(tv, MARGIN_L - 3, y + 3);
+  });
+
+  // ── 수료 목표선 (점선 + 레이블) ──────────────────────────────────────────
+  var goalY = MARGIN_T + chartH - (GOAL / maxVal) * chartH;
+  ctx.save();
+  ctx.setLineDash([4, 3]);
+  ctx.strokeStyle = '#c97b7b';
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(MARGIN_L, goalY);
+  ctx.lineTo(totalW - MARGIN_R, goalY);
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle  = '#c97b7b';
+  ctx.font       = 'bold 8px sans-serif';
+  ctx.textAlign  = 'right';
+  ctx.fillText('목표 ' + GOAL, totalW - MARGIN_R, goalY - 3);
+
+  // ── 막대 그리기 ──────────────────────────────────────────────────────────
+  var colors = ['#5b7fa6', '#7a9e7e', '#b0907a'];
+  labels.forEach(function(lbl, gi) {
+    var x0 = MARGIN_L + gi * (groupW + GROUP_GAP);
+    var cx = x0 + groupW / 2; // 그룹 중심 X
+
+    [relArr[gi], quesArr[gi], day7Arr[gi]].forEach(function(val, bi) {
+      var bh = maxVal > 0 ? (val / maxVal) * chartH : 0;
+      var bx = x0 + bi * (BAR_W + BAR_GAP);
+      var by = MARGIN_T + chartH - bh;
+
+      // 목표 초과 여부에 따라 약간 밝게
+      var exceeded = (bi === 0 && val >= GOAL);
+      ctx.fillStyle = exceeded ? colors[bi] : colors[bi];
+      ctx.globalAlpha = exceeded ? 1.0 : 0.82;
+      ctx.beginPath();
+      if (bh > 0) {
+        ctx.roundRect ? ctx.roundRect(bx, by, BAR_W, bh, [2, 2, 0, 0]) : ctx.rect(bx, by, BAR_W, bh);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      // 값 표시
+      if (val > 0) {
+        ctx.fillStyle  = '#444';
+        ctx.font       = 'bold 8px sans-serif';
+        ctx.textAlign  = 'center';
+        ctx.fillText(val, bx + BAR_W / 2, by - 2);
+      }
+    });
+
+    // X 레이블
+    ctx.fillStyle = '#666';
+    ctx.font      = '9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(lbl, cx, H - MARGIN_B + 12);
+
+    // 수료 여부 ✓ / ·
+    var relN = relArr[gi], qN = quesArr[gi], d7N = day7Arr[gi];
+    var ok   = (relN >= 6 && qN >= 3 && d7N >= 1) || (relN >= 7 && qN >= 2 && d7N >= 1);
+    ctx.fillStyle = ok ? '#7a9e7e' : '#ccc';
+    ctx.font      = '11px sans-serif';
+    ctx.fillText(ok ? '✓' : '·', cx, H - MARGIN_B + 26);
+  });
 }
 
 function showToast(msg) {
