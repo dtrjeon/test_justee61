@@ -3986,7 +3986,7 @@ function renderTab2(data, w) {
       var rel6 = c >= 6 ? '<span class="badge b-green">✓' + c + '</span>' : '<span class="badge b-gray">' + c + '</span>';  // 6이상이면 진행중 표시
       var ques2 = t >= 3 ? '<span class="badge b-green">✓' + t + '</span>' : t >= 2 ? '<span class="badge b-red">'+t+'</span>' : '<span class="badge b-gray">' + t + '</span>';
       var w7recs = joRecs.filter(function(r) {
-        return r.followup && r.followup.indexOf('7일') > -1;
+        return r.evangType === '7일후(팀)';
       }).length;
       var w7ok = w7recs >= 1 ? '<span class="badge b-green">✓' + w7recs + '</span>' : '<span class="badge b-gray">' + w7recs + '</span>';
       var suryoOk = isSuryoComplete(c, t, w7recs) ? '<span class="badge b-green">완료</span>' : '<span class="badge b-gray">미완료</span>';
@@ -4044,7 +4044,7 @@ function renderTab2(data, w) {
   setText('week-label-2b', w);
   // 차트 패널이 열려 있으면 즉시 갱신
   var _cp = document.getElementById('suryo-chart-panel');
-  if (_cp && _cp.style.display !== 'none') drawSuryoChart();
+  if (_cp && _cp.style.display !== 'none') requestAnimationFrame(function() { drawSuryoChart(); });
 }
 
 // ── 수료요건 판단 함수 ────────────────────────────────────────────────────────
@@ -4156,7 +4156,7 @@ function printTab2Pdf() {
 
       var relCnt  = joRecs.filter(function(r){ return r.evangType==='관계(팀)'; }).length;
       var quesCnt = joRecs.filter(function(r){ return r.evangType==='질문지(팀)'; }).length;
-      var day7Cnt = joRecs.filter(function(r){ return r.followup && r.followup.indexOf('7일') > -1; }).length;
+      var day7Cnt = joRecs.filter(function(r){ return r.evangType === '7일후(팀)'; }).length;
       var suryoOk = isSuryoComplete(relCnt, quesCnt, day7Cnt);
 
       var rel6  = relCnt  >= 6 ? '✓'+relCnt  : (relCnt  >= 1 ? relCnt  : '—');
@@ -5559,7 +5559,8 @@ function toggleSuryoChart() {
   panel.style.display = visible ? 'none' : 'block';
   btn.style.background = visible ? '#f0f4ff' : '#1a3ab0';
   btn.style.color      = visible ? '#1a3ab0' : '#fff';
-  if (!visible) drawSuryoChart();
+  // 패널이 DOM에 렌더된 후 clientWidth를 정확히 읽기 위해 rAF 사용
+  if (!visible) requestAnimationFrame(function() { drawSuryoChart(); });
 }
 
 function drawSuryoChart() {
@@ -5577,7 +5578,7 @@ function drawSuryoChart() {
     var recs = data.filter(function(r){ return String(r.jo) === String(jo); });
     var rel  = recs.filter(function(r){ return r.evangType === '관계(팀)'; }).length;
     var ques = recs.filter(function(r){ return r.evangType === '질문지(팀)'; }).length;
-    var day7 = recs.filter(function(r){ return r.followup && r.followup.indexOf('7일') > -1; }).length;
+    var day7 = recs.filter(function(r){ return r.evangType === '7일후(팀)'; }).length;
     labels.push(jo + '조');
     relArr.push(rel);
     quesArr.push(ques);
@@ -5585,14 +5586,17 @@ function drawSuryoChart() {
   });
   if (!labels.length) return;
 
-  // ── 크기 계산 — 패널 전체 너비 사용 ─────────────────────────────────────
+  // ── 크기 계산 — 패널 전체 너비에 꽉 맞춤 ───────────────────────────────
   var MARGIN_L = 32, MARGIN_R = 56, MARGIN_T = 22, MARGIN_B = 40;
   var H = 210;
   var chartH = H - MARGIN_T - MARGIN_B;
 
   var panel  = document.getElementById('suryo-chart-panel');
-  var panelW = panel ? panel.clientWidth - 28 : 500;
-  var totalW = Math.max(panelW, labels.length * 36 + MARGIN_L + MARGIN_R);
+  // display:none 직후엔 clientWidth=0 → body 너비로 fallback
+  var panelW = (panel && panel.clientWidth > 0)
+    ? panel.clientWidth - 28
+    : Math.max(document.body.clientWidth - 32, 320);
+  var totalW = panelW; // 가로 스크롤 없이 패널에 꽉 채움
 
   // 막대 폭: 가용 너비를 조 수로 균등 분할
   var availW  = totalW - MARGIN_L - MARGIN_R;
