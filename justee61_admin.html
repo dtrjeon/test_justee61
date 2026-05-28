@@ -2161,7 +2161,7 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycbwqu_WWwEWwImtgn5DRFLvraD3m6cc4FeTnmd7joY0y_eKq5Dvz4XK-OfQyGP3p1ERx/exec',
+  url: 'https://script.google.com/macros/s/AKfycbwHE0SeQouPOdquc8iX6rqp2k6xgPv6l8dvJAk_3ItvpSOIa0235o7A0iq6pJBfx4Ek/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
   trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
@@ -2517,6 +2517,7 @@ function parseRecords(raw) {
       gender: g('성별'),
       meetPlace: g('만난장소'),
       gospelPlace: g('복음제시장소'),
+      gospelDate: g('개인제시일'),
       gospelDelivery: g('복음전달'),
       targetType: g('대상자구분'),
       relationMember: g('관계조원'),
@@ -3876,10 +3877,21 @@ function renderTab1(data, w) {
           return evangName === m.name;
         }).length;
 
-        var dates = actRecs.map(function(r) {
-          return r.date || '';
-        }).filter(Boolean).sort();
-        var lastDate = dates.length ? dates[dates.length - 1].slice(5) : '—';
+        // 개인제시일: gospel_date 컬럼에서 이름 기준으로 찾기
+        // 저장 형식: "홍길동:2026-05-17|김철수:2026-05-17"
+        var gospelDateRaw = '';
+        allRecs.forEach(function(r) {
+          if (!r.gospelDate) return;
+          r.gospelDate.split('|').forEach(function(p) {
+            var ci  = p.indexOf(':');
+            if (ci < 0) return;
+            var nm  = p.slice(0, ci).trim();
+            var dt  = p.slice(ci + 1).trim();
+            if (nm === m.name && dt) gospelDateRaw = dt;
+          });
+        });
+        // 없으면 — (기존 전도일 fallback 제거)
+        var lastDate = gospelDateRaw ? gospelDateRaw.slice(5).replace('-', '/') : '—';
 
         var nameCls = m.role === '리더' ? 'font-weight:700;color:#1a3a9e;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#555;';
         var stepCls = m.role === '리더' ? 'font-weight:700;' : '';
