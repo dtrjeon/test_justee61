@@ -2102,7 +2102,7 @@ pre.code-block {
           <div class="diag-result-row"><span class="diag-result-key">영접 여부</span>
             <div class="diag-yeopjeop-btns">
               <div class="yj-btn"><input type="radio" name="yeopjeop" value="영접" id="yj1" onchange="onYeopjeopChange()"><span>✅ 영접</span></div>
-              <div class="yj-btn"><input type="radio" name="yeopjeop" value="X" id="yj2" onchange="onYeopjeopChange()"><span>❌ 거부/보류</span></div>
+              <div class="yj-btn"><input type="radio" name="yeopjeop" value="X" id="yj2" onchange="onYeopjeopChange()"><span>❌ 보류/거부</span></div>
               <div class="yj-btn"><input type="radio" name="yeopjeop" value="불필요" id="yj3" onchange="onYeopjeopChange()"><span>— 불필요</span></div>
             </div>
           </div>
@@ -3069,7 +3069,7 @@ function applyFormData(r) {
       '결신': '결신',
       '이미신자': '이미신자',
       '확신': '확신',
-      '보류 / 거부': '보류거부',
+      '보류/거부': '보류거부',
       '-': '보류거부'
     };
     var fv = document.getElementById('diag-final-val');
@@ -3587,6 +3587,16 @@ const DEFAULT_JO = [{
   trainee: '최정화',
   traineeStep: '1',
   group: 'D',
+  ban: '수지주일반'
+}, {
+  jo: '12',
+  leader: 'TEST1',
+  leaderStep: '',
+  trainer: 'TEST2',
+  trainerStep: '',
+  trainee: 'TEST3',
+  traineeStep: '',
+  group: 'E',
   ban: '수지주일반'
 }];
 
@@ -4596,9 +4606,32 @@ function diagNameClass(info) {
 }
 
 function calcResult(hv, rs, yj) {
-  if (yj === '불필요') return (hv === '있었고' && rs === '믿음' && radio('testimony6') === '이미신자') ? '이미신자' : '-';
-  if (yj === '영접') return (hv === '없었고' && rs === '믿음') ? (radio('testimony7') === '비신자' ? '결신' : '확신') : '결신';
-  return '보류 / 거부';
+  if (yj === '불필요') {
+    var t6 = radio('testimony6');
+    if (hv === '있었고' && rs === '믿음') {
+      if (t6 === '이미신자') return '이미신자';
+      if (t6 === '머리신자') return '머리신자';
+    }
+    return '-';
+  }
+  if (yj === '영접') {
+    // 3번: 있었고 + 믿음 + 머리신자 + 영접 → 결신
+    if (hv === '있었고' && rs === '믿음') {
+      var t6 = radio('testimony6');
+      if (t6 === '머리신자') return '결신';
+    }
+    // 6번: 없었고 + 믿음 + 확신부족신자 + 영접 → 확신
+    // 7번: 없었고 + 믿음 + 비신자 + 영접 → 결신
+    if (hv === '없었고' && rs === '믿음') {
+      var t7 = radio('testimony7');
+      if (t7 === '확신부족신자') return '확신';
+      if (t7 === '비신자') return '결신';
+      return '결신';
+    }
+    return '결신';
+  }
+  // 보류/거부
+  return '보류/거부';
 }
 
 function resetDiagCard() {
@@ -4722,11 +4755,23 @@ function onTestimony6Change() {
   var t6 = radio('testimony6'),
     hv = radio('heaven'),
     rs = radio('reason');
+
   if (t6 === '이미신자' && hv === '있었고' && rs === '믿음') {
+    // ── 이미신자 ─────────────────────────────────────────────
     document.querySelectorAll('.yj-btn input[type=radio]').forEach(function(r) {
       r.checked = (r.value === '불필요');
       r.disabled = (r.value !== '불필요');
     });
+    // 5-1, 5-2, 진단 카드 업데이트
+    var hvEl = document.getElementById('diag-hv');
+    var rsEl = document.getElementById('diag-rs');
+    var nameEl = document.getElementById('diag-name');
+    var badgeEl = document.getElementById('diag-badge-wrap');
+    if (hvEl) hvEl.textContent = '천국 확신 있었고';
+    if (rsEl) rsEl.textContent = '믿음';
+    if (nameEl) { nameEl.textContent = '이미신자 / 머리신자'; nameEl.className = 'diag-name orange'; }
+    if (badgeEl) badgeEl.innerHTML = '<span class="diag-badge orange">이미신자 / 머리신자</span>';
+    document.getElementById('diag-card').style.display = 'block';
     var fv = document.getElementById('diag-final-val');
     fv.textContent = '이미신자';
     fv.className = 'diag-final-val 이미신자';
@@ -4735,13 +4780,36 @@ function onTestimony6Change() {
     document.getElementById('diag-saved-result').value = saved;
     var resultEl = document.getElementById('q8_result');
     if (resultEl) resultEl.value = '이미신자';
-    // 이미신자 통계 자동 반영
     if (saved !== _lastSavedDiagResult) {
       var cntEl = document.getElementById('t_believer');
       if (cntEl) cntEl.value = (parseInt(cntEl.value) || 0) + 1;
       _lastSavedDiagResult = saved;
       showStatus('✅ 이미신자 통계에 반영되었습니다.', 'success');
     }
+
+  } else if (t6 === '머리신자' && hv === '있었고' && rs === '믿음') {
+    // ── 머리신자: 영접/보류/거부 선택 가능 (불필요 자동고정 제거) ──
+    document.querySelectorAll('.yj-btn input[type=radio]').forEach(function(r) {
+      r.checked = false;
+      r.disabled = false;
+    });
+    // 5-1, 5-2, 진단 카드 업데이트
+    var hvEl = document.getElementById('diag-hv');
+    var rsEl = document.getElementById('diag-rs');
+    var nameEl = document.getElementById('diag-name');
+    var badgeEl = document.getElementById('diag-badge-wrap');
+    if (hvEl) hvEl.textContent = '천국 확신 있었고';
+    if (rsEl) rsEl.textContent = '믿음';
+    if (nameEl) { nameEl.textContent = '이미신자 / 머리신자'; nameEl.className = 'diag-name orange'; }
+    if (badgeEl) badgeEl.innerHTML = '<span class="diag-badge orange">이미신자 / 머리신자</span>';
+    document.getElementById('diag-card').style.display = 'block';
+    var fv = document.getElementById('diag-final-val');
+    fv.textContent = '머리신자';
+    fv.className = 'diag-final-val 이미신자';
+    document.getElementById('diag-final-row').style.display = 'flex';
+    // 머리신자: 영접여부는 사용자가 선택 → onYeopjeopChange에서 처리
+    document.getElementById('diag-final-row').style.display = 'none';
+
   } else {
     resetDiagCard();
   }
@@ -4766,8 +4834,9 @@ function onYeopjeopChange() {
   var clsMap = {
     '결신': '결신',
     '이미신자': '이미신자',
+    '머리신자': '이미신자',
     '확신': '확신',
-    '보류 / 거부': '보류거부',
+    '보류/거부': '보류거부',
     '-': '보류거부'
   };
   var fv = document.getElementById('diag-final-val');
@@ -4782,8 +4851,10 @@ function onYeopjeopChange() {
   var map = {
     '결신': 't_decision',
     '이미신자': 't_believer',
+    '머리신자': 't_believer',
     '확신': 't_confirm',
-    '보류 / 거부': 't_reject'
+    '보류/거부': 't_reject',
+    '보류/거부': 't_reject'
   };
   if (saved !== _lastSavedDiagResult) {
     // 이전 결과 차감
@@ -4802,7 +4873,7 @@ function onYeopjeopChange() {
     _lastSavedDiagResult = saved;
     showStatus('✅ 진단결과가 통계에 반영되었습니다.', 'success');
   }
-  if (result === '보류 / 거부') {
+  if (result === '보류/거부') {
     var inEl = document.querySelector('input[name="immed_nurture"][value="안했고"]');
     if (inEl) inEl.checked = true;
     document.querySelectorAll('input[name="followup"]').forEach(function(cb) {
@@ -4831,7 +4902,7 @@ function saveDiagResult() {
       '결신': 't_decision',
       '이미신자': 't_believer',
       '확신': 't_confirm',
-      '보류 / 거부': 't_reject'
+      '보류/거부': 't_reject'
     };
     if (map[result]) {
       var cntEl = document.getElementById(map[result]);
@@ -4864,7 +4935,7 @@ function saveDiagResult() {
               autoParts = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신'];
             } else if (result === '이미신자') {
               autoParts = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
-            } else if (result === '보류 / 거부') {
+            } else if (result === '보류/거부') {
               autoParts = ['서론', '은혜', '인간', '하나님', '그리스도', '믿음'];
             }
             if (autoParts.length) {
@@ -5459,7 +5530,7 @@ function renderHistory(records, src) {
         '결신': 'background:#1a6b3c;color:#fff;',
         '이미신자': 'background:#e67e00;color:#fff;',
         '확신': 'background:#1a3a9e;color:#fff;',
-        '보류 / 거부': 'background:#888;color:#fff;',
+        '보류/거부': 'background:#888;color:#fff;',
         '보류/거부': 'background:#888;color:#fff;',
       } [resultText] || 'background:#aaa;color:#fff;';
       resultBadge = '<span style="' + rColor + 'font-size:10px;font-weight:700;border-radius:4px;padding:2px 7px;margin-left:6px;">' + resultText + '</span>';
