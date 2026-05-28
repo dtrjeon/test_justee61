@@ -607,13 +607,17 @@ tr:last-child td {
 
 .td-role {
   white-space: nowrap;
-  width: 1%;
+  min-width: 44px;
+  text-align: center;
 }
 
 .td-role .badge {
   font-size: 9px;
   padding: 2px 5px;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+  display: inline-block;
 }
 
 .td-step {
@@ -1374,11 +1378,11 @@ window.TEST_DATA = {"records":[{"저장일시":"2026-03-14","주차":3,"전도�
       <table class="gospel-tbl">
         <thead>
           <tr>
-            <th rowspan="2" style="background:#1a3a9e;color:#fff;font-size:9px;white-space:nowrap;width:1%;">역할</th>
+            <th rowspan="2" style="background:#1a3a9e;color:#fff;font-size:9px;white-space:nowrap;min-width:44px;text-align:center;">역할</th>
             <th rowspan="2" style="background:#1a3a9e;color:#fff;">단계</th>
             <th rowspan="2" style="background:#1a3a9e;color:#fff;">조</th>
             <th rowspan="2" style="background:#1a3a9e;color:#fff;">이름</th>
-            <th rowspan="2" style="background:#1a3a9e;color:#fff;font-size:8px;white-space:normal;width:1%;word-break:keep-all;">훈련자<br>(조장)</th>
+            <th rowspan="2" style="background:#1a3a9e;color:#fff;font-size:8px;white-space:normal;min-width:44px;word-break:keep-all;text-align:center;">훈련자<br>(조장)</th>
             <th rowspan="2" style="background:#1a3a9e;color:#fff;">개인<br>전도<br>횟수</th>
             <th colspan="9" style="background:#2050c8;color:#fff;">관계전도(팀전도) 복음 참여 현황</th>
             <th rowspan="2" style="background:#1a3a9e;color:#fff;">복음<br>제시일</th>
@@ -3365,7 +3369,7 @@ function renderTab0(data, w) {
       var rowspan = joMembers.length;
       joMembers.forEach(function(m, mi) {
         var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
-        var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+        var roleBadge = m.role === '리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.2;">훈련자<br>(조장)</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
         var displayStep = m.step || '—';
         var inactBorder = (mi === 0) ? joBorderStyle : '';
         html += '<tr class="jo-row inactive-row' + (mi === 0 ? ' jo-row-first' : '') + '" style="background:#fafafa;">' +
@@ -3418,7 +3422,7 @@ function renderTab0(data, w) {
           action = (evangName && m.name === evangName) ? '하였고' : '';
         }
         var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
-        var roleBadge = m.role === '리더' ? '<span class="badge b-blue">조장</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+        var roleBadge = m.role === '리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.2;">훈련자<br>(조장)</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
         var displayStep = m.step || '—';
         var isFirst = (ri === 0 && mi === 0);
         var isRecFirst = (mi === 0);
@@ -3603,7 +3607,7 @@ function renderWeekly2Html(data, w) {
 
     joMembers.forEach(function(m, mi) {
       var roleCls = m.role==='리더' ? 'color:#111;font-weight:700;' : m.role==='훈련자' ? 'color:#1565c0;' : 'color:#666;';
-      var roleBadge = m.role==='리더' ? '<span class="badge b-blue">조장</span>' : m.role==='훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+      var roleBadge = m.role==='리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.2;">훈련자<br>(조장)</span>' : m.role==='훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
 
       // 본인 레코드 필터
       var myRecs = allRecs.filter(function(r){
