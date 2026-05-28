@@ -612,8 +612,8 @@ tr:last-child td {
 }
 
 .td-role .badge {
-  font-size: 9px;
-  padding: 2px 5px;
+  font-size: 8px;
+  padding: 2px 4px;
   white-space: normal;
   text-align: center;
   line-height: 1.3;
@@ -3379,7 +3379,7 @@ function renderTab0(data, w) {
       var rowspan = joMembers.length;
       joMembers.forEach(function(m, mi) {
         var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
-        var roleBadge = m.role === '리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.2;">훈련자<br>(조장)</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+        var roleBadge = m.role === '리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.3;font-size:8px;display:inline-block;">훈련자<br>(조장)</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
         var displayStep = m.step || '—';
         var inactBorder = (mi === 0) ? joBorderStyle : '';
         html += '<tr class="jo-row inactive-row' + (mi === 0 ? ' jo-row-first' : '') + '" style="background:#fafafa;">' +
@@ -3432,7 +3432,7 @@ function renderTab0(data, w) {
           action = (evangName && m.name === evangName) ? '하였고' : '';
         }
         var roleCls = m.role === '리더' ? 'color:#111111;font-weight:700;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#666;';
-        var roleBadge = m.role === '리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.2;">훈련자<br>(조장)</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+        var roleBadge = m.role === '리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.3;font-size:8px;display:inline-block;">훈련자<br>(조장)</span>' : m.role === '훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
         var displayStep = m.step || '—';
         var isFirst = (ri === 0 && mi === 0);
         var isRecFirst = (mi === 0);
@@ -3617,7 +3617,7 @@ function renderWeekly2Html(data, w) {
 
     joMembers.forEach(function(m, mi) {
       var roleCls = m.role==='리더' ? 'color:#111;font-weight:700;' : m.role==='훈련자' ? 'color:#1565c0;' : 'color:#666;';
-      var roleBadge = m.role==='리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.2;">훈련자<br>(조장)</span>' : m.role==='훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
+      var roleBadge = m.role==='리더' ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.3;font-size:8px;display:inline-block;">훈련자<br>(조장)</span>' : m.role==='훈련자' ? '<span class="badge b-green">훈련자</span>' : '<span class="badge b-gray">훈련생</span>';
 
       // 본인 레코드 필터
       var myRecs = allRecs.filter(function(r){
@@ -4052,19 +4052,83 @@ function renderTab2(data, w) {
         }).join('') +
         '</div>';
 
-      html += '<tr>' +
-        '<td></td>' +
-        '<td class="td-jo">' + jo + '조</td>' +
-        '<td class="td-name">' + (leader ? leader.name : '—') + '</td>' +
-        '<td class="td-step">' + (leader ? leader.step : '—') + '</td>' +
-        '<td>' + rel6 + '</td><td>' + ques2 + '</td><td>' + w7ok + '</td>' +
-        '<td>' + suryoOk + '</td>' +
-        '<td>' + (g || '—') + '</td>' +
-        '<td style="font-size:10px;text-align:left;padding:4px 6px;">' + (personalCell || '—') + '</td>' +
-        '<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>' +
-        '<td>' + (d ? '<span class="badge b-red">' + d + '</span>' : '—') + '</td>' +
-        '<td>—</td>' +
-        '</tr>';
+            // 질문지(팀) 횟수 + 날짜수 (조 단위)
+      var _qRecs2  = joRecs.filter(function(r){ return r.evangType==='질문지(팀)'; });
+      var quesRawCnt = _qRecs2.length;
+      var quesCnt  = new Set(_qRecs2.map(function(r){ return r.date; }).filter(Boolean)).size;
+      var ques3 = quesCnt >= 3 ? '<span class="badge b-green">✓'+quesCnt+'</span>' : (quesCnt >= 2 ? '<span class="badge b-red">△'+quesCnt+'</span>' : (quesCnt >= 1 ? String(quesCnt) : '—'));
+      var rel6Cnt = joRecs.filter(function(r){ return r.evangType==='관계(팀)'; }).length;
+      var rel6Cell = rel6Cnt >= 6 ? '<span class="badge b-green">✓'+rel6Cnt+'</span>' : '<span class="badge b-gray">'+rel6Cnt+'</span>';
+      var suryoOk2 = isSuryoComplete(rel6Cnt, quesCnt, w7recs) ? '<span class="badge b-green">완료</span>' : '<span class="badge b-gray">미완료</span>';
+
+      // 관계전도 복음참여 현황: 조 단위 집계
+      var gospelParts = ['간증','서론','은혜','인간','하나님','그리스도','믿음','결신','즉석양육'];
+      var partCounts = gospelParts.map(function(p) {
+        return joRecs.reduce(function(s,r) {
+          var parts = (r.leaderPart||'') + ',' + (r.trainerPart||'') + ',' + (r.traineePart||'');
+          return s + (parts.indexOf(p) > -1 ? 1 : 0);
+        }, 0);
+      });
+      var partCells = partCounts.map(function(cnt) {
+        return '<td style="text-align:center;">' + (cnt > 0 ? '<span style="color:#1565c0;font-weight:700;">' + cnt + '</span>' : '—') + '</td>';
+      }).join('');
+
+      // 조원 목록 (리더/훈련자/훈련생 순)
+      var joMembersSorted = MEMBERS.filter(function(m){ return Number(m.jo) === Number(jo); })
+        .sort(function(a,b){
+          var order = {'리더':0,'훈련자':1,'훈련생':2};
+          return (order[a.role]||9) - (order[b.role]||9);
+        });
+      var rowspan = joMembersSorted.length || 1;
+
+      // 조원별 행 렌더링
+      joMembersSorted.forEach(function(m, mi) {
+        var roleLabel = m.role === '리더'
+          ? '<span class="badge b-blue" style="white-space:normal;text-align:center;line-height:1.3;font-size:8px;display:inline-block;">훈련자<br>(조장)</span>'
+          : m.role === '훈련자'
+            ? '<span class="badge b-green" style="font-size:9px;">훈련자</span>'
+            : '<span class="badge b-gray" style="font-size:9px;">훈련생</span>';
+
+        // 개인전도 횟수
+        var indivCnt = joRecs.filter(function(r) {
+          if (r.evangType !== '개인') return false;
+          var eName = (r.relationMember || '').replace(/\(.*?\)/g,'').trim();
+          return eName === m.name;
+        }).length;
+
+        // 복음제시완료여부: allData에서 이름 기준
+        var gospelDate = '—';
+        allData.forEach(function(r) {
+          if (!r.gospelDate) return;
+          r.gospelDate.split('|').forEach(function(p) {
+            var ci = p.indexOf(':');
+            if (ci < 0) return;
+            var nm = p.slice(0, ci).trim();
+            var dt = p.slice(ci + 1).trim();
+            if (nm === m.name && dt)
+              gospelDate = dt.slice(5).replace('-', '/');
+          });
+        });
+        var gospelDoneCell2 = gospelDate !== '—'
+          ? '<span style="font-size:10px;color:var(--green);font-weight:700;">' + gospelDate + '</span>'
+          : '<span style="color:#bbb;">—</span>';
+
+        html += '<tr>' +
+          (mi === 0 ? '<td class="td-jo" rowspan="' + rowspan + '">' + jo + '조</td>' : '') +
+          '<td class="td-name">' + m.name + '</td>' +
+          '<td class="td-role">' + roleLabel + '</td>' +
+          '<td class="td-step" style="border-right:1px solid #c5cde8;">' + (m.step||'—') + '</td>' +
+          (mi === 0 ? '<td rowspan="' + rowspan + '">' + rel6Cell + '</td>' : '') +
+          (mi === 0 ? '<td rowspan="' + rowspan + '" style="text-align:center;">' + (quesRawCnt||'—') + '</td>' : '') +
+          (mi === 0 ? '<td rowspan="' + rowspan + '">' + ques3 + '</td>' : '') +
+          (mi === 0 ? '<td rowspan="' + rowspan + '">' + w7ok + '</td>' : '') +
+          (mi === 0 ? '<td rowspan="' + rowspan + '">' + suryoOk2 + '</td>' : '') +
+          '<td style="text-align:center;">' + (indivCnt||'—') + '</td>' +
+          (mi === 0 ? partCells : gospelParts.map(function(){ return '<td>—</td>'; }).join('')) +
+          '<td style="text-align:center;border-right:1px solid #c5cde8;">' + gospelDoneCell2 + '</td>' +
+          '<td>—</td>' +
+          '</tr>';
+      });
     });
   });
 
