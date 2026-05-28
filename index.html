@@ -1730,13 +1730,7 @@ pre.code-block {
 }
 
 /* ── 테스트 모드 ── */
-.subbtn.test-mode {
-  background: linear-gradient(135deg, #2e7d32, #1b5e20);
-}
 
-#history-page.test-bg {
-  background: linear-gradient(160deg, #f1f8e9 0%, #e8f5e9 100%);
-}
 
 .history-header h2.test {
   color: #2e7d32;
@@ -1821,7 +1815,7 @@ pre.code-block {
 <div class="server-connected-badge" id="server-connected-badge">
     <span class="scb-label">연결됨</span>
     <span class="scb-dot"></span>
-    <span class="scb-lock" onclick="openAdminPage()" oncontextmenu="event.preventDefault();openAdminModal();" title="클릭: Admin 열기 | 길게누르기: 경로 변경" style="cursor:pointer;opacity:0.6;transition:opacity .2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🔒</span>
+    <span class="scb-lock" onclick="openAdminAuth()" oncontextmenu="event.preventDefault();openAdminModal();" title="클릭: Admin 열기 | 길게누르기: 경로 변경" style="cursor:pointer;opacity:0.6;transition:opacity .2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">🔒</span>
   </div>
   <div class="hd-eyebrow">EVANGELISM FIELD REPORT</div>
   <div class="hd-title">공개 <span>보고서</span></div>
@@ -2504,7 +2498,7 @@ pre.code-block {
 </div>
 
 <!-- HISTORY PAGE -->
-<div id="history-page" class="page test-bg">
+<div id="history-page" class="page server-bg">
 <div class="history-container">
   <div class="history-header">
     <h2 class="test" id="history-title">TEST RECORDS</h2>
@@ -2794,7 +2788,6 @@ pre.code-block {
 })();
 
 const APP_VERSION = 'index v2026.05.26';
-const LS_KEY = 'report_test_records';
 const LS_SEQ = 'report_seq_counter';
 const LS_JO = 'report_jo_data';
 const LS_DRAFT = 'report_draft';
@@ -2831,7 +2824,6 @@ const DIAG_MAP = {
     badge: 'purple'
   }
 };
-let currentMode = 'server';
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbwHE0SeQouPOdquc8iX6rqp2k6xgPv6l8dvJAk_3ItvpSOIa0235o7A0iq6pJBfx4Ek/exec';
 var _lastSavedDiagResult = '';
 var _isApplyingFormData = false; // 불러오기 중 자동 통계 설정 방지
@@ -4347,64 +4339,6 @@ function updateScbState(state) {
   else label.textContent = '오류';
 }
 
-function applyMode(mode, announce) {
-  currentMode = mode;
-  var btn = document.getElementById('submit-btn');
-  var hp = document.getElementById('history-page');
-  var scb = document.getElementById('server-connected-badge');
-  if (mode === 'test') {
-    if (btn) {
-      btn.className = 'subbtn test-mode';
-      btn.textContent = '💾 테스트 저장 (로컬)';
-    }
-    if (hp) {
-      hp.className = (hp.classList.contains('active') ? 'page active ' : 'page ') + 'test-bg';
-    }
-    var ht = document.getElementById('history-title');
-    if (ht) {
-      ht.className = 'test';
-      ht.textContent = 'TEST RECORDS';
-    }
-    var rb = document.getElementById('refresh-btn');
-    if (rb) rb.className = 'h-btn outline test';
-    var sb = document.getElementById('search-btn');
-    if (sb) sb.className = 'h-btn outline test';
-    var nb = document.getElementById('new-btn');
-    if (nb) nb.className = 'h-btn primary test';
-    if (scb) scb.classList.remove('visible');
-    if (announce) {
-      showStatus('🧪 테스트 모드', 'info');
-      loadHistory();
-    }
-  } else {
-    if (btn) {
-      btn.className = 'subbtn server-mode';
-      btn.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;">제출하기</span>';
-    }
-    if (hp) {
-      hp.className = (hp.classList.contains('active') ? 'page active ' : 'page ') + 'server-bg';
-    }
-    var ht2 = document.getElementById('history-title');
-    if (ht2) {
-      ht2.className = 'server';
-      ht2.textContent = 'SERVER RECORDS';
-    }
-    var rb2 = document.getElementById('refresh-btn');
-    if (rb2) rb2.className = 'h-btn outline server';
-    var sb2 = document.getElementById('search-btn');
-    if (sb2) sb2.className = 'h-btn outline server';
-    var nb2 = document.getElementById('new-btn');
-    if (nb2) nb2.className = 'h-btn primary server';
-    if (scb) {
-      scb.classList.add('visible');
-      updateScbState(scriptUrl ? 'ok' : 'warn');
-    }
-    if (announce) {
-      showStatus('☁️ 서버 모드', 'success');
-      loadHistory();
-    }
-  }
-}
 
 function handleSheetBtn() {
   openModal();
@@ -5043,11 +4977,7 @@ function collectFormData() {
 }
 
 async function handleSubmit() {
-  if (currentMode === 'test') {
-    submitTest();
-    return;
-  }
-  // 영접여부 필수 체크 (서버 모드만)
+  // 영접여부 필수 체크
   var yeopjeop = document.querySelector('input[name="yeopjeop"]:checked');
   if (!yeopjeop) {
     showStatus('⚠️ 영접여부를 선택해 주세요. (영접 / 거부·보류 / 불필요)', 'warn');
@@ -5174,6 +5104,14 @@ async function submitServer() {
         btn2.style.gap = '3px';
         btn2.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;">제출하기</span>';
       }
+      // 제출 완료 후 미리보기 탭으로 자동 이동
+      setTimeout(function() {
+        var previewBtn = document.getElementById('tab-btn-preview');
+        if (previewBtn && previewBtn.style.display !== 'none') {
+          previewBtn.click();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 600);
       // 자동 초기화 제거 — 하단 초기화 버튼으로 수동 처리
     } else throw new Error(json.message || '제출 실패');
   } catch (e) {
@@ -5367,24 +5305,7 @@ function clearSearch() {
   filterHistory();
 }
 
-function submitTest() {
-  var payload = Object.assign({}, collectFormData(), {
-    _seq: getNextSeq(),
-    _savedAt: new Date().toLocaleString('ko-KR'),
-    _source: 'test'
-  });
-  var records = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-  records.unshift(payload);
-  localStorage.setItem(LS_KEY, JSON.stringify(records));
-  localStorage.removeItem(LS_DRAFT);
-  showStatus('✅ 테스트 저장 완료! (로컬)', 'success');
-  // 자동 초기화 제거 — 하단 초기화 버튼으로 수동 처리
-}
 
-function loadTestHistory() {
-  var records = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-  renderHistory(records, 'test');
-}
 async function loadHistory() {
   // 프리셋 필터 자동 활성화
   var p = getPreset();
@@ -5398,11 +5319,7 @@ async function loadHistory() {
       else btn.textContent = '👤 ' + p.jo + '조 ✓';
     }
   }
-  if (currentMode === 'test') {
-    loadTestHistory();
-  } else {
-    await loadServerHistory();
-  }
+  await loadServerHistory();
 }
 async function loadServerHistory() {
   var list = document.getElementById('history-list');
@@ -6179,6 +6096,38 @@ const LS_ADMIN_URL = 'report_admin_url';
     });
   });
 })();
+
+function openAdminAuth() {
+  var bg = document.getElementById('admin-auth-bg');
+  if (!bg) return openAdminPage();
+  bg.style.display = 'flex';
+  setTimeout(function() {
+    var inp = document.getElementById('admin-auth-input');
+    if (inp) { inp.value = ''; inp.focus(); }
+    document.getElementById('admin-auth-error').textContent = '';
+  }, 50);
+}
+
+function confirmAdminAuth() {
+  var inp = document.getElementById('admin-auth-input');
+  var val = inp ? inp.value : '';
+  var ADMIN_PW = '5600';
+  if (val === ADMIN_PW) {
+    closeAdminAuth();
+    openAdminPage();
+  } else {
+    var errEl = document.getElementById('admin-auth-error');
+    errEl.textContent = '❌ 비밀번호가 올바르지 않습니다.';
+    inp.value = '';
+    inp.focus();
+    setTimeout(function() { errEl.textContent = ''; }, 2000);
+  }
+}
+
+function closeAdminAuth() {
+  var bg = document.getElementById('admin-auth-bg');
+  if (bg) bg.style.display = 'none';
+}
 
 function openAdminPage() {
   var url = localStorage.getItem(LS_ADMIN_URL) || 'justee61_admin.html';
@@ -7088,7 +7037,6 @@ window.onload = function() {
   buildReligionDropdown();
   buildRelationDropdown();
   document.getElementById('report-date').value = new Date().toISOString().split('T')[0];
-  applyMode('server', false);
   syncRoleAvailability();
   syncPreview();
   updatePresetIndicator();
@@ -7339,5 +7287,21 @@ function showStatus(msg, type) {
 }
 
 </script>
+<!-- Admin 비밀번호 확인 모달 -->
+<div id="admin-auth-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:28px 24px;width:280px;box-shadow:0 8px 32px rgba(0,0,0,0.2);text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">🔒</div>
+    <div style="font-size:14px;font-weight:700;color:#1a3a9e;margin-bottom:16px;">관리자 인증</div>
+    <input type="password" id="admin-auth-input" maxlength="10" placeholder="비밀번호 입력"
+      style="width:100%;height:42px;font-size:18px;text-align:center;border:1.5px solid #c5cde8;border-radius:8px;outline:none;letter-spacing:4px;margin-bottom:8px;"
+      onkeydown="if(event.key==='Enter')confirmAdminAuth()">
+    <div id="admin-auth-error" style="font-size:11px;color:#c00;min-height:16px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="closeAdminAuth()" style="flex:1;height:40px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#555;font-size:13px;cursor:pointer;">취소</button>
+      <button onclick="confirmAdminAuth()" style="flex:1;height:40px;border:none;border-radius:8px;background:#1a3a9e;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">확인</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

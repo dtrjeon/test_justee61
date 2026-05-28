@@ -2271,8 +2271,15 @@ function onLockInput() {
 }
 
 window.onload = function() {
-  // 비밀번호 화면 표시 (배포 시 아래 줄 제거)
-  document.getElementById('lock-screen').style.display = 'none';
+  // 세션에 인증 정보가 없으면 비밀번호 화면 표시
+  if (!sessionStorage.getItem(LS_AUTH)) {
+    document.getElementById('lock-screen').style.display = 'flex';
+    setTimeout(function() {
+      document.getElementById('lock-input').focus();
+    }, 100);
+  } else {
+    document.getElementById('lock-screen').style.display = 'none';
+  }
   // 릴리즈 시각 (한국시간)
   var el = document.getElementById('release-time');
   if (el) {
@@ -2352,6 +2359,8 @@ function buildJoSelect() {
   sel.innerHTML = '<option value="">전체</option>';
   var joSet = new Set();
   MEMBERS.forEach(function(m) { if (m.jo) joSet.add(Number(m.jo)); });
+  // CFG.joGroup에도 없는 조가 MEMBERS에 있으면 추가
+  Object.keys(CFG.joGroup || {}).forEach(function(j) { if (j) joSet.add(Number(j)); });
   Array.from(joSet).sort(function(a,b){ return a-b; }).forEach(function(jo) {
     var opt = document.createElement('option');
     opt.value = String(jo);
@@ -3654,9 +3663,19 @@ function renderWeekly2Html(data, w) {
         });
       });
 
-      // 복음제시 완료 여부
-      var gospelDone = myRecs.filter(function(r){ return r.result==='결신'||r.result==='보류'||r.result==='거절'||r.result==='확신'||r.result==='이미신자'; }).length;
-      var gospelDoneCell = gospelDone > 0 ? '<span style="color:var(--green);font-weight:700;">✔</span>' : '—';
+      // 복음제시 완료여부 → 개인제시일 (이름 기준, 형식 MM/DD)
+      var gospelDateVal = '—';
+      allData.forEach(function(r) {
+        if (!r.gospelDate) return;
+        r.gospelDate.split('|').forEach(function(p) {
+          var ci = p.indexOf(':');
+          if (ci < 0) return;
+          var nm = p.slice(0, ci).trim();
+          var dt = p.slice(ci + 1).trim();
+          if (nm === m.name && dt) gospelDateVal = dt.slice(5).replace('-', '/');
+        });
+      });
+      var gospelDoneCell = '<span style="font-size:10px;color:' + (gospelDateVal !== '—' ? 'var(--green);font-weight:700;' : '#bbb;') + '">' + gospelDateVal + '</span>';
 
       html += '<tr class="jo-row' + (mi===0?' jo-row-first':'') + '">' +
         (mi===0 ? '<td class="td-jo" rowspan="'+rowspan+'">'+jo+'</td>' : '') +
@@ -3798,9 +3817,14 @@ function renderTab1(data, w) {
 
   var html = '';
 
+  var joFilter = (typeof currentJo !== 'undefined' && currentJo) ? currentJo : '';
+
   SORT_SPEC.forEach(function(spec) {
     var roleMembers = MEMBERS.filter(function(m) {
-      return m.role === spec.role;
+      if (m.role !== spec.role) return false;
+      // 조 필터 적용
+      if (joFilter && String(m.jo) !== joFilter) return false;
+      return true;
     });
 
     spec.steps.forEach(function(step) {
