@@ -3249,29 +3249,34 @@ function _openPresetModalNow() {
 
   // ── 그룹장 섹션
   var grpLeaders = (function() {
-    // 1순위: admin에서 저장한 mon_groups
+    // 1순위: admin에서 저장한 mon_groups (같은 도메인)
     try {
-      var saved = JSON.parse(localStorage.getItem('mon_groups') || '[]');
-      if (saved.length && saved.some(function(g) { return g.leader; })) {
-        return saved.filter(function(g) { return g.leader; });
-      }
+      var mg = JSON.parse(localStorage.getItem('mon_groups') || '[]');
+      if (mg.length && mg.some(function(g) { return g.leader; }))
+        return mg.filter(function(g) { return g.leader; });
     } catch(e) {}
-    // 2순위: joData에서 그룹별 첫 번째 조의 조장
+    // 2순위: GAS에서 불러온 그룹설정 캐시 (report_group_settings)
+    try {
+      var gc = JSON.parse(localStorage.getItem('report_group_settings') || '[]');
+      if (gc.length && gc.some(function(g) { return g.leader; }))
+        return gc.filter(function(g) { return g.leader; });
+    } catch(e) {}
+    // 3순위: joData에서 그룹별 첫 번째 조의 조장
     var jd = getJoData();
     var grpMap = {};
     jd.forEach(function(j) {
-      if (j.group && j.leader && !grpMap[j.group]) {
+      if (j.group && j.leader && !grpMap[j.group])
         grpMap[j.group] = { id: j.group, name: j.group + '그룹', leader: j.leader };
-      }
     });
     var derived = Object.values(grpMap).sort(function(a, b) { return a.id > b.id ? 1 : -1; });
     if (derived.length) return derived;
-    // 3순위: 임시 기본값 (서버 연동 전)
+    // 4순위: 기본값
     return [
       { id: 'A', name: 'A그룹', leader: 'A그룹장명' },
       { id: 'B', name: 'B그룹', leader: 'B그룹장명' },
       { id: 'C', name: 'C그룹', leader: 'C그룹장명' },
-      { id: 'D', name: 'D그룹', leader: 'D그룹장명' }
+      { id: 'D', name: 'D그룹', leader: 'D그룹장명' },
+      { id: 'E', name: 'E그룹', leader: 'E그룹장명' }
     ];
   })();
   if (grpLeaders.length) {
@@ -3614,13 +3619,12 @@ function saveJoDataLS(arr) {
 
 function loadJoData() {
   if (!scriptUrl) return;
+  // 조정보 불러오기
   fetch(scriptUrl + '?action=get_jo', {
       method: 'GET',
       redirect: 'follow'
     })
-    .then(function(r) {
-      return r.json();
-    })
+    .then(function(r) { return r.json(); })
     .then(function(json) {
       if (json.status === 'ok' && json.joData && json.joData.length) {
         var joDataWithStep = json.joData.map(function(j) {
@@ -3638,15 +3642,28 @@ function loadJoData() {
         });
         saveJoDataLS(joDataWithStep);
         buildJoDropdown();
+        // 드롭다운 갱신 후 프리셋 재적용 (12조 등 신규 조 반영)
+        if (typeof applyPreset === 'function') applyPreset();
       }
     })
     .catch(function(e) {
-      // 서버 연결 실패 시 DEFAULT_JO 사용 (정상 동작)
       if (!localStorage.getItem(LS_JO)) {
         saveJoDataLS(DEFAULT_JO);
         buildJoDropdown();
       }
     });
+  // 그룹설정도 불러와 캐시 (프리셋 모달 E그룹 등 반영)
+  fetch(scriptUrl + '?action=get_group_settings', {
+      method: 'GET',
+      redirect: 'follow'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (json.status === 'ok' && json.groups && json.groups.length) {
+        localStorage.setItem('report_group_settings', JSON.stringify(json.groups));
+      }
+    })
+    .catch(function() {});
 }
 
 function buildJoDropdown() {
@@ -3656,8 +3673,10 @@ function buildJoDropdown() {
   sel.innerHTML = '<option value="">조 선택</option>';
   getJoData().forEach(function(j) {
     var opt = document.createElement('option');
-    opt.value = String(j.jo); // 항상 문자열로
-    opt.textContent = j.jo + '조';
+    opt.value = String(j.jo);
+    // 이름 조합 (있는 것만)
+    var names = [j.leader, j.trainer, j.trainee].filter(Boolean);
+    opt.textContent = j.jo + '조' + (names.length ? ' (' + names.join(', ') + ')' : '');
     sel.appendChild(opt);
   });
   if (cur) sel.value = cur;
@@ -6889,6 +6908,9 @@ async function handleOcrImage(event) {
 window.onload = function() {
   // 앱 설정 적용 (임상 탭 on/off 등)
   applyAppSettings();
+
+  // 서버에서 조정보 불러오기 (드롭다운 갱신)
+  loadJoData();
 
   // 검색 타입 초기값 주차로 설정
   var stEl = document.getElementById('search-type');
