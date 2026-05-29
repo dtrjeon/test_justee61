@@ -1820,19 +1820,6 @@ pre.code-block {
       <label style="font-size:12px;font-weight:700;color:rgba(30,40,80,0.7);white-space:nowrap;">주차</label>
       <select id="report-week" onchange="syncPreview()" style="width:90px;background:#fff;border:1px solid rgba(0,0,20,0.18);border-radius:6px;padding:8px 8px;font-size:16px;color:#0f1428;outline:none;font-weight:700;">
         <option value="">선택</option>
-        <option value="1">1주차</option>
-        <option value="2">2주차</option>
-        <option value="3">3주차</option>
-        <option value="4">4주차</option>
-        <option value="5">5주차</option>
-        <option value="6">6주차</option>
-        <option value="7">7주차</option>
-        <option value="8">8주차</option>
-        <option value="9">9주차</option>
-        <option value="10">10주차</option>
-        <option value="11">11주차</option>
-        <option value="12">12주차</option>
-        <option value="13">13주차</option>
       </select>
       <select id="q1_jo" onchange="onJoSelect()" style="width:90px;background:#fff;border:1px solid rgba(0,0,20,0.18);border-radius:6px;padding:8px 8px;font-size:16px;color:#0f1428;outline:none;font-weight:700;">
         <option value="">조 선택</option>
@@ -3655,6 +3642,8 @@ function loadJoData() {
         buildJoDropdown();
         // 드롭다운 갱신 후 프리셋 재적용 (12조 등 신규 조 반영)
         if (typeof applyPreset === 'function') applyPreset();
+        // 기간 설정 반영 후 주차 드롭다운 재생성
+        buildReportWeekSelect();
       }
     })
     .catch(function(e) {
@@ -3989,7 +3978,42 @@ function unlock7ilhuStats() {
 }
 
 
-// ── 전도일 기준 주차 자동 계산 ────────────────────────────────────────────────
+// ── 주차 드롭다운 동적 생성 ───────────────────────────────────
+function buildReportWeekSelect() {
+  var sel = document.getElementById('report-week');
+  if (!sel) return;
+  var curVal = sel.value; // 현재 선택값 보존
+
+  // 최대 주차 계산 (mon_trainEnd 없으면 시작일 기준 13주)
+  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-01';
+  var start = new Date(trainStart);
+  var dow = start.getDay();
+  var diffToMon = (dow === 0) ? -6 : 1 - dow;
+  var startMonday = new Date(start);
+  startMonday.setDate(start.getDate() + diffToMon);
+
+  var maxWeek = 13;
+  var trainEnd = localStorage.getItem('mon_trainEnd');
+  if (trainEnd) {
+    var endDate = new Date(trainEnd);
+    if (!isNaN(endDate)) {
+      var diffDays = Math.floor((endDate - startMonday) / (1000 * 60 * 60 * 24));
+      maxWeek = Math.max(1, Math.floor(diffDays / 7) + 1);
+    }
+  }
+
+  // 옵션 재생성
+  sel.innerHTML = '<option value="">선택</option>';
+  for (var w = 1; w <= maxWeek; w++) {
+    var opt = document.createElement('option');
+    opt.value = w;
+    opt.textContent = w + '주차';
+    sel.appendChild(opt);
+  }
+
+  // 이전 선택값 복원
+  if (curVal) sel.value = curVal;
+}
 function autoWeekFromDate() {
   var dateVal = document.getElementById('report-date').value;
   if (!dateVal) return;
@@ -6984,6 +7008,9 @@ window.onload = function() {
   if (isSubmitLocked()) {
     setTimeout(function() { setSubmitLock(true); }, 100);
   }
+
+  // 주차 드롭다운 동적 생성 (mon_trainEnd 기준)
+  buildReportWeekSelect();
 
   // 서버 연결 뱃지 표시 (🔒 자물쇠 아이콘 포함)
   var scb = document.getElementById('server-connected-badge');
