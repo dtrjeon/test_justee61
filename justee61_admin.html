@@ -144,30 +144,32 @@ body {
 .week-bar {
   background: #fff;
   border-bottom: 1px solid var(--border);
-  padding: 8px 12px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: nowrap;
   overflow-x: auto;
 }
 
 .week-bar label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text2);
+  white-space: nowrap;
 }
 
 .week-select {
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 12px;
+  padding: 4px 4px;
+  font-size: 11px;
   font-family: 'Noto Sans KR', sans-serif;
   color: var(--text);
   background: #fff;
   cursor: pointer;
   outline: none;
+  min-width: 0;
 }
 
 .week-select:focus {
@@ -1032,22 +1034,24 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
 </div>
 
 <div class="week-bar">
-  <label>주차</label>
-  <select class="week-select" id="week-select" onchange="onWeekChange()"></select>
-  <label style="margin-left:6px;">조</label>
-  <select class="week-select" id="jo-select" onchange="onWeekChange()" style="min-width:70px;">
-    <option value="">전체</option>
-  </select>
-  <label style="margin-left:6px;">유형</label>
-  <select class="week-select" id="evang-type-select" onchange="onWeekChange()" style="min-width:90px;">
-    <option value="">전체</option>
-    <option value="관계">관계(팀)</option>
-    <option value="질문지">질문지(팀)</option>
-    <option value="개인">개인</option>
-    <option value="7일후">7일후(팀)</option>
-    <option value="QQ">QQ</option>
-  </select>
-  <button class="act-btn" onclick="loadData()" style="font-size:20px;padding:6px 10px;background:#fff;border:none;box-shadow:none;" title="불러오기">🔄</button>
+  <div style="display:flex;align-items:center;gap:4px;flex:1;">
+    <label>주차</label>
+    <select class="week-select" id="week-select" onchange="onWeekChange()" style="flex:1;"></select>
+    <label>조</label>
+    <select class="week-select" id="jo-select" onchange="onWeekChange()" style="flex:1;">
+      <option value="">전체</option>
+    </select>
+    <label>유형</label>
+    <select class="week-select" id="evang-type-select" onchange="onWeekChange()" style="flex:1.2;">
+      <option value="">전체</option>
+      <option value="관계">관계(팀)</option>
+      <option value="질문지">질문지(팀)</option>
+      <option value="개인">개인</option>
+      <option value="7일후">7일후(팀)</option>
+      <option value="QQ">QQ</option>
+    </select>
+  </div>
+  <button class="act-btn" onclick="loadData()" style="font-size:20px;padding:6px 10px;background:#fff;border:none;box-shadow:none;flex-shrink:0;" title="불러오기">🔄</button>
 
   <button class="act-btn" onclick="toggleMismatchPanel()" id="mismatch-open-btn"
     style="background:#fff3f3;color:#ef4444;border:1px solid #ef4444;display:none;"
@@ -1459,7 +1463,7 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
             <th colspan="1" style="background:#4a6fd8;color:#fff;border-right:1px solid #c5cde8;">수료요건</th>
             <th colspan="1" style="background:#4a6fd8;color:#fff;border-right:1px solid #c5cde8;">개인전도</th>
             <th colspan="9" style="background:#2d5cb8;color:#fff;border-right:1px solid #c5cde8;">관계전도(팀) 복음참여 현황</th>
-            <th colspan="1" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">복음제시<br>완료여부</th>
+            <th colspan="1" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">풀복음<br>완료일</th>
             <th colspan="1" style="background:#2050c8;color:#fff;">비고</th>
           </tr>
           <tr>
@@ -1467,10 +1471,10 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
             <th style="border-right:1px solid #c5cde8;">6회↑</th>
             <th>횟수</th><th style="border-right:1px solid #c5cde8;">2일↑</th>
             <th style="border-right:1px solid #c5cde8;">1회↑</th>
-            <th style="border-right:1px solid #c5cde8;">완료여부</th>
+            <th style="border-right:1px solid #c5cde8;">풀복음 완료일</th>
             <th style="border-right:1px solid #c5cde8;">횟수</th>
             <th title="간증">간</th><th title="서론">서</th><th title="은혜">은</th><th title="인간">인</th><th title="하나님">하</th><th title="그리스도">그</th><th title="믿음">믿</th><th title="결신">결</th><th style="border-right:1px solid #c5cde8;" title="즉석양육">즉</th>
-            <th style="border-right:1px solid #c5cde8;">완료</th>
+            <th style="border-right:1px solid #c5cde8;">(월/일)</th>
             <th>비고</th>
           </tr>
         </thead>
@@ -1635,19 +1639,26 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
     </div>
 
     <div class="modal-section">
-      <label>훈련 기간 <span style="font-size:10px;font-weight:400;color:var(--text3);">시작일 기준 주차 자동 계산 (월~일 1주)</span></label>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <label>훈련 기간 <span style="font-size:10px;font-weight:400;color:var(--text3);">시작일 기준 주차 자동 계산</span></label>
+      <!-- 1행: 시작일 ~ 종료일 -->
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
         <div style="flex:1;">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">시작일</div>
-          <input type="date" id="set-train-start" onchange="updateTrainPeriodInfo()" style="width:100%;padding:8px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:14px;font-family:'Noto Sans KR',sans-serif;">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:2px;">시작일</div>
+          <input type="date" id="set-train-start" onchange="updateTrainPeriodInfo()" style="width:100%;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;">
         </div>
-        <div style="padding-top:16px;color:var(--text3);">~</div>
+        <div style="color:var(--text3);padding-top:14px;font-size:12px;">~</div>
         <div style="flex:1;">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">종료일</div>
-          <input type="date" id="set-train-end" onchange="updateTrainPeriodInfo()" style="width:100%;padding:8px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:14px;font-family:'Noto Sans KR',sans-serif;">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:2px;">종료일 <span style="color:#aaa;">(자동)</span></div>
+          <input type="date" id="set-train-end" onchange="onTrainEndChange()" style="width:100%;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;">
         </div>
       </div>
-      <div id="train-period-info" style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;"></div>
+      <!-- 2행: 총 주차 -->
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10px;color:var(--text3);white-space:nowrap;">총 주차</span>
+        <input type="number" id="set-total-weeks" min="1" max="52" value="13" onchange="onTotalWeeksChange()" style="width:56px;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;text-align:center;">
+        <span style="font-size:10px;color:var(--text3);">주</span>
+        <div id="train-period-info" style="font-size:10px;color:var(--text3);flex:1;text-align:right;"></div>
+      </div>
     </div>
 
     <div class="modal-section">
@@ -2196,10 +2207,10 @@ const MEMBERS = [{
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycbwHE0SeQouPOdquc8iX6rqp2k6xgPv6l8dvJAk_3ItvpSOIa0235o7A0iq6pJBfx4Ek/exec',
+  url: 'https://script.google.com/macros/s/AKfycby6SNFk4GAO_ZRwlLBu-H3yTNa8wu4AtBgwkZdqgpATwcd5GWFTExQzrcuC-MOb_-c/exec',
   title: localStorage.getItem('mon_title') || '61기 수주반',
   trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
-  trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-24',
+  trainEnd: localStorage.getItem('mon_trainEnd') || '',
   adminEmail: localStorage.getItem('mon_adminEmail') || '',
   groups: JSON.parse(localStorage.getItem('mon_groups') || 'null') || [{
     id: 'A',
@@ -2413,7 +2424,21 @@ function buildWeekSelect() {
   oAll.value = 0;
   oAll.textContent = '전체';
   sel.appendChild(oAll);
-  for (var w = 1; w <= 13; w++) {
+
+  // 최대 주차: trainEnd 기준 동적 계산, 없으면 13주 기본
+  var maxWeek = 13;
+  if (CFG.trainStart && CFG.trainEnd) {
+    var start = new Date(CFG.trainStart);
+    var end = new Date(CFG.trainEnd);
+    var dow = start.getDay();
+    var diffToMonday = (dow === 0) ? -6 : 1 - dow;
+    var startMonday = new Date(start);
+    startMonday.setDate(start.getDate() + diffToMonday);
+    var diffDays = Math.floor((end - startMonday) / (1000 * 60 * 60 * 24));
+    maxWeek = Math.max(1, Math.floor(diffDays / 7) + 1);
+  }
+
+  for (var w = 1; w <= maxWeek; w++) {
     var o = document.createElement('option');
     o.value = w;
     o.textContent = w + '주차';
@@ -2920,8 +2945,7 @@ function toggleSimMode() {
   window.SIM_MODE = !window.SIM_MODE;
   var btn = document.getElementById('sim-mode-btn');
   if (window.SIM_MODE) {
-    // TEST_DATA로 강제 로드
-    window.TEST_MODE = true;
+        window.TEST_MODE = true;
     if (btn) {
       btn.textContent = '🧪 시뮬 ON';
       btn.style.background = '#2e7d32';
@@ -3698,7 +3722,7 @@ function renderWeekly2Html(data, w) {
         });
       });
 
-      // 복음제시 완료여부 → 풀복음 완료일 (이름 기준, 형식 MM/DD)
+      // 풀복음 완료일 (이름 기준, 형식 MM/DD)
       var gospelDateVal = '—';
       allData.forEach(function(r) {
         if (!r.gospelDate) return;
@@ -3740,8 +3764,7 @@ function renderWeekly2Html(data, w) {
           var zeroDot = '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#b0c4de;vertical-align:middle;"></span>';
           return '<td style="text-align:center;'+(cnt?'font-weight:700;'+color:'')+border+'">'+(cnt||zeroDot)+'</td>';
         }).join('') +
-        // 복음제시 완료
-        '<td style="text-align:center;border-right:1px solid #c5cde8;">'+gospelDoneCell+'</td>' +
+                '<td style="text-align:center;border-right:1px solid #c5cde8;">'+gospelDoneCell+'</td>' +
         // 비고
         '<td style="font-size:10px;"></td>' +
         '</tr>';
@@ -4761,6 +4784,18 @@ function openSettings() {
   document.getElementById('set-title').value = CFG.title;
   document.getElementById('set-train-start').value = CFG.trainStart || '';
   document.getElementById('set-train-end').value = CFG.trainEnd || '';
+  // 총 주차 역산
+  var weeksEl = document.getElementById('set-total-weeks');
+  if (weeksEl && CFG.trainStart && CFG.trainEnd) {
+    var st = new Date(CFG.trainStart);
+    var dow = st.getDay();
+    var diffM = dow === 0 ? -6 : 1 - dow;
+    var mon = new Date(st); mon.setDate(st.getDate() + diffM);
+    var diff = Math.floor((new Date(CFG.trainEnd) - mon) / (1000 * 60 * 60 * 24));
+    weeksEl.value = Math.max(1, Math.ceil(diff / 7));
+  } else if (weeksEl) {
+    weeksEl.value = 13;
+  }
   updateTrainPeriodInfo();
   var banEl = document.getElementById('set-ban');
   var grpEl = document.getElementById('set-group');
@@ -5229,23 +5264,73 @@ function adminSaveJoData() {
   renderAll();
 }
 
+// 시작일 → 종료일 자동 계산 (총 주차 기준)
+function calcEndDateFromWeeks(startStr, totalWeeks) {
+  if (!startStr || !totalWeeks) return '';
+  var start = new Date(startStr);
+  var dow = start.getDay();
+  var diffToMon = dow === 0 ? -6 : 1 - dow;
+  var monday = new Date(start);
+  monday.setDate(start.getDate() + diffToMon);
+  var end = new Date(monday);
+  end.setDate(monday.getDate() + totalWeeks * 7 - 1); // 마지막 주 일요일
+  return end.toISOString().split('T')[0];
+}
+
+// 총 주차 변경 → 종료일 자동 계산
+function onTotalWeeksChange() {
+  var startVal = document.getElementById('set-train-start').value;
+  var weeksEl = document.getElementById('set-total-weeks');
+  var weeks = parseInt(weeksEl.value) || 13;
+  if (startVal) {
+    var endDate = calcEndDateFromWeeks(startVal, weeks);
+    document.getElementById('set-train-end').value = endDate;
+  }
+  updateTrainPeriodInfo();
+}
+
+// 종료일 직접 변경 → 총 주차 역산
+function onTrainEndChange() {
+  var startVal = document.getElementById('set-train-start').value;
+  var endVal = document.getElementById('set-train-end').value;
+  if (startVal && endVal) {
+    var start = new Date(startVal);
+    var dow = start.getDay();
+    var diffToMon = dow === 0 ? -6 : 1 - dow;
+    var monday = new Date(start);
+    monday.setDate(start.getDate() + diffToMon);
+    var diffDays = Math.floor((new Date(endVal) - monday) / (1000 * 60 * 60 * 24));
+    var weeks = Math.max(1, Math.ceil(diffDays / 7));
+    document.getElementById('set-total-weeks').value = weeks;
+  }
+  updateTrainPeriodInfo();
+}
+
 function updateTrainPeriodInfo() {
   var infoEl = document.getElementById('train-period-info');
   if (!infoEl) return;
   var s = document.getElementById('set-train-start').value;
   var e = document.getElementById('set-train-end').value;
-  if (!s) {
-    infoEl.textContent = '';
-    return;
+  var weeksEl = document.getElementById('set-total-weeks');
+
+  // 시작일 변경 시 종료일 자동 재계산
+  if (s && weeksEl) {
+    var weeks = parseInt(weeksEl.value) || 13;
+    if (!e) {
+      e = calcEndDateFromWeeks(s, weeks);
+      document.getElementById('set-train-end').value = e;
+    }
   }
+
+  if (!s) { infoEl.textContent = ''; return; }
   var start = new Date(s);
   var startDay = start.getDay();
   var diffToMon = startDay === 0 ? -6 : 1 - startDay;
   var monday = new Date(start);
   monday.setDate(start.getDate() + diffToMon);
-  var weeks = e ? Math.ceil((new Date(e) - monday) / (1000 * 60 * 60 * 24 * 7)) : 13;
+  var totalWeeks = e ? Math.ceil((new Date(e) - monday) / (1000 * 60 * 60 * 24 * 7)) : (parseInt(weeksEl && weeksEl.value) || 13);
   var curW = calcCurrentWeek();
-  infoEl.textContent = '1주 시작: ' + monday.toLocaleDateString('ko-KR') + (e ? ' / 총 ' + weeks + '주' : '') + (curW ? ' / 현재: ' + curW + '주차' : '');
+  infoEl.textContent = '1주 시작: ' + monday.toLocaleDateString('ko-KR') + ' / 총 ' + totalWeeks + '주' + (curW ? ' / 현재: ' + curW + '주차' : '');
 }
 
 function closeSettings() {
@@ -5361,6 +5446,12 @@ function saveSettings() {
   CFG.title = document.getElementById('set-title').value.trim() || '61기 수주반';
   CFG.trainStart = document.getElementById('set-train-start').value || '';
   CFG.trainEnd = document.getElementById('set-train-end').value || '';
+  // 종료일 없으면 총 주차로 계산
+  if (CFG.trainStart && !CFG.trainEnd) {
+    var weeks = parseInt(document.getElementById('set-total-weeks').value) || 13;
+    CFG.trainEnd = calcEndDateFromWeeks(CFG.trainStart, weeks);
+    document.getElementById('set-train-end').value = CFG.trainEnd;
+  }
   CFG.groups = CFG.groups.map(function(g, i) {
     return {
       id: g.id,

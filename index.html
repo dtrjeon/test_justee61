@@ -782,21 +782,6 @@ select {
   color: #666;
 }
 
-.diag-save-btn {
-  width: 100%;
-  padding: 13px;
-  background: linear-gradient(135deg, #2a5cd8, #1a3ab0);
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  cursor: pointer;
-  letter-spacing: 1px;
-  margin-top: 9px;
-  min-height: 44px;
-}
-
 .role-badge {
   border-radius: 20px;
   padding: 3px 9px;
@@ -818,10 +803,6 @@ select {
   letter-spacing: 2px;
   margin-top: 18px;
   min-height: 50px;
-}
-
-.subbtn.server-mode {
-  background: linear-gradient(135deg, #2a5cd8, #1a3ab0);
 }
 
 .subbtn:disabled {
@@ -2113,7 +2094,6 @@ pre.code-block {
           </div>
         </div>
       </div>
-      <button type="button" class="diag-save-btn" onclick="saveDiagResult()">진단결과 저장 →</button>
     </div>
     <input type="hidden" id="diag-saved-result">
     <div id="cond8-section" style="display:none;margin-top:14px;margin-bottom:14px;"><div class="sec-lbl">8. 역할 배분 <span style="font-weight:400;color:rgba(32,80,200,0.4);text-transform:none;letter-spacing:0;">(그 외 대답)</span></div>
@@ -2184,15 +2164,6 @@ pre.code-block {
              background:rgba(30,140,60,0.05);cursor:pointer;min-height:56px;">
       <span style="font-size:22px;line-height:1;">👁️</span>
       <span style="font-size:10px;font-weight:700;color:#1a6b3c;white-space:nowrap;">미리보기</span>
-    </button>
-
-    <!-- 📊 제출하기 -->
-    <button type="button" class="subbtn server-mode" id="submit-btn" onclick="handleSubmit()"
-      style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-             margin-top:0;margin-bottom:0;padding:10px 4px;border-radius:10px;min-height:56px;
-             font-size:unset;letter-spacing:0;">
-      <span style="font-size:22px;line-height:1;">📊</span>
-      <span style="font-size:10px;font-weight:700;white-space:nowrap;">제출하기</span>
     </button>
 
     <!-- 🔄 초기화 -->
@@ -2478,7 +2449,7 @@ pre.code-block {
     </button>
 
     <!-- 📊 제출하기 -->
-    <button type="button" onclick="handleSubmit()"
+    <button type="button" id="preview-submit-btn" onclick="handleSubmit()"
       style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
              padding:10px 4px;border:none;border-radius:10px;
              background:linear-gradient(135deg,#2a5cd8,#1a3ab0);cursor:pointer;min-height:56px;">
@@ -2793,6 +2764,32 @@ const APP_VERSION = 'index v2026.05.26';
 const LS_SEQ = 'report_seq_counter';
 const LS_JO = 'report_jo_data';
 const LS_DRAFT = 'report_draft';
+const LS_SUBMITTED = 'report_submitted'; // 제출 잠금 플래그
+
+// ── 제출 잠금 상태 관리 ─────────────────────────────────────
+function setSubmitLock(locked) {
+  var btn = document.getElementById('preview-submit-btn');
+  if (!btn) return;
+  if (locked) {
+    localStorage.setItem(LS_SUBMITTED, '1');
+    btn.disabled = true;
+    btn.style.background = 'linear-gradient(135deg,#888,#666)';
+    btn.style.cursor = 'not-allowed';
+    btn.innerHTML = '<span style="font-size:22px;line-height:1;">✅</span><span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap;">제출완료</span>';
+    btn.title = '초기화 후 새 보고서를 작성하세요';
+  } else {
+    localStorage.removeItem(LS_SUBMITTED);
+    btn.disabled = false;
+    btn.style.background = 'linear-gradient(135deg,#2a5cd8,#1a3ab0)';
+    btn.style.cursor = 'pointer';
+    btn.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;color:#fff;white-space:nowrap;">제출하기</span>';
+    btn.title = '';
+  }
+}
+
+function isSubmitLocked() {
+  return localStorage.getItem(LS_SUBMITTED) === '1';
+}
 const LS_PRESET = 'report_user_preset';
 const ROLES = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
 const MEMBERS = [{
@@ -2826,7 +2823,7 @@ const DIAG_MAP = {
     badge: 'purple'
   }
 };
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbwHE0SeQouPOdquc8iX6rqp2k6xgPv6l8dvJAk_3ItvpSOIa0235o7A0iq6pJBfx4Ek/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycby6SNFk4GAO_ZRwlLBu-H3yTNa8wu4AtBgwkZdqgpATwcd5GWFTExQzrcuC-MOb_-c/exec';
 var _lastSavedDiagResult = '';
 var _isApplyingFormData = false; // 불러오기 중 자동 통계 설정 방지
 
@@ -2988,19 +2985,19 @@ function applyFormData(r) {
     if (wrap) wrap.style.display = 'none';
   }
 
-  // 6. 통계 (불러오기 시)
-  // contact/gospel/target 은 저장값 복원
+  // 6. 통계 (불러오기 시) — 저장값 그대로 복원
+  // contact/gospel/target
   ['contact', 'gospel', 'target'].forEach(function(k) {
     var el = document.getElementById('t_' + k);
     if (el) el.value = (r[k] !== undefined && r[k] !== '') ? r[k] : '';
   });
-  // decision/reject/confirm/believer 는 진단결과 저장 버튼으로만 설정 → 항상 0으로 초기화
+  // decision/reject/confirm/believer — 저장값 복원 (0으로 초기화하지 않음)
   ['decision', 'reject', 'confirm', 'believer'].forEach(function(k) {
     var el = document.getElementById('t_' + k);
-    if (el) el.value = '0';
+    if (el) el.value = (r[k] !== undefined && r[k] !== '') ? r[k] : '';
   });
-  // 진단결과 이전 상태 초기화 (진단결과 저장 버튼 재사용 시 차감 오류 방지)
-  _lastSavedDiagResult = '';
+  // _lastSavedDiagResult 세팅 → 영접여부 재선택 시 이전값 차감 후 새값 증가 정상 작동
+  _lastSavedDiagResult = r.diag_result || '';
 
   // 7. 인적정보
   sv('q3_location', r.location);
@@ -3060,6 +3057,8 @@ function applyFormData(r) {
     var el = document.getElementById('t_' + k);
     if (el) el.value = (r[k] !== undefined && r[k] !== '') ? r[k] : '';
   });
+  // _lastSavedDiagResult 재세팅 (onQ5Change가 초기화했으므로 다시 복원)
+  _lastSavedDiagResult = r.diag_result || '';
   sr('yeopjeop', r.yeopjeop);
   sv('diag-saved-result', r.diag_result);
 
@@ -4013,8 +4012,20 @@ function autoWeekFromDate() {
 
   var week = Math.floor(diffDays / 7) + 1;
 
-  // 주차 범위 체크 (1~13)
-  if (week < 1 || week > 13) return;
+  // 최대 주차: mon_trainEnd 기준 동적 계산, 없으면 시작일 기준 13주 자동 계산
+  var trainEnd = localStorage.getItem('mon_trainEnd');
+  var maxWeek = 13;
+  if (trainEnd) {
+    var endDate = new Date(trainEnd);
+    if (!isNaN(endDate)) {
+      var endDiffDays = Math.floor((endDate - startMonday) / (1000 * 60 * 60 * 24));
+      maxWeek = Math.floor(endDiffDays / 7) + 1;
+    }
+  }
+  // trainEnd 없으면 시작일 기준 13주가 기본 (maxWeek = 13 유지)
+
+  // 주차 범위 체크
+  if (week < 1 || week > maxWeek) return;
 
   var weekEl = document.getElementById('report-week');
   if (weekEl) {
@@ -4873,44 +4884,6 @@ function onYeopjeopChange() {
       if (cntEl) cntEl.value = (parseInt(cntEl.value) || 0) + 1;
     }
     _lastSavedDiagResult = saved;
-    showStatus('✅ 진단결과가 통계에 반영되었습니다.', 'success');
-  }
-  if (result === '보류/거부') {
-    var inEl = document.querySelector('input[name="immed_nurture"][value="안했고"]');
-    if (inEl) inEl.checked = true;
-    document.querySelectorAll('input[name="followup"]').forEach(function(cb) {
-      cb.checked = cb.value === '하지 못함';
-    });
-    updateFollowup();
-  }
-  syncPreview();
-  requestAnimationFrame(function(){ window.scrollTo(0, scrollY); });
-}
-
-function saveDiagResult() {
-  var yj = radio('yeopjeop');
-  if (!yj) {
-    showStatus('영접 여부를 먼저 선택하세요.', 'error');
-    return;
-  }
-  var saved = v('diag-saved-result');
-  if (!saved) {
-    showStatus('진단 결과가 없습니다.', 'error');
-    return;
-  }
-  if (saved !== _lastSavedDiagResult) {
-    var result = calcResult(radio('heaven'), radio('reason'), yj);
-    var map = {
-      '결신': 't_decision',
-      '이미신자': 't_believer',
-      '확신': 't_confirm',
-      '보류/거부': 't_reject'
-    };
-    if (map[result]) {
-      var cntEl = document.getElementById(map[result]);
-      if (cntEl) cntEl.value = (parseInt(cntEl.value) || 0) + 1;
-    }
-    _lastSavedDiagResult = saved;
 
     // 개인전도 + 역할배분 없음 → 결과에 따라 전도자 파트 자동설정
     var type = v('evang_type');
@@ -4945,23 +4918,24 @@ function saveDiagResult() {
                 el.checked = autoParts.indexOf(el.value) > -1;
               });
               updateRoleText(evangMemberId);
-              showStatus('✅ 진단결과 저장 + 역할배분 자동설정 완료', 'success');
             }
           }
         }
       }
     }
-  }
 
-  var btn = document.querySelector('.diag-save-btn');
-  btn.textContent = '✅ 저장됨';
-  btn.style.background = '#1a6b3c';
-  setTimeout(function() {
-    btn.textContent = '진단결과 저장 →';
-    btn.style.background = '';
-  }, 2000);
-  showStatus('✅ 진단결과가 통계에 반영되었습니다.', 'success');
+    showStatus('✅ 진단결과가 통계에 반영되었습니다.', 'success');
+  }
+  if (result === '보류/거부') {
+    var inEl = document.querySelector('input[name="immed_nurture"][value="안했고"]');
+    if (inEl) inEl.checked = true;
+    document.querySelectorAll('input[name="followup"]').forEach(function(cb) {
+      cb.checked = cb.value === '하지 못함';
+    });
+    updateFollowup();
+  }
   syncPreview();
+  requestAnimationFrame(function(){ window.scrollTo(0, scrollY); });
 }
 
 function v(id) {
@@ -5069,6 +5043,11 @@ function collectFormData() {
 }
 
 async function handleSubmit() {
+  // 제출 잠금 체크
+  if (isSubmitLocked()) {
+    showStatus('⚠️ 이미 제출된 보고서입니다. 초기화 후 새 보고서를 작성해 주세요.', 'warn');
+    return;
+  }
   // 영접여부 필수 체크
   var yeopjeop = document.querySelector('input[name="yeopjeop"]:checked');
   if (!yeopjeop) {
@@ -5171,9 +5150,8 @@ async function submitServer() {
     showStatus('먼저 구글 시트를 연결해 주세요.', 'error');
     return;
   }
-  var btn = document.getElementById('submit-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<span style="font-size:22px;line-height:1;">⏳</span><span style="font-size:10px;font-weight:700;">제출 중</span>';
+  var btn = document.getElementById('preview-submit-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="font-size:22px;line-height:1;">⏳</span><span style="font-size:10px;font-weight:700;">제출 중</span>'; }
   try {
     var payload = Object.assign({}, collectFormData(), {
       _seq: getNextSeq()
@@ -5187,26 +5165,25 @@ async function submitServer() {
       localStorage.removeItem(LS_DRAFT);
       showStatus('✅ 구글 시트에 제출 완료!', 'success');
       updateScbState('ok');
+      // 제출 잠금 설정
+      setSubmitLock(true);
       // 제출 완료 모달 표시
       showSubmitDone(payload, json.savedAt || '');
       window._isRevision = false;
       window._origDocNumber = '';
-      var btn2 = document.getElementById('submit-btn');
+      var btn2 = document.getElementById('preview-submit-btn');
       if (btn2) {
         btn2.style.background = '';
         btn2.style.flexDirection = 'column';
         btn2.style.gap = '3px';
         btn2.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;">제출하기</span>';
       }
-      // 미리보기 이동은 제출완료 모달을 닫을 때 실행
-      // 자동 초기화 제거 — 하단 초기화 버튼으로 수동 처리
-    } else throw new Error(json.message || '제출 실패');
+            } else throw new Error(json.message || '제출 실패');
   } catch (e) {
     showStatus('❌ 제출 실패: ' + e.message, 'error');
     updateScbState('error');
   }
-  btn.disabled = false;
-  btn.innerHTML = '<span style="font-size:22px;line-height:1;">📊</span><span style="font-size:10px;font-weight:700;">제출하기</span>';
+  if (btn) { btn.disabled = false; }
 }
 
 var _presetFilterActive = false;
@@ -5641,7 +5618,7 @@ function loadRecord(idx) {
   switchTab('form');
 
   // 제출 버튼 수정 모드 표시
-  var sbtn = document.getElementById('submit-btn');
+  var sbtn = document.getElementById('preview-submit-btn');
   if (sbtn) {
     sbtn.style.background = 'linear-gradient(135deg,#e65100,#bf360c)';
     sbtn.style.flexDirection = 'row';
@@ -5672,6 +5649,8 @@ function confirmReset() {
 function resetForm() {
   _lastSavedDiagResult = '';
   localStorage.removeItem(LS_DRAFT);
+  // 제출 잠금 해제
+  setSubmitLock(false);
   document.querySelectorAll('#form-page input[type=text],#form-page input[type=number],#form-page textarea').forEach(function(el) {
     el.value = '';
   });
@@ -7001,6 +6980,11 @@ window.onload = function() {
   // 앱 설정 적용 (임상 탭 on/off 등)
   applyAppSettings();
 
+  // 제출 잠금 상태 복원
+  if (isSubmitLocked()) {
+    setTimeout(function() { setSubmitLock(true); }, 100);
+  }
+
   // 서버 연결 뱃지 표시 (🔒 자물쇠 아이콘 포함)
   var scb = document.getElementById('server-connected-badge');
   if (scb) {
@@ -7217,7 +7201,7 @@ window.onload = function() {
         window._isRevision = true;
         window._origDocNumber = data.doc_number;
         applyFormData(data);
-        var sbtn = document.getElementById('submit-btn');
+        var sbtn = document.getElementById('preview-submit-btn');
         if (sbtn) {
           sbtn.style.background = 'linear-gradient(135deg,#e65100,#bf360c)';
           sbtn.style.flexDirection = 'row';
