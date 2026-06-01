@@ -2461,7 +2461,13 @@ pre.code-block {
 <div id="history-page" class="page server-bg">
 <div class="history-container">
   <div class="history-header">
-    <h2 class="test" id="history-title">TEST RECORDS</h2>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <h2 class="test" id="history-title">TEST RECORDS</h2>
+      <div id="history-conn-badge" style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;border:1px solid rgba(32,80,200,0.18);background:rgba(32,80,200,0.04);font-size:11px;font-weight:600;">
+        <span id="history-conn-dot" style="width:7px;height:7px;border-radius:50%;background:#e6b84a;flex-shrink:0;transition:background .3s;"></span>
+        <span id="history-conn-label" style="color:rgba(140,90,20,0.8);">미연결</span>
+      </div>
+    </div>
     <div class="history-actions">
       <button type="button" class="h-btn outline test" id="refresh-btn" onclick="loadHistory()">🔄 새로고침</button>
       <button type="button" class="h-btn outline test" id="search-btn" onclick="toggleSearch()">🔍 검색</button>
@@ -2747,13 +2753,33 @@ pre.code-block {
   });
 })();
 
-const APP_VERSION = 'index v2026.05.26';
-const LS_SEQ = 'report_seq_counter';
-const LS_JO = 'report_jo_data';
-const LS_DRAFT = 'report_draft';
-const LS_SUBMITTED = 'report_submitted'; // 제출 잠금 플래그
+const APP_VERSION  = 'index v2026.05.26';
+const LS_SEQ       = 'report_seq_counter';
+const LS_JO        = 'report_jo_data';
+const LS_DRAFT     = 'report_draft';
+const LS_SUBMITTED = 'report_submitted';
+const LS_PRESET    = 'report_user_preset';
 
-// ── 제출 잠금 상태 관리 ─────────────────────────────────────
+const ROLES = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
+const MEMBERS = [
+  { id: 'leader',  label: '훈련자(조장)', color: '#1a3a9e' },
+  { id: 'trainer', label: '훈련자',       color: '#2050c8' },
+  { id: 'trainee', label: '훈련생',       color: '#5c7cbb' }
+];
+const DIAG_MAP = {
+  '있었고_믿음': { diag: '머리신자 / 이미신자', badge: 'orange'      },
+  '있었고_etc':  { diag: '착각비신자',           badge: 'red'         },
+  '없었고_믿음': { diag: '확신부족 / 비신자',    badge: 'blue-purple' },
+  '없었고_etc':  { diag: '비신자',               badge: 'purple'      }
+};
+const scriptUrl = 'https://script.google.com/macros/s/AKfycby6SNFk4GAO_ZRwlLBu-H3yTNa8wu4AtBgwkZdqgpATwcd5GWFTExQzrcuC-MOb_-c/exec';
+
+var _lastSavedDiagResult = '';
+var _isApplyingFormData  = false;
+var _autoSaveTimer       = null;
+var _lastAutoSaveData    = '';
+
+// ── 제출 잠금 ───────────────────────────────────────────────
 function setSubmitLock(locked) {
   var btn = document.getElementById('preview-submit-btn');
   if (!btn) return;
@@ -2777,45 +2803,6 @@ function setSubmitLock(locked) {
 function isSubmitLocked() {
   return localStorage.getItem(LS_SUBMITTED) === '1';
 }
-const LS_PRESET = 'report_user_preset';
-const ROLES = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
-const MEMBERS = [{
-  id: 'leader',
-  label: '훈련자(조장)',
-  color: '#1a3a9e'
-}, {
-  id: 'trainer',
-  label: '훈련자',
-  color: '#2050c8'
-}, {
-  id: 'trainee',
-  label: '훈련생',
-  color: '#5c7cbb'
-}];
-const DIAG_MAP = {
-  '있었고_믿음': {
-    diag: '머리신자 / 이미신자',
-    badge: 'orange'
-  },
-  '있었고_etc': {
-    diag: '착각비신자',
-    badge: 'red'
-  },
-  '없었고_믿음': {
-    diag: '확신부족 / 비신자',
-    badge: 'blue-purple'
-  },
-  '없었고_etc': {
-    diag: '비신자',
-    badge: 'purple'
-  }
-};
-const scriptUrl = 'https://script.google.com/macros/s/AKfycby6SNFk4GAO_ZRwlLBu-H3yTNa8wu4AtBgwkZdqgpATwcd5GWFTExQzrcuC-MOb_-c/exec';
-var _lastSavedDiagResult = '';
-var _isApplyingFormData = false; // 불러오기 중 자동 통계 설정 방지
-
-var _autoSaveTimer = null;
-var _lastAutoSaveData = '';
 
 function showDraftBanner(draftAt) {
   var banner = document.getElementById('draft-banner');
@@ -3052,6 +3039,7 @@ function applyFormData(r) {
   // 15. 진단카드 UI 복원
   if (r.diag_result) {
     var dp = r.diag_result.split(' | ');
+    var diagVal  = (dp[0] || '').replace('진단: ', '').trim();
     var finalVal = (dp[2] || '').replace('결과: ', '');
     var clsMap = {
       '결신': '결신',
@@ -3068,6 +3056,14 @@ function applyFormData(r) {
     var fr = document.getElementById('diag-final-row');
     if (fr) fr.style.display = finalVal ? 'flex' : 'none';
     if (radio('heaven')) document.getElementById('diag-card').style.display = 'block';
+    // 영접여부 버튼 모드 복원
+    if (diagVal === '이미신자') {
+      updateYeopjeopOptions('unnecessary');
+    } else if (diagVal) {
+      updateYeopjeopOptions('normal');
+    } else {
+      updateYeopjeopOptions('all');
+    }
   }
 
   // 16. 전도일: 마지막에 세팅 (syncPreview 이전 어떤 호출도 덮어쓰지 못하도록)
@@ -4395,22 +4391,34 @@ function onRoleItemChange(who) {
 
 
 function updateScbState(state) {
+  var cfg = {
+    ok:   { dot: '#7ec88a', color: 'rgba(40,80,50,0.85)',    label: '연결됨', border: 'rgba(40,160,80,0.25)',  bg: 'rgba(40,160,80,0.05)'  },
+    warn: { dot: '#e6b84a', color: 'rgba(140,90,20,0.8)',    label: '미연결', border: 'rgba(32,80,200,0.18)', bg: 'rgba(32,80,200,0.04)'  },
+    error:{ dot: '#e07a7a', color: 'rgba(160,40,40,0.8)',    label: '오류',   border: 'rgba(200,40,40,0.2)',  bg: 'rgba(200,40,40,0.04)'  }
+  };
+  var c = cfg[state] || cfg.warn;
+
   var scb = document.getElementById('server-connected-badge');
-  if (!scb) return;
-  scb.classList.remove('state-ok', 'state-warn', 'state-error');
-  scb.classList.add('state-' + state);
-  var label = scb.querySelector('.scb-label');
-  if (state === 'ok') label.textContent = '연결됨';
-  else if (state === 'warn') label.textContent = '미연결';
-  else label.textContent = '오류';
+  if (scb) {
+    scb.classList.remove('state-ok', 'state-warn', 'state-error');
+    scb.classList.add('state-' + state);
+    var lbl = scb.querySelector('.scb-label');
+    if (lbl) lbl.textContent = c.label;
+  }
+
+  var dot   = document.getElementById('history-conn-dot');
+  var hlbl  = document.getElementById('history-conn-label');
+  var badge = document.getElementById('history-conn-badge');
+  if (dot && hlbl && badge) {
+    dot.style.background    = c.dot;
+    hlbl.style.color        = c.color;
+    hlbl.textContent        = c.label;
+    badge.style.borderColor = c.border;
+    badge.style.background  = c.bg;
+  }
 }
 
-
-function handleSheetBtn() {
-  openModal();
-}
-
-var currentTab = 'form'; // 현재 탭 추적
+var currentTab = 'form';
 
 function switchTab(tab) {
   var prevTab = currentTab;
@@ -4671,11 +4679,38 @@ function calcResult(hv, rs, yj) {
   return '보류/거부';
 }
 
+// 진단 결과에 따라 영접여부 버튼 표시/숨김 제어
+// mode: 'all'(전체), 'normal'(영접+보류/거부만), 'unnecessary'(불필요만)
+function updateYeopjeopOptions(mode) {
+  var btn1 = document.getElementById('yj1'); // 영접
+  var btn2 = document.getElementById('yj2'); // 보류/거부
+  var btn3 = document.getElementById('yj3'); // 불필요
+  if (!btn1 || !btn2 || !btn3) return;
+  var wrap1 = btn1.closest('.yj-btn');
+  var wrap2 = btn2.closest('.yj-btn');
+  var wrap3 = btn3.closest('.yj-btn');
+  if (mode === 'normal') {
+    wrap1.style.display = '';
+    wrap2.style.display = '';
+    wrap3.style.display = 'none';
+    if (btn3.checked) { btn3.checked = false; }
+  } else if (mode === 'unnecessary') {
+    wrap1.style.display = 'none';
+    wrap2.style.display = 'none';
+    wrap3.style.display = '';
+  } else {
+    wrap1.style.display = '';
+    wrap2.style.display = '';
+    wrap3.style.display = '';
+  }
+}
+
 function resetDiagCard() {
   document.querySelectorAll('.yj-btn input[type=radio]').forEach(function(r) {
     r.checked = false;
     r.disabled = false;
   });
+  updateYeopjeopOptions('all');
   var _s = function(id, prop, val) {
     var el = document.getElementById(id);
     if (el) el[prop] = val;
@@ -4778,6 +4813,9 @@ function onQ5Change() {
   var _db = document.getElementById('diag-badge-wrap');
   if (_db) _db.innerHTML = diagBadgeHtml(info);
   updateDiagFromSubResult();
+  // 초기 진단 확정: testimony6/7 선택 전이므로 normal 기본 세팅
+  // (이미신자 케이스는 onTestimony6Change에서 unnecessary로 덮어씀)
+  updateYeopjeopOptions('normal');
   ['t_decision', 't_reject', 't_confirm', 't_believer'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = '';
@@ -4794,12 +4832,10 @@ function onTestimony6Change() {
     rs = radio('reason');
 
   if (t6 === '이미신자' && hv === '있었고' && rs === '믿음') {
-    // ── 이미신자 ─────────────────────────────────────────────
-    document.querySelectorAll('.yj-btn input[type=radio]').forEach(function(r) {
-      r.checked = (r.value === '불필요');
-      r.disabled = (r.value !== '불필요');
-    });
-    // 5-1, 5-2, 진단 카드 업데이트
+    // ── 이미신자: 불필요만 표시, 자동 확정 ──────────────────
+    updateYeopjeopOptions('unnecessary');
+    var yj3 = document.getElementById('yj3');
+    if (yj3) { yj3.checked = true; yj3.disabled = false; }
     var hvEl = document.getElementById('diag-hv');
     var rsEl = document.getElementById('diag-rs');
     var nameEl = document.getElementById('diag-name');
@@ -4825,12 +4861,8 @@ function onTestimony6Change() {
     }
 
   } else if (t6 === '머리신자' && hv === '있었고' && rs === '믿음') {
-    // ── 머리신자: 영접/보류/거부 선택 가능 (불필요 자동고정 제거) ──
-    document.querySelectorAll('.yj-btn input[type=radio]').forEach(function(r) {
-      r.checked = false;
-      r.disabled = false;
-    });
-    // 5-1, 5-2, 진단 카드 업데이트
+    // ── 머리신자: 영접 + 보류/거부만 표시, 결과는 영접 선택 후 확정 ──
+    updateYeopjeopOptions('normal');
     var hvEl = document.getElementById('diag-hv');
     var rsEl = document.getElementById('diag-rs');
     var nameEl = document.getElementById('diag-name');
@@ -4840,11 +4872,6 @@ function onTestimony6Change() {
     if (nameEl) { nameEl.textContent = '이미신자 / 머리신자'; nameEl.className = 'diag-name orange'; }
     if (badgeEl) badgeEl.innerHTML = '<span class="diag-badge orange">이미신자 / 머리신자</span>';
     document.getElementById('diag-card').style.display = 'block';
-    var fv = document.getElementById('diag-final-val');
-    fv.textContent = '머리신자';
-    fv.className = 'diag-final-val 이미신자';
-    document.getElementById('diag-final-row').style.display = 'flex';
-    // 머리신자: 영접여부는 사용자가 선택 → onYeopjeopChange에서 처리
     document.getElementById('diag-final-row').style.display = 'none';
 
   } else {
@@ -4886,12 +4913,11 @@ function onYeopjeopChange() {
   if (resultEl) resultEl.value = result;
   // 통계 자동 반영 — 이전 값 차감 후 새 값 증가
   var map = {
-    '결신': 't_decision',
+    '결신':    't_decision',
     '이미신자': 't_believer',
     '머리신자': 't_believer',
-    '확신': 't_confirm',
-    '보류/거부': 't_reject',
-    '보류/거부': 't_reject'
+    '확신':    't_confirm',
+    '보류/거부':'t_reject'
   };
   if (saved !== _lastSavedDiagResult) {
     // 이전 결과 차감
@@ -5412,9 +5438,11 @@ async function loadHistory() {
 async function loadServerHistory() {
   var list = document.getElementById('history-list');
   if (!scriptUrl) {
+    updateScbState('warn');
     list.innerHTML = '<div class="empty-state"><span class="es-icon">🔗</span><p>구글 시트가 연결되지 않았습니다.<br><button onclick="openModal()" style="margin-top:8px;background:#2050c8;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:12px;font-family:\'Noto Sans KR\',sans-serif;">⚙️ 지금 연결하기</button></p></div>';
     return;
   }
+  updateScbState('warn'); // 요청 시작 전 미연결로 리셋
   list.innerHTML = '<div class="empty-state"><span class="es-icon">⏳</span><p>불러오는 중...</p></div>';
   try {
     var res = await fetch(scriptUrl, {
@@ -5498,9 +5526,10 @@ async function loadServerHistory() {
         q13: r['기타(13번)'] || '',
       };
     });
+    updateScbState('ok');
     renderHistory(records, 'server');
   } catch (e) {
-    list.innerHTML = '<div class="empty-state"><span class="es-icon">❌</span><p>불러오기 실패: ' + e.message + '</p></div>';
+    list.innerHTML = '<div class="empty-state"><span class="es-icon">❌</span><p>불러오기 실패: ' + e.message + '<br><span style="font-size:11px;color:#888;">네트워크 연결 후 🔄 새로고침을 눌러주세요.</span></p></div>';
     updateScbState('error');
   }
 }
