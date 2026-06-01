@@ -3529,7 +3529,7 @@ function renderTab0(data, w) {
             '<td rowspan="' + rowspan + '" style="font-size:10px;border-right:1px solid #c5cde8;' + nameBorderStyle + '">' + (rec.gospelDelivery || rec.gospelPlace || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.heaven || '—') + '</td>' +
             '<td rowspan="' + rowspan + '" style="' + nameBorderStyle + '">' + (rec.reason || '—') + '</td>' +
-            '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;min-width:44px;' + nameBorderStyle + '"><span class="badge b-orange" style="white-space:nowrap;font-size:9px;">' + (rec.diagResult ? (rec.diagResult.split('결과:')[1] || rec.diagResult.split('|')[0].replace('진단:','').trim()).replace(/\|.*/,'').trim() : '—') + '</span></td>' +
+            '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;min-width:44px;' + nameBorderStyle + '"><span class="badge b-orange" style="white-space:nowrap;font-size:9px;">' + (rec.diagResult ? (function(d){ var m = d.match(/진단\s*:\s*([^|]+)/); return m ? m[1].trim() : d.trim(); })(rec.diagResult) : '—') + '</span></td>' +
             '<td rowspan="' + rowspan + '" style="border-right:1px solid #c5cde8;' + nameBorderStyle + '"><span class="badge ' + resultCls + '">' + result + '</span></td>';
         }
 
