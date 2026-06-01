@@ -1803,6 +1803,7 @@ pre.code-block {
   <div class="hd-eyebrow">EVANGELISM FIELD REPORT</div>
   <div class="hd-title">공개 <span>보고서</span></div>
   <div class="hd-sub">현장전도 보고서</div>
+  <div id="hd-train-period" style="font-size:11px;color:rgba(40,60,140,0.6);letter-spacing:1px;margin-bottom:4px;display:none;">📆 훈련기간: <span id="hd-train-period-text"></span></div>
   <div class="hd-badge">📅 전도일: <input type="date" id="report-date" oninput="autoWeekFromDate();syncPreview()" style="background:transparent;border:none;font-size:16px;color:rgba(20,50,160,1);outline:none;width:auto;padding:0;"></div>
 </div>
 <div class="con">
@@ -2461,18 +2462,18 @@ pre.code-block {
 <div id="history-page" class="page server-bg">
 <div class="history-container">
   <div class="history-header">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <h2 class="test" id="history-title">TEST RECORDS</h2>
-      <div id="history-conn-badge" style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;border:1px solid rgba(32,80,200,0.18);background:rgba(32,80,200,0.04);font-size:11px;font-weight:600;">
+    <h2 class="test" id="history-title">TEST RECORDS</h2>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <div id="history-conn-badge" style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;border:1px solid rgba(32,80,200,0.18);background:rgba(32,80,200,0.04);font-size:11px;font-weight:600;">
         <span id="history-conn-dot" style="width:7px;height:7px;border-radius:50%;background:#e6b84a;flex-shrink:0;transition:background .3s;"></span>
         <span id="history-conn-label" style="color:rgba(140,90,20,0.8);">미연결</span>
       </div>
-    </div>
-    <div class="history-actions">
-      <button type="button" class="h-btn outline test" id="refresh-btn" onclick="loadHistory()">🔄 새로고침</button>
-      <button type="button" class="h-btn outline test" id="search-btn" onclick="toggleSearch()">🔍 검색</button>
-      <button type="button" class="h-btn outline test" id="multiprint-btn" onclick="toggleMultiSelect()" style="display:none;">☑ 선택출력</button>
-      <button type="button" class="h-btn primary test" id="new-btn" onclick="switchTab('form')">+ 새 보고서</button>
+      <div class="history-actions">
+        <button type="button" class="h-btn outline test" id="refresh-btn" onclick="loadHistory()">🔄 새로고침</button>
+        <button type="button" class="h-btn outline test" id="search-btn" onclick="toggleSearch()">🔍 검색</button>
+        <button type="button" class="h-btn outline test" id="multiprint-btn" onclick="toggleMultiSelect()" style="display:none;">☑ 선택출력</button>
+        <button type="button" class="h-btn primary test" id="new-btn" onclick="switchTab('form')">+ 새 보고서</button>
+      </div>
     </div>
   </div>
   <div id="multiprint-bar" style="display:none;background:#f0f4ff;border:1.5px solid rgba(32,80,200,0.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;align-items:center;justify-content:space-between;gap:8px;">
@@ -3978,9 +3979,8 @@ function unlock7ilhuStats() {
 function buildReportWeekSelect() {
   var sel = document.getElementById('report-week');
   if (!sel) return;
-  var curVal = sel.value; // 현재 선택값 보존
+  var curVal = sel.value;
 
-  // 최대 주차 계산 (mon_trainEnd 없으면 시작일 기준 13주)
   var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-01';
   var start = new Date(trainStart);
   var dow = start.getDay();
@@ -3998,7 +3998,6 @@ function buildReportWeekSelect() {
     }
   }
 
-  // 옵션 재생성
   sel.innerHTML = '<option value="">선택</option>';
   for (var w = 1; w <= maxWeek; w++) {
     var opt = document.createElement('option');
@@ -4007,8 +4006,40 @@ function buildReportWeekSelect() {
     sel.appendChild(opt);
   }
 
-  // 이전 선택값 복원
   if (curVal) sel.value = curVal;
+  updateTrainPeriodBadge();
+}
+
+function updateTrainPeriodBadge() {
+  var el    = document.getElementById('hd-train-period');
+  var txtEl = document.getElementById('hd-train-period-text');
+  if (!el || !txtEl) return;
+
+  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-01';
+  var trainEnd   = localStorage.getItem('mon_trainEnd')   || '';
+
+  var fmt = function(dateStr) {
+    var d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return (d.getMonth() + 1) + '/' + d.getDate();
+  };
+
+  // 종료일 없으면 시작일 기준 13주로 계산
+  if (!trainEnd) {
+    var s = new Date(trainStart);
+    var dow = s.getDay();
+    var diffM = dow === 0 ? -6 : 1 - dow;
+    var mon = new Date(s);
+    mon.setDate(s.getDate() + diffM);
+    var end = new Date(mon);
+    end.setDate(mon.getDate() + 13 * 7 - 1);
+    trainEnd = end.getFullYear() + '-'
+      + String(end.getMonth() + 1).padStart(2, '0') + '-'
+      + String(end.getDate()).padStart(2, '0');
+  }
+
+  txtEl.textContent = fmt(trainStart) + ' ~ ' + fmt(trainEnd);
+  el.style.display = 'block';
 }
 function autoWeekFromDate() {
   var dateVal = document.getElementById('report-date').value;
