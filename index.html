@@ -1781,11 +1781,11 @@ pre.code-block {
     <button class="tab-btn" onclick="switchTab('history')">📁 기록</button>
   </div>
   <div class="topbar-right">
-    <div class="preset-indicator" id="preset-indicator" onclick="openPresetModal()" title="사용자 프리셋 설정">
+    <div class="preset-indicator" id="preset-indicator" onclick="openPresetModal()" title="내 조 설정">
       <span class="pi-dot"></span>
-      <span id="preset-label">프리셋</span>
+      <span id="preset-label">내 조 설정</span>
     </div>
-    <button class="icon-btn" onclick="openPresetModal()" title="내 프리셋 설정" style="font-size:15px;">👤</button>
+    <button class="icon-btn" onclick="openPresetModal()" title="내 조 설정" style="font-size:15px;">👤</button>
     <button class="icon-btn" onclick="confirmReset()" title="화면 초기화" style="font-size:15px;">🔄</button>
 
   </div>
@@ -2485,7 +2485,7 @@ pre.code-block {
     </div>
   </div>
   <div class="search-bar" id="search-bar" style="display:none;">
-    <button type="button" class="search-preset-btn" id="preset-filter-btn" onclick="togglePresetFilter()" title="내 프리셋 기준으로 필터">👤 내 조</button>
+    <button type="button" class="search-preset-btn" id="preset-filter-btn" onclick="togglePresetFilter()" title="내 조 설정 기준으로 필터">👤 내 조</button>
     <div style="display:flex;gap:6px;align-items:center;">
       <select id="search-type" onchange="onSearchTypeChange()" style="flex:1;">
         <option value="doc_number">문서번호</option>
@@ -3222,7 +3222,7 @@ function _openPresetModalNow() {
 
   var h3 = document.createElement('h3');
   h3.style.cssText = 'margin:0 0 4px;font-size:16px;font-weight:800;color:#1a3ab0;display:flex;justify-content:space-between;align-items:center;';
-  h3.innerHTML = '👤 내 프리셋 설정'
+  h3.innerHTML = '👤 내 조 설정'
     + '<button onclick="closePresetModal()" '
     + 'style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;line-height:1;padding:0 2px;">✕</button>';
   var p = document.createElement('p');
@@ -3279,7 +3279,7 @@ function _openPresetModalNow() {
         savePreset({ name: g.leader, scope: 'group', group: g.id, role: '그룹장' });
         closePresetModal();
         applyPreset();
-        showStatus('✅ ' + g.leader + '님 (그룹장) 프리셋 저장!', 'success');
+        showStatus('✅ ' + g.leader + '님 (그룹장) 내 조 설정 저장!', 'success');
       };
       list.appendChild(btn);
     });
@@ -3307,7 +3307,7 @@ function _openPresetModalNow() {
         savePreset({ jo: m.jo, name: m.name, role: m.role, scope: 'jo' });
         closePresetModal();
         applyPreset();
-        showStatus('✅ ' + m.name + '님 프리셋 저장!', 'success');
+        showStatus('✅ ' + m.name + '님 내 조 설정 저장!', 'success');
       };
       list.appendChild(btn);
     });
@@ -3326,7 +3326,7 @@ function _openPresetModalNow() {
   btnClear.id = 'preset-clear-btn';
   btnClear.className = 'preset-skip';
   btnClear.style.cssText = 'flex:1;color:#c00;border-color:rgba(200,0,0,0.25);display:' + (saved && saved.name ? 'block' : 'none');
-  btnClear.textContent = '🚫 프리셋 해제';
+  btnClear.textContent = '🚫 내 조 설정 해제';
   btnClear.onclick = onClearPreset;
 
   // ── 임시 테스트 설정 (공식 오픈 전)
@@ -3345,7 +3345,7 @@ function _openPresetModalNow() {
       '🔓 전체 보기' +
     '</button>' +
     '</div>' +
-    '<div style="font-size:9px;color:#888;margin-top:5px;line-height:1.6;">서버 연동 후 실제 이름으로 프리셋을 설정하면 자동으로 해제됩니다.</div>';
+    '<div style="font-size:9px;color:#888;margin-top:5px;line-height:1.6;">서버 연동 후 실제 이름으로 내 조 설정을 하면 자동으로 해제됩니다.</div>';
 
   // 임시 버튼 이벤트
   setTimeout(function() {
@@ -3431,7 +3431,7 @@ function clearPreset() {
 function onClearPreset() {
   clearPreset();
   closePresetModal();
-  showStatus('프리셋이 해제되었습니다.', 'info');
+  '내 조 설정이 해제되었습니다.', 'info');
 }
 
 function updatePresetIndicator() {
@@ -3442,7 +3442,7 @@ function updatePresetIndicator() {
     label.textContent = p.scope === 'group' ? p.name + ' (' + p.group + '그룹장)' : p.name;
     if (dot) dot.style.background = '#2e7d32';
   } else {
-    label.textContent = '프리셋';
+    label.textContent = '내 조 설정';
     if (dot) dot.style.background = '#2050c8';
   }
 }
@@ -4493,7 +4493,7 @@ function switchTab(tab) {
   if (tab === 'history') {
     var p = getPreset();
     if (!p || !p.name) {
-      showStatus('⚠️ 기록을 보려면 먼저 프리셋을 설정해주세요.', 'warn');
+      showStatus('⚠️ 기록을 보려면 먼저 내 조 설정을 해주세요.', 'warn');
       setTimeout(function() { openPresetModal(); }, 400);
       return;
     }
@@ -5272,7 +5272,7 @@ var _presetFilterActive = false;
 function togglePresetFilter() {
   var p = getPreset();
   if (!p || !p.name) {
-    showStatus('⚠️ 프리셋을 먼저 설정해주세요.', 'warn');
+    showStatus('⚠️ 내 조 설정을 먼저 해주세요.', 'warn');
     return;
   }
   _presetFilterActive = !_presetFilterActive;
