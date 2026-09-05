@@ -3367,10 +3367,31 @@ function _openPresetModalNow() {
     + '</span></label>'
     + '</div>';
 
+  // ── 훈련기간 섹션 ──────────────────────────────────────────
+  var trainSection = document.createElement('div');
+  trainSection.style.cssText = 'margin-top:16px;border-top:1px solid #eee;padding-top:14px;';
+  var curStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
+  var curEnd   = localStorage.getItem('mon_trainEnd')   || '2026-05-29';
+  if (isAdminUser()) {
+    trainSection.innerHTML = '<div style="font-size:10px;font-weight:700;color:rgba(32,80,200,.5);letter-spacing:2px;margin-bottom:10px;">📆 훈련기간</div>'
+      + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">'
+      + '<input type="date" id="preset-train-start" value="' + curStart + '" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;">'
+      + '<span style="color:#999;">~</span>'
+      + '<input type="date" id="preset-train-end" value="' + curEnd + '" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;">'
+      + '</div>'
+      + '<button id="preset-train-save-btn" onclick="saveTrainPeriodFromPreset()" style="width:100%;padding:9px;border:none;border-radius:8px;background:#1a3ab0;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">저장</button>'
+      + '<div id="preset-train-status" style="font-size:11px;color:#888;margin-top:6px;min-height:14px;"></div>';
+  } else {
+    trainSection.innerHTML = '<div style="font-size:10px;font-weight:700;color:rgba(32,80,200,.5);letter-spacing:2px;margin-bottom:10px;">📆 훈련기간</div>'
+      + '<div style="font-size:13px;color:#444;">' + curStart + ' ~ ' + curEnd + '</div>'
+      + '<div style="font-size:11px;color:#aaa;margin-top:4px;">변경은 admin 인증 후 가능합니다 (🔒 길게 누르기)</div>';
+  }
+
   modal.appendChild(p);
   modal.appendChild(list);
   modal.appendChild(btnRow);
   modal.appendChild(settingsSection);
+  modal.appendChild(trainSection);
   bg.appendChild(modal);
   document.body.appendChild(bg);
 }
@@ -3619,6 +3640,69 @@ function syncTrainPeriodFromServer() {
       }
     })
     .catch(function() { /* 서버 오류 시 기존 localStorage 기본값 유지 */ });
+}
+
+// ── '내 조 설정' 모달에서 훈련기간 저장 ─────────────────────
+// ⚠️ 서버의 save_group_settings는 그룹설정 시트 전체를 다시 씀 →
+//    먼저 현재 그룹설정(adminEmail/groups)을 읽어와 그대로 함께 보내야
+//    기존 그룹장/이메일 정보가 지워지지 않는다.
+function saveTrainPeriodFromPreset() {
+  var startEl = document.getElementById('preset-train-start');
+  var endEl   = document.getElementById('preset-train-end');
+  var status  = document.getElementById('preset-train-status');
+  var newStart = startEl ? startEl.value : '';
+  var newEnd   = endEl   ? endEl.value   : '';
+
+  if (!newStart || !newEnd) {
+    if (status) { status.textContent = '⚠️ 시작일/종료일을 모두 입력하세요.'; status.style.color = '#c00'; }
+    return;
+  }
+  if (newStart > newEnd) {
+    if (status) { status.textContent = '⚠️ 시작일이 종료일보다 늦습니다.'; status.style.color = '#c00'; }
+    return;
+  }
+
+  if (!scriptUrl) {
+    localStorage.setItem('mon_trainStart', newStart);
+    localStorage.setItem('mon_trainEnd', newEnd);
+    updateTrainPeriodBadge();
+    buildReportWeekSelect();
+    if (status) { status.textContent = '✅ 로컬에 저장됨 (서버 미연결)'; status.style.color = '#2e7d32'; }
+    return;
+  }
+
+  if (status) { status.textContent = '⏳ 저장 중...'; status.style.color = '#888'; }
+
+  fetch(scriptUrl + '?action=get_group_settings', { method: 'GET', redirect: 'follow' })
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      var adminEmail = (json && json.status === 'ok') ? (json.adminEmail || '') : '';
+      var groups     = (json && json.status === 'ok') ? (json.groups || []) : [];
+      return fetch(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'save_group_settings',
+          adminEmail: adminEmail,
+          trainStart: newStart,
+          trainEnd: newEnd,
+          groups: groups
+        })
+      });
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (json.status !== 'ok') throw new Error(json.message || '저장 실패');
+      localStorage.setItem('mon_trainStart', newStart);
+      localStorage.setItem('mon_trainEnd', newEnd);
+      updateTrainPeriodBadge();
+      buildReportWeekSelect();
+      if (status) { status.textContent = '✅ 저장 완료 (서버 동기화됨)'; status.style.color = '#2e7d32'; }
+      showStatus('✅ 훈련기간이 ' + newStart + ' ~ ' + newEnd + '로 저장되었습니다.', 'success');
+    })
+    .catch(function(e) {
+      if (status) { status.textContent = '❌ 서버 저장 실패: ' + e.message; status.style.color = '#c00'; }
+    });
 }
 
 function loadJoData() {
@@ -3989,7 +4073,7 @@ function buildReportWeekSelect() {
   if (!sel) return;
   var curVal = sel.value;
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-08-30';
+  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
   var start = new Date(trainStart);
   var dow = start.getDay();
   var diffToMon = (dow === 0) ? -6 : 1 - dow;
@@ -3997,7 +4081,7 @@ function buildReportWeekSelect() {
   startMonday.setDate(start.getDate() + diffToMon);
 
   var maxWeek = 14;
-  var trainEnd = localStorage.getItem('mon_trainEnd') || '2026-11-29';
+  var trainEnd = localStorage.getItem('mon_trainEnd') || '2026-05-29';
   if (trainEnd) {
     var endDate = new Date(trainEnd);
     if (!isNaN(endDate)) {
@@ -4027,7 +4111,7 @@ function computeWeekPeriod(week) {
   week = parseInt(week, 10);
   if (!week || week < 1) return '';
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-08-30';
+  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
   var start = new Date(trainStart);
   if (isNaN(start)) return '';
 
@@ -4066,8 +4150,8 @@ function updateTrainPeriodBadge() {
   var txtEl = document.getElementById('hd-train-period-text');
   if (!el || !txtEl) return;
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-08-30';
-  var trainEnd   = localStorage.getItem('mon_trainEnd')   || '2026-11-29';
+  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
+  var trainEnd   = localStorage.getItem('mon_trainEnd')   || '2026-05-29';
 
   var fmt = function(dateStr) {
     var d = new Date(dateStr);
@@ -4096,7 +4180,7 @@ function autoWeekFromDate() {
   var dateVal = document.getElementById('report-date').value;
   if (!dateVal) return;
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-08-30';
+  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
   var startDate  = new Date(trainStart);
   var inputDate  = new Date(dateVal);
 
@@ -4115,7 +4199,7 @@ function autoWeekFromDate() {
   var week = Math.floor(diffDays / 7) + 1;
 
   // 최대 주차: mon_trainEnd 기준 동적 계산, 없으면 시작일 기준 14주 자동 계산
-  var trainEnd = localStorage.getItem('mon_trainEnd') || '2026-11-29';
+  var trainEnd = localStorage.getItem('mon_trainEnd') || '2026-05-29';
   var maxWeek = 14;
   if (trainEnd) {
     var endDate = new Date(trainEnd);
