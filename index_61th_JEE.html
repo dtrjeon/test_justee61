@@ -2831,7 +2831,7 @@ const DIAG_MAP = {
 const LS_SCRIPT_URL = 'report_script_url';
 // ↓ 이번 기수(61기) 기본 배포값. 다음 기수용으로 복제할 땐 이 줄의 URL을 지우고 ''만 남기면
 //   최초 실행 시 아래 설정모달이 자동으로 떠서 새 주소를 입력받음(코드 수정 불필요).
-const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyErh9V8pWOhEmCrpdjv1TKIrd6-mGd4nmrS_JNfiJhyVnJYCdg4UgBgyZ7b4sYcN3hfQ/exec';
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6SNFk4GAO_ZRwlLBu-H3yTNa8wu4AtBgwkZdqgpATwcd5GWFTExQzrcuC-MOb_-c/exec';
 let scriptUrl = localStorage.getItem(LS_SCRIPT_URL) || DEFAULT_SCRIPT_URL;
 // ※ GAS 측에 아래 action 추가 필요:
 //   case 'verify_admin':
