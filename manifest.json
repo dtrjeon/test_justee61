@@ -1,18 +1,20 @@
 {
-  "name": "61기 수지주일반 전도현황",
-  "short_name": "전도보고서",
-  "description": "61기 수지주일반 전도 보고서 입력 앱",
-  "start_url": "./index.html",
+  "name": "61기 전도보고서",
+  "short_name": "전도보고서 61",
+  "description": "61기 수지주일반 전도폭발훈련 현장전도 보고서",
+  "start_url": "./index_61th_JEE.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#1a3ab0",
-  "lang": "ko",
+  "background_color": "#f4f6fb",
+  "theme_color": "#1a3a9e",
   "icons": [
-    {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%231a3ab0'/><text x='96' y='130' font-size='110' text-anchor='middle'>📋</text></svg>",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
-    }
+    { "src": "icons/icon-16.png", "sizes": "16x16", "type": "image/png" },
+    { "src": "icons/icon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
