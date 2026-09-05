@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="전도관리자">
+<meta name="theme-color" content="#1a3a9e">
 <title>61기 수지주일반 전도현황</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
@@ -401,11 +408,140 @@ body {
   border-top: 2px solid #8fa3d0;
 }
 
+/* 개인별 복음참여현황 — 헤더 2줄 전체를 세로 스크롤에도 상단 고정 (top은 JS에서 실측하여 지정) */
+.gospel-tbl thead th {
+  position: sticky;
+  z-index: 6;
+}
+
+.gospel-tbl thead tr:first-child th {
+  top: 0;
+}
+
+.gospel-tbl th:nth-child(4),
+.gospel-tbl td:nth-child(4) {
+  position: sticky;
+  left: 0;
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
+  z-index: 4;
+  background: #f0f4ff;
+  border-right: 1px solid #c5cde8 !important;
+}
+
+.gospel-tbl thead th:nth-child(4) {
+  background: #1a3a9e;
+  z-index: 7;
+}
+
+.gospel-tbl tbody td:nth-child(4) {
+  background: #fff;
+}
+
+.gospel-tbl tbody tr:hover td:nth-child(4) {
+  background: #f7f9ff;
+}
+
+.gospel-tbl th:nth-child(5),
+.gospel-tbl td:nth-child(5) {
+  position: sticky;
+  left: 50px;
+  z-index: 4;
+  background: #f0f4ff;
+  box-shadow: 2px 0 4px rgba(26, 58, 176, 0.08);
+  border-right: 1px solid #c5cde8 !important;
+}
+
+.gospel-tbl thead th:nth-child(5) {
+  background: #1a3a9e;
+  z-index: 7;
+}
+
+.gospel-tbl tbody td:nth-child(5) {
+  background: #fff;
+}
+
+.gospel-tbl tbody tr:hover td:nth-child(5) {
+  background: #f7f9ff;
+}
+
+/* 복음제시현황(weekly-acc-tbl)과 테이블 크기(폰트/여백) 통일 */
+.gospel-tbl th,
+.gospel-tbl td,
+.team-tbl th,
+.team-tbl td {
+  font-size: 10px;
+  padding: 4px 5px;
+}
+
+.team-tbl .td-jo {
+  font-size: 11px;
+}
+
+/* 그룹/조별 팀전도 현황 — "이름"·"역할" 열 고정 (조 셀이 rowspan이라 nth-child 대신 클래스로 지정) */
+.team-tbl .td-name {
+  position: sticky;
+  left: 0;
+  width: 60px;
+  min-width: 60px;
+  max-width: 60px;
+  z-index: 4;
+  background: #f0f4ff;
+  border-right: 1px solid #c5cde8 !important;
+}
+
+.team-tbl th.td-name {
+  background: #1a3a9e;
+  color: #fff;
+  z-index: 5;
+}
+
+.team-tbl td.td-name {
+  background: #fff;
+}
+
+.team-tbl tr:hover td.td-name {
+  background: #f7f9ff;
+}
+
+.team-tbl .td-role {
+  position: sticky;
+  left: 60px;
+  z-index: 4;
+  background: #f0f4ff;
+  box-shadow: 2px 0 4px rgba(26, 58, 176, 0.08);
+  border-right: 1px solid #c5cde8 !important;
+}
+
+.team-tbl th.td-role {
+  background: #1a3a9e;
+  color: #fff;
+  z-index: 5;
+}
+
+.team-tbl td.td-role {
+  background: #fff;
+}
+
+.team-tbl tr:hover td.td-role {
+  background: #f7f9ff;
+}
+
 /* 복음제시현황 주차별 테이블 — border-collapse 방식 */
 .weekly-acc-tbl {
   border-collapse: collapse;
   border-top: 1px solid #c5cde8;
   border-left: 1px solid #c5cde8;
+}
+
+/* 복음참여/팀전도/복음제시 세 테이블 전체 폭 통일 (컬럼 수가 달라도 동일한 폭으로 렌더링) */
+/* table-layout:fixed 필수 — auto면 컬럼이 많을 때 지정한 width를 무시하고 내용에 맞춰 늘어남 */
+.gospel-tbl,
+.team-tbl,
+.weekly-acc-tbl {
+  width: 1000px;
+  table-layout: fixed;
 }
 
 /* 1열(주차) 고정 */
@@ -451,6 +587,10 @@ body {
   border-left: none !important;
   border-top: none !important;
   font-size: 10px !important;
+  white-space: normal !important;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  overflow: hidden;
 }
 
 /* weekly-acc-tbl 전역 th border-bottom 덮어쓰기 */
@@ -997,6 +1137,7 @@ tr:last-child td {
 </style>
 </head>
 <body>
+<div style="position:fixed;top:2px;left:4px;font-size:9px;color:rgba(255,255,255,0.35);z-index:99999;pointer-events:none;font-family:monospace;letter-spacing:.3px;">v2026.08.31-2</div>
 <script>
 // ── 테스트 모드 데이터 ──────────────────────────────────────────────────────
 // 테스트 모드 ON: window.TEST_MODE = true
@@ -1031,6 +1172,7 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
   <div class="tab" onclick="switchTab(2)">🏃 수료조건</div>
   <div class="tab" onclick="switchTab(3)">📈 복음제시</div>
   <div class="tab" onclick="switchTab(4)">🔍 문서번호관리</div>
+  <div class="tab" onclick="switchTab(5)">🔒 특이사항</div>
 </div>
 
 <div class="week-bar">
@@ -1453,7 +1595,7 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
       </div>
     </div>
     <div class="tbl-scroll">
-      <table>
+      <table class="team-tbl">
         <thead>
           <tr>
             <th colspan="4" style="background:#1a3a9e;color:#fff;border-right:1px solid #c5cde8;">조 정보</th>
@@ -1467,7 +1609,7 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
             <th colspan="1" style="background:#2050c8;color:#fff;">비고</th>
           </tr>
           <tr>
-            <th>조</th><th>이름</th><th>역할</th><th style="border-right:1px solid #c5cde8;">단계</th>
+            <th>조</th><th class="td-name">이름</th><th class="td-role">역할</th><th style="border-right:1px solid #c5cde8;">단계</th>
             <th style="border-right:1px solid #c5cde8;">6회↑</th>
             <th>횟수</th><th style="border-right:1px solid #c5cde8;">2일↑</th>
             <th style="border-right:1px solid #c5cde8;">1회↑</th>
@@ -1521,8 +1663,8 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
           <tr>
             <th style="border-right:1px solid #c5cde8;">주차</th>
             <th style="border-right:none;">실시</th><th style="border-right:1px solid #c5cde8;">미실시</th>
-            <th>관계(팀)</th><th>질문지(팀)</th><th>7일후(팀)</th><th>개인</th><th>관계</th><th>QQ</th><th style="border-right:1px solid #c5cde8;">합계</th>
-            <th>지인/지인가족</th><th>가족</th><th>지구촌교인</th><th>질문지</th><th>7일후</th><th>훈련생</th><th style="border-right:1px solid #c5cde8;">합계</th>
+            <th>관계(팀)</th><th>질문지<br>(팀)</th><th>7일후<br>(팀)</th><th>개인</th><th>관계</th><th>QQ</th><th style="border-right:1px solid #c5cde8;">합계</th>
+            <th>지인/<br>지인가족</th><th>가족</th><th>지구촌<br>교인</th><th>질문지</th><th>7일후</th><th>훈련생</th><th style="border-right:1px solid #c5cde8;">합계</th>
             <th>복음제시</th><th>결신</th><th>보류/거절</th><th>확신<br>부족</th><th style="border-right:1px solid #c5cde8;">이미<br>신자</th>
             <th>접촉횟수</th>
           </tr>
@@ -1604,6 +1746,31 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
   </div>
 </div>
 
+<div class="page" id="page-5">
+  <div class="week-banner" style="background:linear-gradient(135deg,#8a5a00,#c98e00);">
+    <div class="wb-left">
+      <div class="wb-title">특이사항 공유</div>
+      <div class="wb-sub">보고서 14번 항목 — 관리자에게만 전달된 내용 (그룹장 미공유)</div>
+    </div>
+    <div class="wb-right">
+      <div class="wb-rate" id="sn-total-cnt">—</div>
+      <div class="wb-rate-label">건수</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap" style="margin-top:8px;">
+    <div class="tbl-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+      <span class="tbl-head-title">🔒 특이사항 목록</span>
+      <button onclick="renderTab5()" class="act-btn primary" style="font-size:11px;padding:4px 12px;">🔄 새로고침</button>
+    </div>
+    <div style="padding:8px 12px;font-size:10px;color:#888;background:#fafafa;border-bottom:1px solid #eee;">
+      ※ 이 항목은 보고서 미리보기·인쇄본에는 표시되지 않으며, 제출 시 관리자에게만 이메일로 즉시 전달됩니다.
+    </div>
+    <div id="sn-empty" style="padding:20px;text-align:center;font-size:12px;color:#aaa;display:none;">✅ 등록된 특이사항이 없습니다</div>
+    <div id="sn-list" style="display:flex;flex-direction:column;gap:8px;padding:10px;"></div>
+  </div>
+</div>
+
 <!-- 설정 모달 -->
 <div class="modal-bg" id="settings-modal">
   <div class="modal">
@@ -1639,23 +1806,28 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
     </div>
 
     <div class="modal-section">
+      <label>GitHub Pages 폴더명 <span style="font-size:10px;font-weight:400;color:var(--text3);">보고서 링크 열기에 사용</span></label>
+      <input type="text" id="set-folder" placeholder="예: test_justee63">
+    </div>
+
+    <div class="modal-section">
       <label>훈련 기간 <span style="font-size:10px;font-weight:400;color:var(--text3);">시작일 기준 주차 자동 계산</span></label>
       <!-- 1행: 시작일 ~ 종료일 -->
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
         <div style="flex:1;">
           <div style="font-size:9px;color:var(--text3);margin-bottom:2px;">시작일</div>
-          <input type="date" id="set-train-start" onchange="updateTrainPeriodInfo()" style="width:100%;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;">
+          <input type="date" id="set-train-start" onchange="updateTrainPeriodInfo()" style="width:100%;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:16px;font-family:'Noto Sans KR',sans-serif;">
         </div>
         <div style="color:var(--text3);padding-top:14px;font-size:12px;">~</div>
         <div style="flex:1;">
           <div style="font-size:9px;color:var(--text3);margin-bottom:2px;">종료일 <span style="color:#aaa;">(자동)</span></div>
-          <input type="date" id="set-train-end" onchange="onTrainEndChange()" style="width:100%;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;">
+          <input type="date" id="set-train-end" onchange="onTrainEndChange()" style="width:100%;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:16px;font-family:'Noto Sans KR',sans-serif;">
         </div>
       </div>
       <!-- 2행: 총 주차 -->
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:10px;color:var(--text3);white-space:nowrap;">총 주차</span>
-        <input type="number" id="set-total-weeks" min="1" max="52" value="13" onchange="onTotalWeeksChange()" style="width:56px;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:13px;font-family:'Noto Sans KR',sans-serif;text-align:center;">
+        <input type="number" id="set-total-weeks" min="1" max="52" value="13" onchange="onTotalWeeksChange()" style="width:56px;padding:5px 6px;border:1px solid rgba(0,0,20,0.15);border-radius:6px;font-size:16px;font-family:'Noto Sans KR',sans-serif;text-align:center;">
         <span style="font-size:10px;color:var(--text3);">주</span>
         <div id="train-period-info" style="font-size:10px;color:var(--text3);flex:1;text-align:right;"></div>
       </div>
@@ -1768,7 +1940,7 @@ window.TEST_DATA = {"records": [{"저장일시": "2026-03-14", "주차": 3, "전
 
 <script>
 // ── 조 구성 데이터 ─────────────────────────────────────────────────────────
-const ADMIN_VERSION = 'admin v2026.05.26';
+const ADMIN_VERSION = 'admin v2026.08.31';
 // 하드코딩 기준 데이터 (step 복원용)
 const HARDCODED_MEMBERS = [{
   jo: 1,
@@ -2206,11 +2378,17 @@ const MEMBERS = [{
 }];
 
 // ── 설정 ────────────────────────────────────────────────────────────────────
+// 다음 기수용으로 복제할 땐 아래 DEFAULT_SCRIPT_URL / DEFAULT_FOLDER 줄만 새 값으로 바꾸면 됨.
+// (또는 그냥 비워두면 설정화면에서 최초 1회 입력한 값이 localStorage에 저장되어 계속 쓰임)
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyErh9V8pWOhEmCrpdjv1TKIrd6-mGd4nmrS_JNfiJhyVnJYCdg4UgBgyZ7b4sYcN3hfQ/exec';
+const DEFAULT_FOLDER = 'test_justee61';
+
 let CFG = {
-  url: 'https://script.google.com/macros/s/AKfycby6SNFk4GAO_ZRwlLBu-H3yTNa8wu4AtBgwkZdqgpATwcd5GWFTExQzrcuC-MOb_-c/exec',
+  url: localStorage.getItem('mon_url') || DEFAULT_SCRIPT_URL,
+  folderName: localStorage.getItem('mon_folderName') || DEFAULT_FOLDER,
   title: localStorage.getItem('mon_title') || '61기 수주반',
-  trainStart: localStorage.getItem('mon_trainStart') || '2026-03-01',
-  trainEnd: localStorage.getItem('mon_trainEnd') || '',
+  trainStart: localStorage.getItem('mon_trainStart') || '2026-08-30',
+  trainEnd: localStorage.getItem('mon_trainEnd') || '2026-11-29',
   adminEmail: localStorage.getItem('mon_adminEmail') || '',
   groups: JSON.parse(localStorage.getItem('mon_groups') || 'null') || [{
     id: 'A',
@@ -2292,15 +2470,39 @@ let suryoChartData = []; // 수료조건 차트용 — 주차 필터 적용된 �
 
 // ── 비밀번호 ─────────────────────────────────────────────────────────────────
 // ⚠️ 보안을 위해 배포 전 반드시 변경하세요
-const ADMIN_PW = '5600';
+// 9191 = 모니터링(열람 전용) / 7463 = admin(전체 권한 — 문서번호 관리, 불일치 수정 포함)
+const PW_MONITOR = '9191';
+const PW_ADMIN = '7463';
 const LS_AUTH = 'admin_auth_61';
+
+// 현재 인증 레벨 ('admin' | 'monitor' | null)
+window._authLevel = null;
+
+function isAdminLevel() {
+  return window._authLevel === 'admin';
+}
+
+// admin 전용 기능 진입 전 공통 체크 — 권한 없으면 안내 후 false 반환
+function requireAdminLevel() {
+  if (isAdminLevel()) return true;
+  showToast('🔒 이 기능은 admin(7463) 권한이 필요합니다. (현재: 모니터링)');
+  return false;
+}
 
 function checkPassword() {
   var val = document.getElementById('lock-input').value;
-  if (val === ADMIN_PW) {
-    sessionStorage.setItem(LS_AUTH, '1');
+  if (val === PW_ADMIN) {
+    window._authLevel = 'admin';
+    sessionStorage.setItem(LS_AUTH, 'admin');
+    localStorage.setItem('index_admin_verified', '1'); // 공개보고서 페이지와 인증 공유 (admin만)
     document.getElementById('lock-screen').style.display = 'none';
     document.getElementById('lock-input').value = '';
+  } else if (val === PW_MONITOR) {
+    window._authLevel = 'monitor';
+    sessionStorage.setItem(LS_AUTH, 'monitor');
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('lock-input').value = '';
+    showToast('👁️ 모니터링 권한으로 접속했습니다. (문서번호 관리·불일치 수정은 admin 전용)');
   } else {
     var err = document.getElementById('lock-error');
     err.textContent = '❌ 비밀번호가 올바르지 않습니다.';
@@ -2317,13 +2519,29 @@ function onLockInput() {
 }
 
 window.onload = function() {
-  // 세션에 인증 정보가 없으면 비밀번호 화면 표시
-  if (!sessionStorage.getItem(LS_AUTH)) {
+  // 페이지 제목/상단 타이틀을 설정된 기수명으로 동기화 (기수 교체시 코드수정 불필요)
+  document.title = CFG.title;
+  var topbarTitleEl = document.querySelector('.topbar-title');
+  if (topbarTitleEl) {
+    topbarTitleEl.innerHTML = CFG.title + '<br><span>Evangelism Monitoring</span>';
+  }
+  var wbT = document.getElementById('wb-title');
+  if (wbT) wbT.textContent = CFG.title;
+
+  // 세션 인증 또는 공개보고서 페이지에서의 인증(localStorage 공유, admin만 공유됨)이 있으면 통과
+  var sessLevel = sessionStorage.getItem(LS_AUTH); // 'admin' | 'monitor' | '1'(구버전) | null
+  var sharedAdmin = localStorage.getItem('index_admin_verified') === '1';
+  var level = (sessLevel === 'admin' || sessLevel === '1' || sharedAdmin) ? 'admin'
+            : (sessLevel === 'monitor') ? 'monitor'
+            : null;
+  if (!level) {
     document.getElementById('lock-screen').style.display = 'flex';
     setTimeout(function() {
       document.getElementById('lock-input').focus();
     }, 100);
   } else {
+    window._authLevel = level;
+    sessionStorage.setItem(LS_AUTH, level); // 세션에도 동기화(레벨 그대로)
     document.getElementById('lock-screen').style.display = 'none';
   }
   // 릴리즈 시각 (한국시간)
@@ -2373,9 +2591,9 @@ window.onload = function() {
   buildWeekSelect();
   buildJoSelect();
   updateConnBadge();
-  // 조정보(단계 포함) 항상 서버에서 최신으로 로드
+  // 조정보(단계 포함) + 훈련기간(그룹설정) 항상 서버에서 최신으로 로드
   if (CFG.url) {
-    syncJoFromServer().finally(function() {
+    Promise.all([syncJoFromServer(), loadGroupSettings()]).finally(function() {
       loadData();
     });
   } else {
@@ -2416,16 +2634,10 @@ function buildJoSelect() {
   if (cur) sel.value = cur;
 }
 
-function buildWeekSelect() {
-  var sel = document.getElementById('week-select');
-  sel.innerHTML = '';
-  // 전체 옵션
-  var oAll = document.createElement('option');
-  oAll.value = 0;
-  oAll.textContent = '전체';
-  sel.appendChild(oAll);
-
-  // 최대 주차: trainEnd 기준 동적 계산, 없으면 13주 기본
+// 최대 주차: trainEnd 기준 동적 계산 (매주 정확히 7일 간격 전제), 없으면 13주 기본
+// buildWeekSelect(), renderTab3() 등 주차 관련 로직은 모두 이 함수를 통해
+// 동일한 최대 주차를 사용해야 함 — 하드코딩 금지
+function getMaxWeek() {
   var maxWeek = 13;
   if (CFG.trainStart && CFG.trainEnd) {
     var start = new Date(CFG.trainStart);
@@ -2437,6 +2649,19 @@ function buildWeekSelect() {
     var diffDays = Math.floor((end - startMonday) / (1000 * 60 * 60 * 24));
     maxWeek = Math.max(1, Math.floor(diffDays / 7) + 1);
   }
+  return maxWeek;
+}
+
+function buildWeekSelect() {
+  var sel = document.getElementById('week-select');
+  sel.innerHTML = '';
+  // 전체 옵션
+  var oAll = document.createElement('option');
+  oAll.value = 0;
+  oAll.textContent = '전체';
+  sel.appendChild(oAll);
+
+  var maxWeek = getMaxWeek();
 
   for (var w = 1; w <= maxWeek; w++) {
     var o = document.createElement('option');
@@ -2479,7 +2704,7 @@ async function loadData() {
       if (!latestMap[key]) { latestMap[key] = r; }
       else { if ((r.savedAt||'') > (latestMap[key].savedAt||'')) latestMap[key] = r; }
     });
-    allData = Object.values(latestMap);
+    allData = Object.values(latestMap).filter(function(r) { return String(r.jo) !== '12'; }); // 12조는 로직 점검용 테스트 조 — 집계 제외
     allData.sort(function(a,b){
       if (a.week!==b.week) return a.week-b.week;
       return String(a.jo).localeCompare(String(b.jo));
@@ -2523,7 +2748,8 @@ async function loadData() {
         }
       }
     });
-    allData = Object.values(latestMap);
+    var dedupedCount = Object.keys(latestMap).length;
+    allData = Object.values(latestMap).filter(function(r) { return String(r.jo) !== '12'; }); // 12조는 로직 점검용 테스트 조 — 집계 제외
     // 주차→조 순 정렬 유지
     allData.sort(function(a, b) {
       if (a.week !== b.week) return a.week - b.week;
@@ -2531,7 +2757,7 @@ async function loadData() {
     });
 
     var totalRaw = parsed.length;
-    var totalLatest = allData.length;
+    var totalLatest = dedupedCount;
     var dupCount = totalRaw - totalLatest;
 
     updateConnBadge();
@@ -2611,7 +2837,8 @@ function parseRecords(raw) {
       q10: g('느낀점(10번)'),
       q11: g('문제점(11번)'),
       q12: g('기도제목(12번)'),
-      q13: g('기타(13번)')
+      q13: g('기타(13번)'),
+      specialNote: g('특이사항(공유)')
     };
   });
 }
@@ -2751,6 +2978,7 @@ function showDataErrorModal() {
 }
 
 function openInIndex(docNumber) {
+  if (!requireAdminLevel()) return;
   if (!CFG.url) {
     showToast('구글 시트 URL이 설정되지 않았습니다.');
     return;
@@ -2772,7 +3000,7 @@ function openInIndex(docNumber) {
         record: json.record,
         ts: Date.now()
       }));
-      window.open('https://dtrjeon.github.io/test_justee61/index.html', '_blank');
+      window.open(getIndexUrl(), '_blank');
       showToast('✅ index.html을 열고 있습니다...');
     })
     .catch(function(e) {
@@ -2783,7 +3011,7 @@ function openInIndex(docNumber) {
         record: null,
         ts: Date.now()
       }));
-      window.open('https://dtrjeon.github.io/test_justee61/index.html', '_blank');
+      window.open(getIndexUrl(), '_blank');
     });
 }
 
@@ -2792,10 +3020,12 @@ var _mismatches = [];
 
 function checkMismatch(data) {
   var TYPE_MAP = {
-    '관': '관계(팀)', '관계': '관계(팀)',
+    '관': '관계(팀)',
+    '관계': '관계',
     '질': '질문지(팀)', '질문지': '질문지(팀)',
     '7일후': '7일후(팀)',
-    '개인': '개인'
+    '개인': '개인',
+    'QQ': 'QQ'
   };
   _mismatches = [];
   data.forEach(function(r) {
@@ -3478,7 +3708,7 @@ function renderTab0(data, w) {
       var result = rec ? rec.result : '';
       var resultCls = result === '결신' ? 'b-red' : result === '이미신자' ? 'b-green' : result === '확신' ? 'b-blue' : 'b-gray';
       var recEvangType = rec ? rec.evangType || '' : '';
-      var isPersonal = (recEvangType === '개인' || recEvangType === '관계' || recEvangType === 'QQ');
+      var isPersonal = (recEvangType === '개인' || recEvangType === '관계');
 
       joMembers.forEach(function(m, mi) {
         var action = m.role === '리더' ? (rec ? rec.leaderAction : '') :
@@ -3814,6 +4044,21 @@ function applyInactiveFilter() {
   });
 }
 // ── TAB 1: 복음참여현황 (누적) ───────────────────────────────────────────────
+// 개인별 복음참여현황 — 헤더 1행 실제 높이를 측정해 2행(간증~즉석양육) sticky top에 반영
+// (폰트 크기/줄바꿈에 따라 1행 높이가 달라질 수 있어 하드코딩 대신 실측)
+function alignGospelTblHeader() {
+  var table = document.querySelector('.gospel-tbl');
+  if (!table) return;
+  var rows = table.querySelectorAll('thead tr');
+  if (rows.length < 2) return;
+  var row1Height = rows[0].getBoundingClientRect().height;
+  if (!row1Height) return;
+  rows[1].querySelectorAll('th').forEach(function(th) {
+    th.style.top = row1Height + 'px';
+  });
+}
+window.addEventListener('resize', alignGospelTblHeader);
+
 function renderTab1(data, w) {
   var tb = document.getElementById('tb-gospel');
   var PARTS = ['간증', '서론', '은혜', '인간', '하나님', '그리스도', '믿음', '결신', '즉석양육'];
@@ -3978,8 +4223,9 @@ function renderTab1(data, w) {
         var nameCls = m.role === '리더' ? 'font-weight:700;color:#1a3a9e;' : m.role === '훈련자' ? 'color:#1565c0;' : 'color:#555;';
         var stepCls = m.role === '리더' ? 'font-weight:700;' : '';
 
+        var roleLabelHtml = roleLabel === '훈련자(조장)' ? '훈련자<br>(조장)' : roleLabel;
         html += '<tr>' +
-          '<td style="font-size:9px;text-align:center;color:' + col + ';">' + roleLabel + '</td>' +
+          '<td style="font-size:9px;text-align:center;color:' + col + ';">' + roleLabelHtml + '</td>' +
           '<td class="td-step" style="' + stepCls + 'text-align:center;">' + (m.step || '—') + '</td>' +
           '<td class="td-jo" style="text-align:center;">' + m.jo + '</td>' +
           '<td class="td-name" style="' + nameCls + '">' + m.name + '</td>' +
@@ -4040,6 +4286,7 @@ function renderTab1(data, w) {
   setText('acc-confirm', totals.confirm || '—');
   setText('acc-gospel', calcGospel || '—');
   setText('acc-reject', totals.reject || '—');
+  requestAnimationFrame(alignGospelTblHeader);
 }
 
 
@@ -4443,7 +4690,7 @@ async function exportPdf(tbodyId, filename) {
     container.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;padding:12px;z-index:-1;';
     var title = document.createElement('div');
     title.style.cssText = 'font-weight:900;font-size:13px;margin-bottom:8px;color:#1a3a9e;';
-    title.textContent = filename.replace(/_/g,' ') + ' (' + new Date().toISOString().slice(0,10) + ')';
+    title.textContent = filename.replace(/^tab\d+_/, '').replace(/_/g,' ');
     container.appendChild(title);
     var cloned = tbl.cloneNode(true);
     cloned.style.cssText = 'border-collapse:collapse;font-size:8px;width:100%;';
@@ -4452,6 +4699,12 @@ async function exportPdf(tbodyId, filename) {
       el.style.padding = '3px 4px';
       el.style.whiteSpace = 'normal';
       el.style.wordBreak = 'break-all';
+      // sticky 위치 고정 스타일 제거 — html2canvas가 sticky를 캡처 시점 스크롤 위치대로
+      // 잘못 렌더링해서 '조'/'이름' 컬럼이 엉뚱한 위치(맨 끝)로 밀리는 문제 방지
+      el.style.position = 'static';
+      el.style.left = 'auto';
+      el.style.zIndex = 'auto';
+      el.style.boxShadow = 'none';
     });
     container.appendChild(cloned);
     document.body.appendChild(container);
@@ -4599,7 +4852,8 @@ function renderTab3(selectedWeek) {
     return r.jo;
   })).size || 10;
 
-  for (var w = 1; w <= 13; w++) {
+  var maxWeekTab3 = getMaxWeek();
+  for (var w = 1; w <= maxWeekTab3; w++) {
     var wData = allData.filter(function(r) {
       return Number(r.week) === w;
     });
@@ -4775,12 +5029,18 @@ function renderTab3(selectedWeek) {
   setText('wb-sub-3', '1주 ~ ' + selectedWeek + '주 누적');
 }
 
+// GitHub Pages index.html 절대경로 (설정된 폴더명 기준, 기수 교체시 코드수정 불필요)
+function getIndexUrl() {
+  return 'https://dtrjeon.github.io/' + (CFG.folderName || DEFAULT_FOLDER) + '/index.html';
+}
+
 // ── 설정 모달 ────────────────────────────────────────────────────────────────
 function openSettings() {
   // 버전 표시
   var va = document.getElementById('ver-admin');
   if (va) va.textContent = ADMIN_VERSION;
   document.getElementById('set-url').value = CFG.url;
+  document.getElementById('set-folder').value = CFG.folderName;
   document.getElementById('set-title').value = CFG.title;
   document.getElementById('set-train-start').value = CFG.trainStart || '';
   document.getElementById('set-train-end').value = CFG.trainEnd || '';
@@ -4842,7 +5102,7 @@ function checkAllVersions() {
   }
 
   // ── Index 버전 확인 — index.html 직접 fetch ────────────────
-  var INDEX_URL = 'https://dtrjeon.github.io/test_justee61/index.html';
+  var INDEX_URL = getIndexUrl();
   fetch(INDEX_URL, { cache: 'no-cache' })
     .then(function(r) { return r.text(); })
     .then(function(html) {
@@ -5443,6 +5703,9 @@ function cycleJoGroup(el, jo) {
 
 function saveSettings() {
   CFG.url = document.getElementById('set-url').value.trim();
+  CFG.folderName = document.getElementById('set-folder').value.trim() || DEFAULT_FOLDER;
+  localStorage.setItem('mon_url', CFG.url);
+  localStorage.setItem('mon_folderName', CFG.folderName);
   CFG.title = document.getElementById('set-title').value.trim() || '61기 수주반';
   CFG.trainStart = document.getElementById('set-train-start').value || '';
   CFG.trainEnd = document.getElementById('set-train-end').value || '';
@@ -5482,7 +5745,10 @@ function saveSettings() {
   closeSettings();
   updateConnBadge();
   showToast('✅ 설정이 저장됐습니다. 현재 주차: ' + currentWeek + '주');
-  if (CFG.url) loadData();
+  if (CFG.url) {
+    saveGroupSettings(); // 훈련기간을 구글시트(그룹설정)에도 함께 저장
+    loadData();
+  }
 }
 
 // ── 그룹 편성 설정 저장/불러오기 (그룹명 + 그룹장 + 이메일 통합) ──────────
@@ -5518,6 +5784,8 @@ async function saveGroupSettings() {
     var payload = {
       action: 'save_group_settings',
       adminEmail: CFG.adminEmail,
+      trainStart: CFG.trainStart || '',
+      trainEnd: CFG.trainEnd || '',
       groups: CFG.groups.map(function(g) {
         return { id: g.id, name: g.name, leader: g.leader, email: g.email };
       })
@@ -5545,6 +5813,26 @@ async function loadGroupSettings() {
   try {
     var res = await fetch(CFG.url + '?action=get_group_settings', { method: 'GET', redirect: 'follow' });
     var json = await res.json();
+    if (json.status === 'ok') {
+      // 훈련기간 서버값 반영 (서버가 신뢰 원본 — 항상 우선 적용)
+      if (json.trainStart) {
+        CFG.trainStart = json.trainStart;
+        localStorage.setItem('mon_trainStart', CFG.trainStart);
+        var tsEl = document.getElementById('set-train-start');
+        if (tsEl) tsEl.value = CFG.trainStart;
+      }
+      if (json.trainEnd) {
+        CFG.trainEnd = json.trainEnd;
+        localStorage.setItem('mon_trainEnd', CFG.trainEnd);
+        var teEl = document.getElementById('set-train-end');
+        if (teEl) teEl.value = CFG.trainEnd;
+      }
+      if (json.trainStart || json.trainEnd) {
+        currentWeek = calcCurrentWeek();
+        buildWeekSelect();
+        updateTrainPeriodInfo();
+      }
+    }
     if (json.status === 'ok' && json.groups && json.groups.length) {
       // 서버 데이터로 CFG.groups 업데이트 (email 포함)
       json.groups.forEach(function(sg) {
@@ -5676,9 +5964,10 @@ function renderTab4() {
     return;
   }
 
-  // 문서번호별 그룹핑 (rawData 전체 기준)
+  // 문서번호별 그룹핑 (rawData 전체 기준, 12조는 로직 점검용 테스트 조라서 제외)
+  var filteredRaw = rawData.filter(function(r) { return String(r.jo) !== '12'; });
   var groups = {};
-  rawData.forEach(function(r) {
+  filteredRaw.forEach(function(r) {
     var doc = r.docNumber || '';
     if (!doc) return;
     if (!groups[doc]) {
@@ -5694,7 +5983,7 @@ function renderTab4() {
   });
 
   var allDocs = Object.values(groups);
-  var totalRows = rawData.length;
+  var totalRows = filteredRaw.length;
   var uniqueDocs = allDocs.length;
 
   // 최신 저장일시 계산 + 중복 건수
@@ -5762,7 +6051,50 @@ function renderTab4() {
   }).join('');
 }
 
+function renderTab5() {
+  if (!rawData || !rawData.length) {
+    showToast('먼저 데이터를 불러오세요.');
+    return;
+  }
+
+  var withNote = rawData.filter(function(r) {
+    return String(r.jo) !== '12' && r.specialNote && String(r.specialNote).trim();
+  });
+
+  // 최신순 정렬
+  withNote.sort(function(a, b) {
+    return String(b.savedAt || '').localeCompare(String(a.savedAt || ''));
+  });
+
+  document.getElementById('sn-total-cnt').textContent = withNote.length + '건';
+
+  var empty = document.getElementById('sn-empty');
+  var list  = document.getElementById('sn-list');
+
+  if (!withNote.length) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = withNote.map(function(r) {
+    var esc = function(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    };
+    return '<div style="background:#fffbe8;border:1px solid #ffe0a3;border-radius:10px;padding:10px 12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+        '<span style="font-weight:700;font-size:12px;color:#8a5a00;">' + esc(r.jo) + '조 · ' + esc(r.leader) + ' 조장</span>' +
+        '<span style="font-size:10px;color:#a68a55;">' + esc((r.savedAt || '').slice(0,16)) + '</span>' +
+      '</div>' +
+      '<div style="font-size:10px;color:#999;margin-bottom:6px;">문서번호: ' + esc(r.docNumber) + ' · 전도일: ' + esc(r.date) + '</div>' +
+      '<div style="font-size:12px;color:#333;white-space:pre-wrap;word-break:break-word;">' + esc(r.specialNote) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
 function switchTab(idx) {
+  if (idx === 4 && !requireAdminLevel()) return; // 문서번호 관리(중복행 삭제)는 admin 전용
   currentTab = idx;
   document.querySelectorAll('.tab').forEach(function(t, i) {
     t.classList.toggle('active', i === idx);
@@ -5771,6 +6103,7 @@ function switchTab(idx) {
     p.classList.toggle('active', i === idx);
   });
   if (idx === 4) renderTab4();
+  if (idx === 5) renderTab5();
 }
 
 // ── 유틸 ────────────────────────────────────────────────────────────────────
