@@ -3193,17 +3193,27 @@ function openPresetModal() {
   var old = document.getElementById('preset-modal-bg');
   if (old) old.remove();
 
-  // 서버에서 최신 조정보 로드 후 모달 열기
+  // 서버에서 최신 조정보 + 그룹설정(그룹장)을 로드한 후 모달 열기
   if (scriptUrl) {
-    fetch(scriptUrl + '?action=get_jo', { method: 'GET', redirect: 'follow' })
+    var joDone = fetch(scriptUrl + '?action=get_jo', { method: 'GET', redirect: 'follow' })
       .then(function(r) { return r.json(); })
       .then(function(json) {
         if (json.status === 'ok' && json.joData && json.joData.length) {
           localStorage.setItem('report_jo_data', JSON.stringify(json.joData));
         }
       })
-      .catch(function() {})
-      .finally(function() { _openPresetModalNow(); });
+      .catch(function() {});
+
+    var groupDone = fetch(scriptUrl + '?action=get_group_settings', { method: 'GET', redirect: 'follow' })
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (json.status === 'ok' && json.groups && json.groups.length) {
+          localStorage.setItem('report_group_settings', JSON.stringify(json.groups));
+        }
+      })
+      .catch(function() {});
+
+    Promise.all([joDone, groupDone]).finally(function() { _openPresetModalNow(); });
   } else {
     _openPresetModalNow();
   }
@@ -3246,17 +3256,17 @@ function _openPresetModalNow() {
 
   // ── 그룹장 섹션
   var grpLeaders = (function() {
-    // 1순위: admin에서 저장한 mon_groups (같은 도메인)
-    try {
-      var mg = JSON.parse(localStorage.getItem('mon_groups') || '[]');
-      if (mg.length && mg.some(function(g) { return g.leader; }))
-        return mg.filter(function(g) { return g.leader; });
-    } catch(e) {}
-    // 2순위: GAS에서 불러온 그룹설정 캐시 (report_group_settings)
+    // 1순위: GAS에서 방금 불러온 그룹설정(구글시트 "그룹설정" 탭의 실제 최신값)
     try {
       var gc = JSON.parse(localStorage.getItem('report_group_settings') || '[]');
       if (gc.length && gc.some(function(g) { return g.leader; }))
         return gc.filter(function(g) { return g.leader; });
+    } catch(e) {}
+    // 2순위: admin.html에서 저장한 mon_groups (같은 도메인, 서버 조회 실패시 대비)
+    try {
+      var mg = JSON.parse(localStorage.getItem('mon_groups') || '[]');
+      if (mg.length && mg.some(function(g) { return g.leader; }))
+        return mg.filter(function(g) { return g.leader; });
     } catch(e) {}
     // 3순위: joData에서 그룹별 첫 번째 조의 조장
     var jd = getJoData();
