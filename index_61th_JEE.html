@@ -1790,7 +1790,7 @@ pre.code-block {
         <b>)</b> → <b>홈 화면에 추가</b>
       </div>
     </div>
-    <button onclick="document.getElementById('pwa-banner').style.display='none';localStorage.setItem('pwa_banner_dismissed','1');"
+    <button onclick="document.getElementById('pwa-banner').style.display='none';localStorage.setItem('pwa_banner_dismissed_61','1');"
       style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);
              color:#fff;border-radius:6px;padding:6px 10px;font-size:12px;font-weight:700;
              cursor:pointer;flex-shrink:0;white-space:nowrap;">
@@ -2811,7 +2811,7 @@ pre.code-block {
 
 const APP_VERSION  = 'index v2026.09.05';
 const LS_SEQ       = 'report_seq_counter';
-const LS_JO        = 'report_jo_data';
+const LS_JO        = 'report_jo_data_61';
 const LS_SUBMITTED = 'report_submitted';
 const LS_PRESET    = 'report_user_preset';
 const LS_APP_SETTINGS = 'app_settings';
@@ -3200,7 +3200,7 @@ function openPresetModal() {
       .then(function(r) { return r.json(); })
       .then(function(json) {
         if (json.status === 'ok' && json.joData && json.joData.length) {
-          localStorage.setItem('report_jo_data', JSON.stringify(json.joData));
+          localStorage.setItem('report_jo_data_61', JSON.stringify(json.joData));
         }
       })
       .catch(function() {});
@@ -3209,7 +3209,7 @@ function openPresetModal() {
       .then(function(r) { return r.json(); })
       .then(function(json) {
         if (json.status === 'ok' && json.groups && json.groups.length) {
-          localStorage.setItem('report_group_settings', JSON.stringify(json.groups));
+          localStorage.setItem('report_group_settings_61', JSON.stringify(json.groups));
         }
       })
       .catch(function() {});
@@ -3259,13 +3259,13 @@ function _openPresetModalNow() {
   var grpLeaders = (function() {
     // 1순위: GAS에서 방금 불러온 그룹설정(구글시트 "그룹설정" 탭의 실제 최신값)
     try {
-      var gc = JSON.parse(localStorage.getItem('report_group_settings') || '[]');
+      var gc = JSON.parse(localStorage.getItem('report_group_settings_61') || '[]');
       if (gc.length && gc.some(function(g) { return g.leader; }))
         return gc.filter(function(g) { return g.leader; });
     } catch(e) {}
     // 2순위: admin.html에서 저장한 mon_groups (같은 도메인, 서버 조회 실패시 대비)
     try {
-      var mg = JSON.parse(localStorage.getItem('mon_groups') || '[]');
+      var mg = JSON.parse(localStorage.getItem('mon_groups_61') || '[]');
       if (mg.length && mg.some(function(g) { return g.leader; }))
         return mg.filter(function(g) { return g.leader; });
     } catch(e) {}
@@ -3381,8 +3381,8 @@ function _openPresetModalNow() {
   // ── 훈련기간 섹션 ──────────────────────────────────────────
   var trainSection = document.createElement('div');
   trainSection.style.cssText = 'margin-top:16px;border-top:1px solid #eee;padding-top:14px;';
-  var curStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
-  var curEnd   = localStorage.getItem('mon_trainEnd')   || '2026-05-29';
+  var curStart = localStorage.getItem('mon_trainStart_61') || '2026-03-31';
+  var curEnd   = localStorage.getItem('mon_trainEnd_61')   || '2026-05-29';
   if (isAdminUser()) {
     trainSection.innerHTML = '<div style="font-size:10px;font-weight:700;color:rgba(32,80,200,.5);letter-spacing:2px;margin-bottom:10px;">📆 훈련기간</div>'
       + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">'
@@ -3638,11 +3638,11 @@ function syncTrainPeriodFromServer() {
       if (json.status !== 'ok') return;
       var changed = false;
       if (json.trainStart) {
-        localStorage.setItem('mon_trainStart', json.trainStart);
+        localStorage.setItem('mon_trainStart_61', json.trainStart);
         changed = true;
       }
       if (json.trainEnd) {
-        localStorage.setItem('mon_trainEnd', json.trainEnd);
+        localStorage.setItem('mon_trainEnd_61', json.trainEnd);
         changed = true;
       }
       if (changed) {
@@ -3674,8 +3674,8 @@ function saveTrainPeriodFromPreset() {
   }
 
   if (!scriptUrl) {
-    localStorage.setItem('mon_trainStart', newStart);
-    localStorage.setItem('mon_trainEnd', newEnd);
+    localStorage.setItem('mon_trainStart_61', newStart);
+    localStorage.setItem('mon_trainEnd_61', newEnd);
     updateTrainPeriodBadge();
     buildReportWeekSelect();
     if (status) { status.textContent = '✅ 로컬에 저장됨 (서버 미연결)'; status.style.color = '#2e7d32'; }
@@ -3705,8 +3705,8 @@ function saveTrainPeriodFromPreset() {
     .then(function(r) { return r.json(); })
     .then(function(json) {
       if (json.status !== 'ok') throw new Error(json.message || '저장 실패');
-      localStorage.setItem('mon_trainStart', newStart);
-      localStorage.setItem('mon_trainEnd', newEnd);
+      localStorage.setItem('mon_trainStart_61', newStart);
+      localStorage.setItem('mon_trainEnd_61', newEnd);
       updateTrainPeriodBadge();
       buildReportWeekSelect();
       if (status) { status.textContent = '✅ 저장 완료 (서버 동기화됨)'; status.style.color = '#2e7d32'; }
@@ -3762,7 +3762,7 @@ function loadJoData() {
     .then(function(r) { return r.json(); })
     .then(function(json) {
       if (json.status === 'ok' && json.groups && json.groups.length) {
-        localStorage.setItem('report_group_settings', JSON.stringify(json.groups));
+        localStorage.setItem('report_group_settings_61', JSON.stringify(json.groups));
       }
     })
     .catch(function() {});
@@ -4085,7 +4085,7 @@ function buildReportWeekSelect() {
   if (!sel) return;
   var curVal = sel.value;
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
+  var trainStart = localStorage.getItem('mon_trainStart_61') || '2026-03-31';
   var start = new Date(trainStart);
   var dow = start.getDay();
   var diffToMon = (dow === 0) ? -6 : 1 - dow;
@@ -4093,7 +4093,7 @@ function buildReportWeekSelect() {
   startMonday.setDate(start.getDate() + diffToMon);
 
   var maxWeek = 14;
-  var trainEnd = localStorage.getItem('mon_trainEnd') || '2026-05-29';
+  var trainEnd = localStorage.getItem('mon_trainEnd_61') || '2026-05-29';
   if (trainEnd) {
     var endDate = new Date(trainEnd);
     if (!isNaN(endDate)) {
@@ -4123,7 +4123,7 @@ function computeWeekPeriod(week) {
   week = parseInt(week, 10);
   if (!week || week < 1) return '';
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
+  var trainStart = localStorage.getItem('mon_trainStart_61') || '2026-03-31';
   var start = new Date(trainStart);
   if (isNaN(start)) return '';
 
@@ -4162,8 +4162,8 @@ function updateTrainPeriodBadge() {
   var txtEl = document.getElementById('hd-train-period-text');
   if (!el || !txtEl) return;
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
-  var trainEnd   = localStorage.getItem('mon_trainEnd')   || '2026-05-29';
+  var trainStart = localStorage.getItem('mon_trainStart_61') || '2026-03-31';
+  var trainEnd   = localStorage.getItem('mon_trainEnd_61')   || '2026-05-29';
 
   var fmt = function(dateStr) {
     var d = new Date(dateStr);
@@ -4192,7 +4192,7 @@ function autoWeekFromDate() {
   var dateVal = document.getElementById('report-date').value;
   if (!dateVal) return;
 
-  var trainStart = localStorage.getItem('mon_trainStart') || '2026-03-31';
+  var trainStart = localStorage.getItem('mon_trainStart_61') || '2026-03-31';
   var startDate  = new Date(trainStart);
   var inputDate  = new Date(dateVal);
 
@@ -4211,7 +4211,7 @@ function autoWeekFromDate() {
   var week = Math.floor(diffDays / 7) + 1;
 
   // 최대 주차: mon_trainEnd 기준 동적 계산, 없으면 시작일 기준 14주 자동 계산
-  var trainEnd = localStorage.getItem('mon_trainEnd') || '2026-05-29';
+  var trainEnd = localStorage.getItem('mon_trainEnd_61') || '2026-05-29';
   var maxWeek = 14;
   if (trainEnd) {
     var endDate = new Date(trainEnd);
@@ -4475,7 +4475,7 @@ function onJoSelect() {
     document.getElementById('trainer_step').value = found.trainerStep || '';
     document.getElementById('trainee_step').value = found.traineeStep || '';
     // 조 선택 시 group localStorage 저장
-    if (found.group) localStorage.setItem('suju_group', found.group);
+    if (found.group) localStorage.setItem('suju_group_61', found.group);
   } else {
     document.getElementById('q2_leader').value = '';
     document.getElementById('q2_trainer').value = '';
@@ -5792,11 +5792,11 @@ function maskName(name) {
 }
 
 function isAdminUser() {
-  return localStorage.getItem('index_admin_verified') === '1';
+  return localStorage.getItem('index_admin_verified_61') === '1';
 }
 
 function getAdminToken() {
-  return localStorage.getItem('index_admin_token') || '';
+  return localStorage.getItem('index_admin_token_61') || '';
 }
 
 // "내 조 설정" 모달의 🔒 아이콘 — 새 탭으로 이동하지 않고 그 자리에서 admin 인증만 수행
@@ -5817,9 +5817,9 @@ function openPresetAdminAuth() {
     .then(function(r) { return r.json(); })
     .then(function(json) {
       if (json.status === 'ok' && json.level === 'admin') {
-        localStorage.setItem('index_admin_verified', '1');
-        localStorage.setItem('index_admin_token', json.token || '');
-        localStorage.removeItem('index_monitor_verified');
+        localStorage.setItem('index_admin_verified_61', '1');
+        localStorage.setItem('index_admin_token_61', json.token || '');
+        localStorage.removeItem('index_monitor_verified_61');
         showStatus('✅ admin 인증 완료 — 관리그룹/12조가 표시됩니다.', 'success');
         _openPresetModalNow(); // 목록 새로고침 (E그룹/12조 반영)
       } else {
@@ -5983,7 +5983,7 @@ function renderHistory(records, src) {
   });
 
   // ── 관리자 여부 판단 ────────────────────────────────────────
-  var isAdmin = localStorage.getItem('index_admin_verified') === '1';
+  var isAdmin = localStorage.getItem('index_admin_verified_61') === '1';
 
   // ── 일반 사용자: 문서번호 기준 최신 1건만 ──────────────────
   var displayRecords;
@@ -6369,12 +6369,12 @@ function syncSuju() {
   var _joInfo = getJoData().find(function(j) {
     return j.jo === _jo;
   });
-  var _kisu = (_joInfo && _joInfo.kisu) || localStorage.getItem('mon_kisu') || '61';
+  var _kisu = (_joInfo && _joInfo.kisu) || localStorage.getItem('mon_kisu_61') || '61';
   setEl2('sj_kisu', _kisu);
   // 반: 조 데이터의 ban에서 "반" 접미어 제거 후 표시
-  var _ban = (_joInfo && _joInfo.ban) || localStorage.getItem('suju_ban') || '수지주일반';
+  var _ban = (_joInfo && _joInfo.ban) || localStorage.getItem('suju_ban_61') || '수지주일반';
   setEl2('sj_ban', _ban);
-  setEl2('sj_group', (_joInfo && _joInfo.group) || localStorage.getItem('suju_group') || '');
+  setEl2('sj_group', (_joInfo && _joInfo.group) || localStorage.getItem('suju_group_61') || '');
   // 팀원
   setEl2('sj_leader', v('q2_leader'));
   setEl2('sj_trainer', v('q2_trainer'));
@@ -6818,9 +6818,9 @@ function confirmAdminAuth() {
     .then(function(r) { return r.json(); })
     .then(function(json) {
       if (json.status === 'ok' && json.level === 'admin') {
-        localStorage.setItem('index_admin_verified', '1');
-        localStorage.setItem('index_admin_token', json.token || '');
-        localStorage.removeItem('index_monitor_verified');
+        localStorage.setItem('index_admin_verified_61', '1');
+        localStorage.setItem('index_admin_token_61', json.token || '');
+        localStorage.removeItem('index_monitor_verified_61');
         closeAdminAuth();
         openAdminPage();
         // 관리자 인증 후 기록탭 새로고침 (전체 목록 재표시)
@@ -7754,7 +7754,7 @@ window.onload = function() {
     var isAndroid = /android/i.test(navigator.userAgent);
     var isStandalone = window.navigator.standalone === true
       || window.matchMedia('(display-mode: standalone)').matches;
-    var dismissed = localStorage.getItem('pwa_banner_dismissed');
+    var dismissed = localStorage.getItem('pwa_banner_dismissed_61');
     // iOS Safari 또는 안드로이드(이미 standalone이 아닌 경우)
     var shouldShow = ((isIOS && isSafari) || isAndroid) && !isStandalone && !dismissed;
     if (shouldShow) {
@@ -7906,15 +7906,15 @@ window.onload = function() {
 
   // ── admin.html에서 불일치 수정 요청 처리 ──────────────────────────────────
   (function() {
-    var req = localStorage.getItem('admin_load_request');
+    var req = localStorage.getItem('admin_load_request_61');
     if (!req) return;
     try {
       var obj = JSON.parse(req);
       if (Date.now() - (obj.ts || 0) > 5 * 60 * 1000) {
-        localStorage.removeItem('admin_load_request');
+        localStorage.removeItem('admin_load_request_61');
         return;
       }
-      localStorage.removeItem('admin_load_request');
+      localStorage.removeItem('admin_load_request_61');
 
       function applyAndShow(r) {
         var data = {
@@ -7973,7 +7973,7 @@ window.onload = function() {
       // 조정보 로드 완료 후 폼 적용 (buildPersonalMemberSelect 타이밍 보장)
       function applyAfterJo(record) {
         // localStorage에 조정보가 있으면 바로 적용
-        if (localStorage.getItem('report_jo_data')) {
+        if (localStorage.getItem('report_jo_data_61')) {
           applyAndShow(record);
           return;
         }
@@ -7983,7 +7983,7 @@ window.onload = function() {
             .then(function(r) { return r.json(); })
             .then(function(j) {
               if (j.status === 'ok' && j.joData && j.joData.length) {
-                localStorage.setItem('report_jo_data', JSON.stringify(j.joData));
+                localStorage.setItem('report_jo_data_61', JSON.stringify(j.joData));
                 buildJoDropdown && buildJoDropdown();
               }
             })
@@ -8025,7 +8025,7 @@ function hasDocOwnership() {
   if (!docNum) return false;
 
   // 1) 관리자 세션 (localStorage에 admin_verified 저장)
-  if (localStorage.getItem('index_admin_verified') === '1') return true;
+  if (localStorage.getItem('index_admin_verified_61') === '1') return true;
 
   // 2) 그 보고서의 조원(리더/훈련자/훈련생) 중 한 명 — 현재 preset 이름과 일치하면 허용
   //    (완전히 관계없는 사람은 여전히 불가)
@@ -8140,9 +8140,9 @@ function confirmAdminPwDelete(docNum) {
     .then(function(r) { return r.json(); })
     .then(function(json) {
       if (json.status === 'ok' && json.level === 'admin') {
-        localStorage.setItem('index_admin_verified', '1');
-        localStorage.setItem('index_admin_token', json.token || '');
-        localStorage.removeItem('index_monitor_verified');
+        localStorage.setItem('index_admin_verified_61', '1');
+        localStorage.setItem('index_admin_token_61', json.token || '');
+        localStorage.removeItem('index_monitor_verified_61');
         cancelDeletePw();
         if (!confirm('⚠️ [' + docNum + '] 문서를 구글 시트에서 삭제합니다.\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?')) {
           // 확인 취소해도 관리자 세션 유지, 기록 새로고침

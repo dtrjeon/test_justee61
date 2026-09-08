@@ -2400,14 +2400,14 @@ const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6SNFk4GAO_
 const DEFAULT_FOLDER = 'test_justee61';
 
 let CFG = {
-  url: localStorage.getItem('mon_url') || DEFAULT_SCRIPT_URL,
-  folderName: localStorage.getItem('mon_folderName') || DEFAULT_FOLDER,
-  title: localStorage.getItem('mon_title') || '61기 수주반',
-  trainStart: localStorage.getItem('mon_trainStart') || '2026-03-31',
-  trainEnd: localStorage.getItem('mon_trainEnd') || '2026-05-29',
-  adminEmail: localStorage.getItem('mon_adminEmail') || '',
-  gospelTypes: JSON.parse(localStorage.getItem('mon_gospel_types') || 'null') || ['관계(팀)', '질문지(팀)'],
-  groups: JSON.parse(localStorage.getItem('mon_groups') || 'null') || [{
+  url: localStorage.getItem('mon_url_61') || DEFAULT_SCRIPT_URL,
+  folderName: localStorage.getItem('mon_folderName_61') || DEFAULT_FOLDER,
+  title: localStorage.getItem('mon_title_61') || '61기 수주반',
+  trainStart: localStorage.getItem('mon_trainStart_61') || '2026-03-31',
+  trainEnd: localStorage.getItem('mon_trainEnd_61') || '2026-05-29',
+  adminEmail: localStorage.getItem('mon_adminEmail_61') || '',
+  gospelTypes: JSON.parse(localStorage.getItem('mon_gospel_types_61') || 'null') || ['관계(팀)', '질문지(팀)'],
+  groups: JSON.parse(localStorage.getItem('mon_groups_61') || 'null') || [{
     id: 'A',
     name: 'A그룹',
     leader: '',
@@ -2428,7 +2428,7 @@ let CFG = {
     leader: '',
     email: ''
   }, ],
-  joGroup: JSON.parse(localStorage.getItem('mon_joGroup') || 'null') || (function() {
+  joGroup: JSON.parse(localStorage.getItem('mon_joGroup_61') || 'null') || (function() {
     // MEMBERS에서 조 목록 자동 생성 (없으면 1~11 기본값)
     var grps = ['A', 'B', 'C', 'D'];
     var jos = {};
@@ -2513,7 +2513,7 @@ function requireAdminLevel() {
 }
 
 function getAdminToken() {
-  return localStorage.getItem('index_admin_token') || '';
+  return localStorage.getItem('index_admin_token_61') || '';
 }
 
 function checkPassword() {
@@ -2534,13 +2534,13 @@ function checkPassword() {
       if (json.status === 'ok' && (json.level === 'admin' || json.level === 'monitor')) {
         window._authLevel = json.level;
         sessionStorage.setItem(LS_AUTH, json.level);
-        localStorage.setItem('index_admin_token', json.token || '');
+        localStorage.setItem('index_admin_token_61', json.token || '');
         if (json.level === 'admin') {
-          localStorage.setItem('index_admin_verified', '1'); // 공개보고서 페이지와 인증 공유
-          localStorage.removeItem('index_monitor_verified');
+          localStorage.setItem('index_admin_verified_61', '1'); // 공개보고서 페이지와 인증 공유
+          localStorage.removeItem('index_monitor_verified_61');
         } else {
-          localStorage.setItem('index_monitor_verified', '1'); // 공개보고서 페이지와 열람 권한 공유
-          localStorage.removeItem('index_admin_verified');
+          localStorage.setItem('index_monitor_verified_61', '1'); // 공개보고서 페이지와 열람 권한 공유
+          localStorage.removeItem('index_admin_verified_61');
           showToast('👁️ 모니터링 권한으로 접속했습니다. (문서번호 관리·불일치 수정은 admin 전용)');
         }
         document.getElementById('lock-screen').style.display = 'none';
@@ -2576,8 +2576,8 @@ window.onload = function() {
 
   // 세션 인증 또는 공개보고서 페이지에서의 인증(localStorage 공유, admin/monitor 모두 공유됨)이 있으면 통과
   var sessLevel = sessionStorage.getItem(LS_AUTH); // 'admin' | 'monitor' | '1'(구버전) | null
-  var sharedAdmin   = localStorage.getItem('index_admin_verified') === '1';
-  var sharedMonitor = localStorage.getItem('index_monitor_verified') === '1';
+  var sharedAdmin   = localStorage.getItem('index_admin_verified_61') === '1';
+  var sharedMonitor = localStorage.getItem('index_monitor_verified_61') === '1';
   var level = (sessLevel === 'admin' || sessLevel === '1' || sharedAdmin) ? 'admin'
             : (sessLevel === 'monitor' || sharedMonitor) ? 'monitor'
             : null;
@@ -2599,7 +2599,7 @@ window.onload = function() {
   }
 
   // 저장된 구성원 복원
-  var saved = localStorage.getItem('mon_members');
+  var saved = localStorage.getItem('mon_members_61');
   if (saved) {
     try {
       var m = JSON.parse(saved);
@@ -3042,7 +3042,7 @@ function openInIndex(docNumber) {
       if (json.status !== 'ok') throw new Error(json.message || '오류');
       if (!json.record) throw new Error('레코드 없음');
 
-      localStorage.setItem('admin_load_request', JSON.stringify({
+      localStorage.setItem('admin_load_request_61', JSON.stringify({
         docNumber: docNumber,
         record: json.record,
         ts: Date.now()
@@ -3053,7 +3053,7 @@ function openInIndex(docNumber) {
     .catch(function(e) {
       showToast('❌ ' + e.message);
       // 실패해도 localStorage에 문서번호만 저장해서 index.html에서 GAS 조회하도록
-      localStorage.setItem('admin_load_request', JSON.stringify({
+      localStorage.setItem('admin_load_request_61', JSON.stringify({
         docNumber: docNumber,
         record: null,
         ts: Date.now()
@@ -5128,8 +5128,8 @@ function openSettings() {
   updateTrainPeriodInfo();
   var banEl = document.getElementById('set-ban');
   var grpEl = document.getElementById('set-group');
-  if (banEl) banEl.value = localStorage.getItem('suju_ban') || '수지주일반';
-  if (grpEl) grpEl.value = localStorage.getItem('suju_group') || '';
+  if (banEl) banEl.value = localStorage.getItem('suju_ban_61') || '수지주일반';
+  if (grpEl) grpEl.value = localStorage.getItem('suju_group_61') || '';
   buildGroupSettings();
   buildJoAssign();
   adminBuildJoEditor();
@@ -5214,7 +5214,7 @@ function previewMemberFile(input) {
       prev.innerHTML = '<span style="color:#c00;">❌ 파싱 실패. 형식: 기수,그룹,조,이름,단계,역할</span>';
       return;
     }
-    var curKisu = localStorage.getItem('mon_kisu') || '';
+    var curKisu = localStorage.getItem('mon_kisu_61') || '';
     var isNew = _pendingKisu && _pendingKisu !== curKisu;
     var jos = new Set(parsed.members.map(function(m) { return m.jo; }));
     var grps = new Set(parsed.members.map(function(m) { return m.group; }));
@@ -5280,23 +5280,23 @@ function applyMemberUpload() {
     showToast('⚠️ 먼저 파일을 선택하고 내용을 확인하세요.');
     return;
   }
-  var curKisu = localStorage.getItem('mon_kisu') || '';
+  var curKisu = localStorage.getItem('mon_kisu_61') || '';
   var isNew = _pendingKisu && _pendingKisu !== curKisu;
   if (isNew) {
     if (!confirm('기수 변경: ' + curKisu + ' → ' + _pendingKisu + '\n기존 데이터가 초기화됩니다. 계속하시겠습니까?')) return;
     allData = [];
-    localStorage.setItem('mon_kisu', _pendingKisu);
+    localStorage.setItem('mon_kisu_61', _pendingKisu);
     CFG.title = _pendingKisu + ' 수주반';
-    localStorage.setItem('mon_title', CFG.title);
+    localStorage.setItem('mon_title_61', CFG.title);
     document.getElementById('set-title').value = CFG.title;
   }
 
   MEMBERS.length = 0;
   _pendingMembers.forEach(function(m) { MEMBERS.push(m); });
-  localStorage.setItem('mon_members', JSON.stringify(MEMBERS));
+  localStorage.setItem('mon_members_61', JSON.stringify(MEMBERS));
 
   CFG.joGroup = _pendingJoGroup || CFG.joGroup;
-  localStorage.setItem('mon_joGroup', JSON.stringify(CFG.joGroup));
+  localStorage.setItem('mon_joGroup_61', JSON.stringify(CFG.joGroup));
 
   // 새 그룹 자동 추가
   var grpIds = [...new Set(_pendingMembers.map(function(m) { return m.group; }))].filter(Boolean).sort();
@@ -5305,7 +5305,7 @@ function applyMemberUpload() {
       CFG.groups.push({ id: id, name: id + '그룹', leader: '' });
     }
   });
-  localStorage.setItem('mon_groups', JSON.stringify(CFG.groups));
+  localStorage.setItem('mon_groups_61', JSON.stringify(CFG.groups));
 
   _pendingMembers = null; _pendingKisu = null; _pendingJoGroup = null;
   document.getElementById('member-file').value = '';
@@ -5481,8 +5481,8 @@ function adminAddJoRow() {
 
 function adminSaveJoData() {
   var rows = [].slice.call(document.querySelectorAll('#admin-jo-editor-list > div'));
-  var kisu = localStorage.getItem('mon_kisu') || '61';
-  var ban = localStorage.getItem('suju_ban') || '수지주일반';
+  var kisu = localStorage.getItem('mon_kisu_61') || '61';
+  var ban = localStorage.getItem('suju_ban_61') || '수지주일반';
   var f = function(row, name) {
     var el = row.querySelector('input[data-f="' + name + '"]');
     return el ? el.value.trim() : '';
@@ -5556,13 +5556,13 @@ function adminSaveJoData() {
       kisu: kisu
     });
   });
-  localStorage.setItem('mon_members', JSON.stringify(MEMBERS));
+  localStorage.setItem('mon_members_61', JSON.stringify(MEMBERS));
 
   // joGroup 업데이트
   joArray.forEach(function(j) {
     if (j.group) CFG.joGroup[j.jo] = j.group;
   });
-  localStorage.setItem('mon_joGroup', JSON.stringify(CFG.joGroup));
+  localStorage.setItem('mon_joGroup_61', JSON.stringify(CFG.joGroup));
 
   // 서버에 joData 저장 (index.html과 공유)
   if (CFG.url) {
@@ -5775,8 +5775,8 @@ function cycleJoGroup(el, jo) {
 function saveSettings() {
   CFG.url = document.getElementById('set-url').value.trim();
   CFG.folderName = document.getElementById('set-folder').value.trim() || DEFAULT_FOLDER;
-  localStorage.setItem('mon_url', CFG.url);
-  localStorage.setItem('mon_folderName', CFG.folderName);
+  localStorage.setItem('mon_url_61', CFG.url);
+  localStorage.setItem('mon_folderName_61', CFG.folderName);
   CFG.title = document.getElementById('set-title').value.trim() || '61기 수주반';
   CFG.trainStart = document.getElementById('set-train-start').value || '';
   CFG.trainEnd = document.getElementById('set-train-end').value || '';
@@ -5798,7 +5798,7 @@ function saveSettings() {
   var adminEl = document.getElementById('set-admin-email');
   if (adminEl) {
     CFG.adminEmail = adminEl.value.trim();
-    localStorage.setItem('mon_adminEmail', CFG.adminEmail);
+    localStorage.setItem('mon_adminEmail_61', CFG.adminEmail);
   }
   // 결신율 계산 포함 전도유형 저장
   var gospelChecked = GOSPEL_TYPE_OPTIONS.filter(function(t, i) {
@@ -5806,17 +5806,17 @@ function saveSettings() {
     return el && el.checked;
   });
   CFG.gospelTypes = gospelChecked.length ? gospelChecked : ['관계(팀)', '질문지(팀)'];
-  localStorage.setItem('mon_gospel_types', JSON.stringify(CFG.gospelTypes));
+  localStorage.setItem('mon_gospel_types_61', JSON.stringify(CFG.gospelTypes));
   // 반·그룹 저장
   var banEl = document.getElementById('set-ban');
   var grpEl = document.getElementById('set-group');
-  if (banEl) localStorage.setItem('suju_ban', '수지주일반');
-  if (grpEl) localStorage.setItem('suju_group', grpEl.value.trim());
-  localStorage.setItem('mon_title', CFG.title);
-  localStorage.setItem('mon_trainStart', CFG.trainStart);
-  localStorage.setItem('mon_trainEnd', CFG.trainEnd);
-  localStorage.setItem('mon_groups', JSON.stringify(CFG.groups));
-  localStorage.setItem('mon_joGroup', JSON.stringify(CFG.joGroup));
+  if (banEl) localStorage.setItem('suju_ban_61', '수지주일반');
+  if (grpEl) localStorage.setItem('suju_group_61', grpEl.value.trim());
+  localStorage.setItem('mon_title_61', CFG.title);
+  localStorage.setItem('mon_trainStart_61', CFG.trainStart);
+  localStorage.setItem('mon_trainEnd_61', CFG.trainEnd);
+  localStorage.setItem('mon_groups_61', JSON.stringify(CFG.groups));
+  localStorage.setItem('mon_joGroup_61', JSON.stringify(CFG.joGroup));
   // 훈련 시작일 기준 주차 재계산
   currentWeek = calcCurrentWeek();
   buildWeekSelect();
@@ -5837,7 +5837,7 @@ async function saveGroupSettings() {
   var adminEl = document.getElementById('set-admin-email');
   if (adminEl) {
     CFG.adminEmail = adminEl.value.trim();
-    localStorage.setItem('mon_adminEmail', CFG.adminEmail);
+    localStorage.setItem('mon_adminEmail_61', CFG.adminEmail);
   }
   // 그룹별 입력값을 CFG.groups에 반영
   CFG.groups = CFG.groups.map(function(g, i) {
@@ -5848,7 +5848,7 @@ async function saveGroupSettings() {
       email: (document.getElementById('grp-email-' + i) || {}).value || g.email || ''
     };
   });
-  localStorage.setItem('mon_groups', JSON.stringify(CFG.groups));
+  localStorage.setItem('mon_groups_61', JSON.stringify(CFG.groups));
   buildGroupSettings();
   buildJoAssign();
 
@@ -5896,13 +5896,13 @@ async function loadGroupSettings() {
       // 훈련기간 서버값 반영 (서버가 신뢰 원본 — 항상 우선 적용)
       if (json.trainStart) {
         CFG.trainStart = json.trainStart;
-        localStorage.setItem('mon_trainStart', CFG.trainStart);
+        localStorage.setItem('mon_trainStart_61', CFG.trainStart);
         var tsEl = document.getElementById('set-train-start');
         if (tsEl) tsEl.value = CFG.trainStart;
       }
       if (json.trainEnd) {
         CFG.trainEnd = json.trainEnd;
-        localStorage.setItem('mon_trainEnd', CFG.trainEnd);
+        localStorage.setItem('mon_trainEnd_61', CFG.trainEnd);
         var teEl = document.getElementById('set-train-end');
         if (teEl) teEl.value = CFG.trainEnd;
       }
@@ -5927,11 +5927,11 @@ async function loadGroupSettings() {
       // 관리자 이메일 복원
       if (json.adminEmail) {
         CFG.adminEmail = json.adminEmail;
-        localStorage.setItem('mon_adminEmail', CFG.adminEmail);
+        localStorage.setItem('mon_adminEmail_61', CFG.adminEmail);
         var adminEl = document.getElementById('set-admin-email');
         if (adminEl) adminEl.value = CFG.adminEmail;
       }
-      localStorage.setItem('mon_groups', JSON.stringify(CFG.groups));
+      localStorage.setItem('mon_groups_61', JSON.stringify(CFG.groups));
       buildGroupSettings();
       buildJoAssign();
       if (status) { status.textContent = '✅ 서버에서 불러오기 완료'; status.style.color = 'var(--green)'; }
@@ -6001,7 +6001,7 @@ async function syncJoFromServer() {
       newMembers.forEach(function(m) {
         MEMBERS.push(m);
       });
-      localStorage.setItem('mon_members', JSON.stringify(MEMBERS));
+      localStorage.setItem('mon_members_61', JSON.stringify(MEMBERS));
       buildGroupSettings();
       buildJoAssign();
       renderAll();
