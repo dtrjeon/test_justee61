@@ -3127,9 +3127,10 @@ function applyFormData(r) {
     }
 
     if (selMember) {
-      // 전도자 → 하였고, 나머지 → 불참하였고 (저장값 없을 때만)
+      // 전도자 → 하였고, 나머지 → 불참하였고
+      // 개인전도는 제출 시 검증 규칙이 이를 강제하므로,
+      // 저장값이 남아있어도(과거 오류로 '참관하였고' 등 저장된 경우 포함) 항상 규칙대로 재설정한다.
       MEMBERS.forEach(function(m) {
-        if (radio(m.id + '_action')) return;
         var memberName = Object.keys(nameToId).find(function(n) { return nameToId[n] === m.id; });
         var isEvangelist = (memberName === selMember);
         var radioEl = document.querySelector('input[name="' + m.id + '_action"][value="' + (isEvangelist ? '하였고' : '불참하였고') + '"]');
@@ -3696,7 +3697,8 @@ function saveTrainPeriodFromPreset() {
           adminEmail: adminEmail,
           trainStart: newStart,
           trainEnd: newEnd,
-          groups: groups
+          groups: groups,
+          adminToken: getAdminToken()
         })
       });
     })
@@ -4757,11 +4759,13 @@ function updateRoleText(who) {
   }
   var a1 = document.getElementById(who + '_a1');
   var a2 = document.getElementById(who + '_a2');
+  var a3 = document.getElementById(who + '_a3');
   if (a1 && a2) {
     if (checked.length > 0) {
       a1.checked = true;
       a2.checked = false;
-    } else {
+    } else if (!(a3 && a3.checked)) {
+      // 파트가 0개가 됐다고 해서 이미 선택된 '불참하였고'(a3)를 임의로 '참관하였고'로 바꾸지 않는다.
       a1.checked = false;
       a2.checked = true;
     }
@@ -4942,6 +4946,17 @@ function updateDiagFromSubResult() {
       nameEl.textContent = t7;
       nameEl.className = 'diag-name';
       badgeEl.innerHTML = '<span class="diag-badge ' + badge + '">' + t7 + '</span>';
+      return;
+    }
+  }
+  // 있었고+믿음(머리신자/이미신자 결합 라벨)도 6번이 이미 선택돼 있으면
+  // 그 구체적인 값만 진단명으로 표시 (복원 시 결합 라벨로 되돌리던 문제 방지)
+  if (hv === '있었고' && rs === '믿음') {
+    var t6 = radio('testimony6');
+    if (t6 === '이미신자' || t6 === '머리신자') {
+      nameEl.textContent = t6;
+      nameEl.className = 'diag-name orange';
+      badgeEl.innerHTML = '<span class="diag-badge orange">' + t6 + '</span>';
       return;
     }
   }
@@ -5780,6 +5795,10 @@ function isAdminUser() {
   return localStorage.getItem('index_admin_verified') === '1';
 }
 
+function getAdminToken() {
+  return localStorage.getItem('index_admin_token') || '';
+}
+
 // "내 조 설정" 모달의 🔒 아이콘 — 새 탭으로 이동하지 않고 그 자리에서 admin 인증만 수행
 // (인증되면 관리그룹/12조가 즉시 목록에 나타나도록 모달을 새로고침)
 function openPresetAdminAuth() {
@@ -5797,8 +5816,10 @@ function openPresetAdminAuth() {
   })
     .then(function(r) { return r.json(); })
     .then(function(json) {
-      if (json.status === 'ok') {
+      if (json.status === 'ok' && json.level === 'admin') {
         localStorage.setItem('index_admin_verified', '1');
+        localStorage.setItem('index_admin_token', json.token || '');
+        localStorage.removeItem('index_monitor_verified');
         showStatus('✅ admin 인증 완료 — 관리그룹/12조가 표시됩니다.', 'success');
         _openPresetModalNow(); // 목록 새로고침 (E그룹/12조 반영)
       } else {
@@ -6796,8 +6817,10 @@ function confirmAdminAuth() {
   })
     .then(function(r) { return r.json(); })
     .then(function(json) {
-      if (json.status === 'ok') {
+      if (json.status === 'ok' && json.level === 'admin') {
         localStorage.setItem('index_admin_verified', '1');
+        localStorage.setItem('index_admin_token', json.token || '');
+        localStorage.removeItem('index_monitor_verified');
         closeAdminAuth();
         openAdminPage();
         // 관리자 인증 후 기록탭 새로고침 (전체 목록 재표시)
@@ -7360,7 +7383,7 @@ async function deleteSelectedRecords() {
       var res = await fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'delete_doc_row', rowIndex: toDelete[i].rowIndex, docNumber: toDelete[i].doc_number })
+        body: JSON.stringify({ action: 'delete_doc_row', rowIndex: toDelete[i].rowIndex, docNumber: toDelete[i].doc_number, adminToken: getAdminToken() })
       });
       var json = await res.json();
       if (json.status === 'ok') okCount++; else failCount++;
@@ -8116,8 +8139,10 @@ function confirmAdminPwDelete(docNum) {
   })
     .then(function(r) { return r.json(); })
     .then(function(json) {
-      if (json.status === 'ok') {
+      if (json.status === 'ok' && json.level === 'admin') {
         localStorage.setItem('index_admin_verified', '1');
+        localStorage.setItem('index_admin_token', json.token || '');
+        localStorage.removeItem('index_monitor_verified');
         cancelDeletePw();
         if (!confirm('⚠️ [' + docNum + '] 문서를 구글 시트에서 삭제합니다.\n이 작업은 되돌릴 수 없습니다.\n계속하시겠습니까?')) {
           // 확인 취소해도 관리자 세션 유지, 기록 새로고침
@@ -8154,7 +8179,7 @@ async function executeDeleteDoc(docNum) {
     var res = await fetch(scriptUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'delete_doc', docNumber: docNum })
+      body: JSON.stringify({ action: 'delete_doc', docNumber: docNum, adminToken: getAdminToken() })
     });
     var json = await res.json();
     if (json.status === 'ok') {
