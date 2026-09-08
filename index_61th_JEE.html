@@ -3309,6 +3309,21 @@ function _openPresetModalNow() {
         showStatus('✅ ' + g.leader + '님 (그룹장) 내 조 설정 저장!', 'success');
       };
       list.appendChild(btn);
+
+      // 부그룹장 — 그룹설정에 등록된 경우에만 표시 (그룹장과 동일한 'group' scope 권한)
+      if (g.deputy) {
+        var dbtn = document.createElement('button');
+        dbtn.type = 'button';
+        dbtn.className = 'preset-member-btn' + (saved && saved.name === g.deputy && saved.scope === 'group' ? ' selected' : '');
+        dbtn.innerHTML = '<span class="pm-jo">' + g.id + '그룹</span><span class="pm-name">' + g.deputy + '</span><span class="pm-role">부그룹장</span>';
+        dbtn.onclick = function() {
+          savePreset({ name: g.deputy, scope: 'group', group: g.id, role: '부그룹장' });
+          closePresetModal();
+          applyPreset();
+          showStatus('✅ ' + g.deputy + '님 (부그룹장) 내 조 설정 저장!', 'success');
+        };
+        list.appendChild(dbtn);
+      }
     });
 
     var memLabel = document.createElement('div');
